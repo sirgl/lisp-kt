@@ -21,7 +21,7 @@ internal class ParseSession(private val tokens: List<Token>, private var index: 
     /**
      * if type of current token is same, it advances, otherwise it return null
      */
-    fun expect(type: TokenType): Token? {
+    private fun expect(type: TokenType): Token? {
         return when (type) {
             current().type -> advance()
             else -> null
@@ -73,7 +73,7 @@ internal class ParseSession(private val tokens: List<Token>, private var index: 
         }
     }
 
-    fun parseList() : AstNode {
+    private fun parseList() : AstNode {
         val (lParNode, lParToken) = parseServiceNode(TokenType.Lpar, "lPar")
         val first = current()
         val firstNode = when (first.type) {
@@ -103,7 +103,7 @@ internal class ParseSession(private val tokens: List<Token>, private var index: 
         }
     }
 
-    fun parseExpr() : AstNode {
+    private fun parseExpr() : AstNode {
         return if (current().type == TokenType.Lpar) {
             parseList()
         } else {

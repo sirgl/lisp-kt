@@ -45,8 +45,8 @@ class ParserTest {
     @Test
     fun `atom parse string literal`() {
         testParse("\"asdasd\"", """
-[0, 20)@File
-  [0, 20)@Error Bad int: Number doesn't fit into integer token: 0@Int@"12381289371287389127"
+[0, 8)@File
+  [0, 8)@StringLiteral "asdasd"
 """)
     }
 

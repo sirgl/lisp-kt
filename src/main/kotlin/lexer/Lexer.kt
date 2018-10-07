@@ -75,6 +75,7 @@ private class LexerSession(
                 ?: parseLpar()
                 ?: parseRpar()
                 ?: parseBool()
+                ?: parseStringLiteral()
                 ?: parseIdentifier()
     }
 
@@ -101,6 +102,18 @@ private class LexerSession(
             return createTokenIfPresent(offset, offset + 1, type)
         }
         return null
+    }
+
+    private fun parseStringLiteral(): Token? {
+        val startOffset = offset
+        if (current() != '\"') return null
+        var endOffset = startOffset + 1
+        while (!endReached(endOffset) && at(endOffset) != '\"') {
+            endOffset++
+        }
+        if (endReached(endOffset)) return null
+        endOffset++
+        return createTokenIfPresent(startOffset, endOffset, TokenType.String)
     }
 
     private fun parseBool(): Token? {
