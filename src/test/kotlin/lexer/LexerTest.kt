@@ -41,6 +41,14 @@ class LexerTest {
     }
 
     @Test
+    fun `test string literal`() {
+        testLexer("\"foo\"", """
+            0@String@""foo""
+            5@End@""
+        """)
+    }
+
+    @Test
     fun `test error`() {
         testLexer("@#$@#", """
             0@Error@"@#${'$'}@#"
