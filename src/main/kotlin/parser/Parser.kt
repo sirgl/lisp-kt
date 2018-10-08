@@ -76,21 +76,22 @@ internal class ParseSession(private val tokens: List<Token>, private var index: 
     private fun parseList() : AstNode {
         val (lParNode, lParToken) = parseServiceNode(TokenType.Lpar, "lPar")
         val first = current()
-        val firstNode = when (first.type) {
-            TokenType.LetKw -> ServiceNode(first.textRange)
-            TokenType.DefineKw -> ServiceNode(first.textRange)
-            TokenType.IfKw -> ServiceNode(first.textRange)
-            else -> parseExpr()
-        }
         val innerNodes = mutableListOf<AstNode>()
-        // TODO
-        innerNodes.add(firstNode)
+        val firstType = first.type
+        val specialFormType = firstType.toSpecialFormType()
+        if (specialFormType != null) {
+            innerNodes.add(ServiceNode(first.textRange))
+            advance()
+        }
         while (current().type != TokenType.Rpar) {
             innerNodes.add(parseExpr())
         }
         val (rParNode, rParToken) = parseServiceNode(TokenType.Rpar, "rPar")
-        // TODO parse special forms
-        return ListNode(TextRange(lParToken, rParToken), SyntaxKind.List, lParNode, rParNode, innerNodes)
+        return if (specialFormType == null) {
+            ListNode(TextRange(lParToken, rParToken), SyntaxKind.List, lParNode, rParNode, innerNodes)
+        } else {
+            SpecialFormNode(TextRange(lParToken, rParToken), specialFormType.syntaxKind, lParNode, rParNode, innerNodes, specialFormType)
+        }
     }
 
     private fun parseServiceNode(tokenType: TokenType, expectedTokenTypeMessage: String): Pair<LeafNode, Token> {

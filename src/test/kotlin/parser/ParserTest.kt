@@ -2,12 +2,12 @@ package parser
 
 import lexer.Lexer
 import org.junit.jupiter.api.Test
-import lexer.LexerImpl
+import lexer.*
 import kotlin.test.assertEquals
 
 class ParserTest {
     val parser = Parser()
-    val lexer : Lexer = LexerImpl()
+    val lexer : Lexer = LexerIdentificationLayer(LexerImpl(), ::remapWithKeywords)
 
     @Test
     fun `atom parse identifier`() {
@@ -51,6 +51,23 @@ class ParserTest {
     }
 
     @Test
+    fun `nested list`() {
+        testParse("(12 (12 22) 33)", """
+[0, 15)@File
+  [0, 15)@List
+    [0, 1)@Service
+    [1, 3)@IntLiteral 12
+    [4, 11)@List
+      [4, 5)@Service
+      [5, 7)@IntLiteral 12
+      [8, 10)@IntLiteral 22
+      [10, 11)@Service
+    [12, 14)@IntLiteral 33
+    [14, 15)@Service
+""")
+    }
+
+    @Test
     fun `list parse numbers`() {
         testParse("(12 22 33)", """
 [0, 10)@File
@@ -60,6 +77,20 @@ class ParserTest {
     [4, 6)@IntLiteral 22
     [7, 9)@IntLiteral 33
     [9, 10)@Service
+""")
+    }
+
+    @Test
+    fun `if form`() {
+        testParse("(if #t 22 33)", """
+[0, 13)@File
+  [0, 13)@IfForm
+    [0, 1)@Service
+    [1, 3)@Service
+    [4, 6)@BoolLiteral true
+    [7, 9)@IntLiteral 22
+    [10, 12)@IntLiteral 33
+    [12, 13)@Service
 """)
     }
 

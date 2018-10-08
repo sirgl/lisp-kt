@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class LexerTest {
-    val lexer = LexerImpl()
+    val lexer = LexerIdentificationLayer(LexerImpl(), ::remapWithKeywords)
 
     @Test
     fun `test whitespaces`() {

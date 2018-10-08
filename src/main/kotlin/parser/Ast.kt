@@ -1,6 +1,7 @@
 package parser
 
 import lexer.Token
+import lexer.TokenType
 
 abstract class AstNode(
         val textRange: TextRange,
@@ -89,34 +90,14 @@ class BoolLiteralNode(textRange: TextRange, val value: Boolean) : LiteralNode(te
     override fun toString(): String = super.toString() + " $value"
 }
 
-abstract class SpecialFormNode(
+class SpecialFormNode(
         textRange: TextRange,
         syntaxKind: SyntaxKind,
         lPar: AstNode,
         rPar: AstNode,
-        innerNodes: List<AstNode>
+        innerNodes: List<AstNode>,
+        val specialFormType: SpecialFormType
 ) : ListLikeNode(textRange, syntaxKind, lPar, rPar, innerNodes)
-
-class IfFormNode(
-        textRange: TextRange,
-        val conditionNode: AstNode,
-        val thenNode: AstNode,
-        val elseNode: AstNode?,
-        lPar: AstNode,
-        rPar: AstNode
-) : SpecialFormNode(textRange, SyntaxKind.IfForm, lPar, rPar, buildChildren(conditionNode, thenNode, elseNode)) {
-    override val children: List<AstNode>  = buildChildren(conditionNode, thenNode, elseNode)
-
-
-}
-
-private fun buildChildren(conditionNode: AstNode, thenNode: AstNode, elseNode: AstNode?) : List<AstNode> {
-    return if (elseNode != null) {
-        listOf(conditionNode, thenNode, elseNode)
-    } else {
-        listOf(conditionNode, thenNode)
-    }
-}
 
 //class DefineFormNode(textRange: TextRange, val name: AstNode, val value: AstNode) : AstNode(textRange, SyntaxKind.DefineForm) {
 //    override val children: List<AstNode>
@@ -134,6 +115,22 @@ enum class SyntaxKind {
     Error,
     File,
     IfForm,
+    LetForm,
     DefineForm,
     Service
+}
+
+enum class SpecialFormType(val syntaxKind: SyntaxKind) {
+    Let(SyntaxKind.LetForm),
+    If(SyntaxKind.IfForm),
+    Define(SyntaxKind.DefineForm)
+}
+
+fun TokenType.toSpecialFormType() : SpecialFormType? {
+    return when (this) {
+        TokenType.LetKw -> SpecialFormType.Let
+        TokenType.DefineKw -> SpecialFormType.Define
+        TokenType.IfKw -> SpecialFormType.If
+        else -> null
+    }
 }
