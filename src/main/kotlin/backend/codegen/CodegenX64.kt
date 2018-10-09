@@ -1,4 +1,4 @@
-package codegen
+package backend.codegen
 
 class CodegenX64 {
     fun generateCode() {

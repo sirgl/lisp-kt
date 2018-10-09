@@ -1,6 +1,6 @@
 package lir
 
-import codegen.CallingConvention
+import backend.codegen.CallingConvention
 
 /**
  * @param callingConvention calling convention, that must be used when invoking this function.
