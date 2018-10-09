@@ -11,6 +11,10 @@ class LirFunction(
         val basicBlock: BasicBlock,
         val callingConvention: CallingConvention? = null,
         val functionId: FunctionId
-)
+) {
+    override fun toString(): String {
+        TODO("print llir")
+    }
+}
 
 inline class FunctionId(val id: Int)

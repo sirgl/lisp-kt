@@ -1,8 +1,18 @@
 package backend
 
-abstract class Artifact
+import util.io.Path
+
+/**
+ * It is files and other information that we can get from backend as a result of compilation
+ */
+interface Artifact
 
 // Not Java Path because of cross platform
-open class FileArtifact(val path: String) : Artifact()
+interface FileArtifact : Artifact {
+    /**
+     * path relative from output directory
+     */
+    val path: Path
+}
 
-class AssemblyFileArtifact(path: String, val assembler: Assembler) : FileArtifact(path)
+//class AssemblyFileArtifact(path: Path, val assembler: Assembler) : FileArtifact(path)
