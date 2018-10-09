@@ -2,7 +2,6 @@ import lexer.Lexer
 import lexer.LexerIdentificationLayer
 import lexer.LexerImpl
 import lexer.remapWithKeywords
-import java.io.File
 
 fun main(args: Array<String>) {
     if (args.size != 1) {
@@ -10,8 +9,8 @@ fun main(args: Array<String>) {
     }
     val path = args.first()
 
-    val text = File(path).readText()
-    val lexer =  LexerIdentificationLayer(LexerImpl(), ::remapWithKeywords)
+//    val text = File(path).readText()
+//    val lexer =  LexerIdentificationLayer(LexerImpl(), ::remapWithKeywords)
 //    lexer.tokenize()
 
 }
