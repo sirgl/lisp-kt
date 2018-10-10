@@ -21,6 +21,15 @@ interface FunctionX64Assembler {
     fun emitPop(memoryLocation: MemoryLocation)
 
     fun emitLabel(name: String): Label
+
+    fun emitCall(name: String)
+
+    fun emitJmp(label: Label)
+
+    /**
+     * To jump to some label that not yet exists or is external
+     */
+    fun emitJmp(labelName: String)
 }
 
 inline class Label(private val storage: LongStorage) {
@@ -31,4 +40,8 @@ inline class Label(private val storage: LongStorage) {
 
     val id: Int
         get() = storage.second
+
+    override fun toString(): String = "Label(offset=$offset, id=$id)"
 }
+
+class AssemblerException(message: String) : Exception(message)
