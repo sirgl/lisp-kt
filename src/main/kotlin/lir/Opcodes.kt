@@ -56,11 +56,24 @@ object Opcodes : Iterable<OpDescription> {
     val OP_MULTIPLY = MULTIPLY.opcode
     val DIV = i32BinOp("div")
     val OP_DIV = DIV.opcode
-    // TODO all last instructions
-
-//    val DEREF
-//    val OP_DEREF
-
+    val REM = i32BinOp("rem")
+    val OP_REM = REM.opcode
+    val INC = i32BinOp("inc")
+    val OP_INC = INC.opcode
+    val DEC = i32BinOp("dec")
+    val OP_DEC = DEC.opcode
+    val BITWISE_OR = i32BinOp("bitwise_or")
+    val OP_BITWISE_OR = BITWISE_OR.opcode
+    val BITWISE_AND = i32BinOp("bitwise_and")
+    val OP_BITWISE_AND = BITWISE_AND.opcode
+    val BITWISE_XOR = i32BinOp("bitwise_xor")
+    val OP_BITWISE_XOR = BITWISE_XOR.opcode
+    val BITWISE_COMPLEMENT = i32BinOp("bitwise_complement")
+    val OP_BITWISE_COMPLEMENT = BITWISE_COMPLEMENT.opcode
+    val BITCAST = unOp("bitcast", null)
+    val OP_BITCAST = BITCAST.opcode
+    val GET_ELEMENT_PTR = unOp("get_element_ptr", null)
+    val OP_GET_ELEMENT_PTR = GET_ELEMENT_PTR.opcode
 }
 
 fun main(args: Array<String>) {
