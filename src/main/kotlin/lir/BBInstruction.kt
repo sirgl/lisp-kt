@@ -5,6 +5,9 @@ import util.LongStorage
 
 inline class Opcode(val storage: Byte) {
     override fun toString(): String = Opcodes[storage].name
+
+    val description: OpDescription
+        get() = Opcodes[storage]
 }
 
 inline class Operand(val storage: Short)
@@ -22,6 +25,13 @@ inline class BBInstruction(val storage: LongStorage) {
     val secondOperand: Operand
         get() = Operand(storage.ef)
 
+    override fun toString(): String {
+        val description = opcode.description
+        return buildString {
+            append(opcode)
+            append(" TODO extract from description")
+        }
+    }
 }
 
 /**

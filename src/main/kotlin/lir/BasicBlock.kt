@@ -1,57 +1,45 @@
 package lir
 
-import util.collection.ShortList
+import lir.types.LirType
+import lir.types.TypeIndexList
+import lir.types.TypeStorage
 
-
-sealed class TailInstruction {
-    abstract fun pretty(blockParameterCount: Int) : String
+inline class BlockId(val index: Int) {
+    override fun toString(): String = index.toString()
 }
 
-class GotoInstruction(
-        val blockIndex: BlockIndex,
-        val blockArguments: Arguments
-) : TailInstruction() {
-    override fun pretty(blockParameterCount: Int): String = "goto block${blockIndex.index} ($blockArguments)"
-}
-
-class ConditionalJumpInstruction(
-        val conditionIndex: InstructionIndex,
-        val thenBlockIndex: BlockIndex,
-        val thenArguments: Arguments,
-        val elseBlockIndex: BlockIndex,
-        val elseArguments: Arguments
-) : TailInstruction() {
-    override fun pretty(blockParameterCount: Int): String {
-        return "jump_if cond(%${conditionIndex.getVariableIndex(blockParameterCount)}) " +
-                "block${thenBlockIndex.index} ($thenArguments) else block${elseBlockIndex.index} ($elseArguments)"
-    }
-}
-
-object UnreachableInstruction : TailInstruction() {
-    override fun pretty(blockParameterCount: Int): String = "unreachable"
-}
-
-class CallInstruction(
-        val funcitonId: FunctionId,
-        val arguments: Arguments
-) : TailInstruction() {
-    override fun pretty(blockParameterCount: Int): String = "call $funcitonId ($arguments)"
-}
-
-inline class BlockIndex(val index: Int)
-
-inline class Arguments(private val args: ShortList) {
-    operator fun get(index: Int): InstructionIndex = InstructionIndex(args[index])
-
-    val size: Int
-        get() = args.size
-
-    override fun toString(): String = args.toString()
-}
-
-// TODO block id inside?
+/**
+ * @param typeIndexList indices of types from [TypeStorage]. Starts from parameter types
+ */
 class BasicBlock(
         val instructions: Array<BBInstruction>,
+        val typeIndexList: TypeIndexList,
         val tailInstruction: TailInstruction,
-        val parametersCount: Int
-)
+        val parametersCount: Int,
+        val id: BlockId
+) {
+    override fun toString(): String {
+        return "block$id parameters: $parametersCount \n${instructions.joinToString("\n") { "\t" + it }}\n"
+    }
+
+    fun pretty(typeStorage: TypeStorage): String {
+        return buildString {
+            append("block$id ")
+            append(parametersText(typeStorage))
+            append(instructions.joinToString("\n") { "\t" + it })
+            append(tailInstruction.pretty(parametersCount))
+        }
+    }
+
+    fun parametersText(typeStorage: TypeStorage) : String = buildString {
+        for (i in 0 until parametersCount) {
+            val type = getVariableType(i, typeStorage)
+            append("%").append(i).append(": ").append(type)
+        }
+    }
+
+    private fun getVariableType(index: Int, typeStorage: TypeStorage): LirType {
+        val typeIndex = typeIndexList[index]
+        return typeStorage[typeIndex]
+    }
+}

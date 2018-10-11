@@ -136,3 +136,5 @@ class UnaryOpDescription(
             }
         }
 }
+
+// TODO Opcode description must fully describe operation (its layout, inline operands (variables and others))
