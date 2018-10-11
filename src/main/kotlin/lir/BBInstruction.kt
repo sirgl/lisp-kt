@@ -21,3 +21,5 @@ inline class BBInstruction(val storage: LongStorage) {
         get() = Operand(storage.ef)
 
 }
+
+inline class InstructionIndex(val index: Short)

@@ -1,5 +1,6 @@
 package backend.codegen
 
+import backend.ArtifactBuilder
 import backend.MemoryLocation
 import util.LongStorage
 import util.io.OutputStream

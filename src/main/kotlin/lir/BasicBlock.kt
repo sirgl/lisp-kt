@@ -1,38 +1,42 @@
 package lir
 
-import util.LongStorage
+import util.collection.ShortList
 
 
-/**
- * @param storage has next layout: | empty 2 byte | tag 2 byte | block/function index 4 byte
- */
-inline class JumpInstruction(private val storage: LongStorage) {
-    constructor(tag: Short, value: Int) : this(LongStorage(0, tag, value))
+sealed class TailInstruction
 
-    /**
-     * [blockOfFunctionIndex] index of basic block or function index, to which control will be transferred
-     */
-    val blockOfFunctionIndex: Int
-        get() = storage.second
+class GotoInstruction(
+        val blockIndex: BlockIndex,
+        val blockArguments: Arguments
+) : TailInstruction()
 
-    companion object {
-        fun makeReturn() = JumpInstruction(RETURN_TAG, 0)
-        fun makeJump(blockIndex: Int) = JumpInstruction(JUMP_TAG, blockIndex)
-        fun makeCall(functionId: FunctionId) = JumpInstruction(CALL_TAG, functionId.id)
-    }
-
-    val tag: Short
-        get() = storage.cd
-
-    val isReturn: Boolean
-        get() = tag == RETURN_TAG
-}
-
-class BasicBlock(
-        val instructions: Array<BBInstruction>,
-        val tailJumpInstruction: JumpInstruction
+class ConditionalJumpInstruction(
+        val thenBlockIndex: BlockIndex,
+        val thenArguments: Arguments,
+        val elseBlockIndex: BlockIndex,
+        val elseArguments: Arguments
 )
 
-private const val CALL_TAG = 1.toShort()
-private const val JUMP_TAG = 2.toShort()
-private const val RETURN_TAG = 0.toShort()
+object UnreachableInstruction : TailInstruction()
+
+class CallInstruction(
+        val funcitonId: FunctionId,
+        val arguments: Arguments
+) : TailInstruction()
+
+inline class BlockIndex(val index: Int)
+
+inline class Arguments(private val args: ShortList) {
+    operator fun get(index: Int): InstructionIndex = InstructionIndex(args[index])
+
+    val size: Int
+        get() = args.size
+
+}
+
+// TODO block id inside?
+class BasicBlock(
+        val instructions: Array<BBInstruction>,
+        val tailInstruction: TailInstruction,
+        val parametersCount: Int
+)

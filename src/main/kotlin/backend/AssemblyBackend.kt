@@ -14,6 +14,7 @@ class AssemblyBackend : Backend {
             val unitAssembler = TextAssembler()
             for (function in unit.functions) {
                 unitAssembler.writeFunction(function.name) {
+                    // TODO
                     it.emitMov(X64Registers.rdi, X64Registers.rax)
                     it.emitRet()
                 }
@@ -21,6 +22,10 @@ class AssemblyBackend : Backend {
             artifactBuilder.createFileArtifact(unit.sourceFile) { os -> unitAssembler.save(os) }
         }
         return emptyList()
+    }
+
+    fun writeFunction() {
+
     }
 
 }
