@@ -1,6 +1,6 @@
 package lir.types
 
-class PoiterType(val referredType: Type) : Type(PointerTypeTypeDescriptor(referredType.typeDescriptor))
+class PoiterType(val referredType: LirType) : LirType(PointerTypeTypeDescriptor(referredType.typeDescriptor))
 
 class PointerTypeTypeDescriptor(val referredTypeDescriptor: TypeDescriptor) : TypeDescriptor {
     override val presentableName: String = "*" + referredTypeDescriptor.presentableName

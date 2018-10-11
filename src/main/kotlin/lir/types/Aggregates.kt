@@ -1,6 +1,6 @@
 package lir.types
 
-abstract class AggregateType(typeDescriptor: TypeDescriptor) : Type(typeDescriptor)
+abstract class AggregateType(typeDescriptor: TypeDescriptor) : LirType(typeDescriptor)
 
 interface AggregateTypeDescriptor : TypeDescriptor
 
@@ -30,7 +30,7 @@ class StructType(
 
 class StructField(
         val name: String,
-        val type: Type
+        val type: LirType
 )
 
 interface StructLayout {
@@ -43,7 +43,7 @@ interface StructLayout {
 
 
 class ArrayType(
-        val elementType: Type
+        val elementType: LirType
 ) : AggregateType(ArrayTypeDescriptor(elementType.typeDescriptor))
 
 class ArrayTypeDescriptor(val elementTypeDescriptor: TypeDescriptor) : AggregateTypeDescriptor {

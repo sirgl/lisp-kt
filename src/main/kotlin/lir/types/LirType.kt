@@ -1,6 +1,6 @@
 package lir.types
 
-abstract class Type(val typeDescriptor: TypeDescriptor)
+abstract class LirType(val typeDescriptor: TypeDescriptor)
 
 interface TypeDescriptor {
     /**

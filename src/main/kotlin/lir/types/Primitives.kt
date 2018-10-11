@@ -1,6 +1,6 @@
 package lir.types
 
-abstract class PrimitiveType(typeDescriptor: PrimitiveTypeDescriptor) : Type(typeDescriptor)
+abstract class PrimitiveType(typeDescriptor: PrimitiveTypeDescriptor) : LirType(typeDescriptor)
 
 interface PrimitiveTypeDescriptor : TypeDescriptor
 
