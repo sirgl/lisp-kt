@@ -36,4 +36,8 @@ class ShortList(private var capacity: Int = 8) {
         }
         return false
     }
+
+    override fun toString(): String {
+        return internalStorage.joinToString(", ")
+    }
 }

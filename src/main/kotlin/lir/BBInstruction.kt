@@ -22,4 +22,13 @@ inline class BBInstruction(val storage: LongStorage) {
 
 }
 
-inline class InstructionIndex(val index: Short)
+/**
+ * @param index index from
+ */
+inline class InstructionIndex(val index: Short) {
+    fun getVariableIndex(parameterCount: Int): Int = index + parameterCount
+
+    override fun toString(): String {
+        return index.toString()
+    }
+}

@@ -17,4 +17,6 @@ class LirFunction(
     }
 }
 
-inline class FunctionId(val id: Int)
+inline class FunctionId(val id: Int) {
+    override fun toString(): String = id.toString()
+}
