@@ -3,7 +3,9 @@ package lir
 import util.LongStorage
 
 
-inline class Opcode(val storage: Byte)
+inline class Opcode(val storage: Byte) {
+    override fun toString(): String = Opcodes[storage].name
+}
 
 inline class Operand(val storage: Short)
 

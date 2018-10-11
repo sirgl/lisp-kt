@@ -1,10 +1,15 @@
 package lir
 
 
+
 object Opcodes : Iterable<OpDescription> {
-    val opcodes = arrayOfNulls<OpDescription>(256)
+    private val opcodes = arrayOfNulls<OpDescription>(256)
 
     private var nextOpcodeNumber = 0
+
+    operator fun get(opcode: Byte) : OpDescription {
+        return opcodes[opcode.toInt()]!!
+    }
 
     /**
      * Not optimized for frequent calls, result should be cached
@@ -34,7 +39,7 @@ object Opcodes : Iterable<OpDescription> {
             leftTypeRequirement: TypeDescriptorMatcher? = null,
             rightTypeRequirement: TypeDescriptorMatcher? = null
     ) : BinaryOpDescription {
-        return setDescr(BinaryOpDescription(name, nextOpcode(), leftTypeRequirement, rightTypeRequirement))
+        return setDescr(BinaryOpDescription(name, Opcode(nextOpcode()), leftTypeRequirement, rightTypeRequirement))
     }
 
     private fun i32BinOp(name: String) : BinaryOpDescription = binOp(name, i32Matcher, i32Matcher)
@@ -45,8 +50,6 @@ object Opcodes : Iterable<OpDescription> {
     ) : UnaryOpDescription {
         return setDescr(UnaryOpDescription(name, nextOpcode(), typeRequirementMatcher))
     }
-
-    fun getDescription(opcode: Opcode) : OpDescription = opcodes[opcode.storage.toInt()]!!
 
     val SUM = i32BinOp("sum")
     val OP_SUM = SUM.opcode
@@ -86,7 +89,7 @@ fun main(args: Array<String>) {
 abstract class OpDescription(
         val inlineOperandsCount: Int,
         val name: String,
-        val opcode: Byte
+        val opcode: Opcode
 ) {
     open val presentableDescription: String
         get() = "$name with $inlineOperandsCount operands and opcode $opcode"
@@ -95,7 +98,7 @@ abstract class OpDescription(
 
 class BinaryOpDescription(
         name: String,
-        opcode: Byte,
+        opcode: Opcode,
         val leftTypeRequirement: TypeDescriptorMatcher? = null,
         val rightTypeRequirement: TypeDescriptorMatcher? = null
 ) : OpDescription(2, name, opcode) {
@@ -123,7 +126,7 @@ class UnaryOpDescription(
         name: String,
         opcode: Byte,
         val typeRequirement: TypeDescriptorMatcher?
-) : OpDescription(1, name, opcode) {
+) : OpDescription(1, name, Opcode(opcode)) {
     override val presentableDescription: String
         get() = buildString {
             append(super.presentableDescription)
