@@ -11,7 +11,7 @@ class TypeStorage {
         return LirTypeIndex(index)
     }
 
-    private fun addType(type: LirType): Int {
+    fun addType(type: LirType): Int {
         val newIndex = types.size
         types.add(type)
         typeToIndex[type] = newIndex

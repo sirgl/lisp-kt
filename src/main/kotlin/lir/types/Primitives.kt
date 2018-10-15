@@ -21,3 +21,12 @@ object I8TypeDescriptor : PrimitiveTypeDescriptor {
     override val descriptor: String
         get() = "Li8"
 }
+
+object VoidType : LirType(VoidTypeDescriptor)
+
+object VoidTypeDescriptor : TypeDescriptor {
+    override val descriptor: String
+        get() = "v"
+    override val presentableName: String
+        get() = "void"
+}

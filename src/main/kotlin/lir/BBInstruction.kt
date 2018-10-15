@@ -1,6 +1,7 @@
 package lir
 
 import util.LongStorage
+import util.collection.LongList
 
 
 inline class Opcode(val storage: Byte) {
@@ -27,10 +28,11 @@ inline class BBInstruction(val storage: LongStorage) {
 
     override fun toString(): String {
         val description = opcode.description
-        return buildString {
-            append(opcode)
-            append(" TODO extract from description")
-        }
+        return opcode.toString()
+//        return buildString {
+//            append(opcode)
+//            append(" TODO extract from description")
+//        }
     }
 }
 
