@@ -1,7 +1,5 @@
 import lexer.Lexer
-import lexer.LexerIdentificationLayer
 import lexer.LexerImpl
-import lexer.remapWithKeywords
 
 fun main(args: Array<String>) {
     if (args.size != 1) {

@@ -43,12 +43,28 @@ static const Value nil = Value(0, ValueType::Nil); // NOLINT(cert-err58-cpp)
 
 
 
+static uint8_t PASSED_MASK = 0b00000001;
+
 struct Header {
     Header* next;
     // actually, only heap types are
     ValueType type;
+    uint8_t flags;
+
+    inline bool isPassed() {
+        return flags & PASSED_MASK;
+    }
+
+    inline void setPassed(bool passed = true) {
+        if (passed) {
+            flags |= PASSED_MASK;
+        } else {
+            flags &= PASSED_MASK;
+        }
+    }
 
     explicit Header(ValueType type) : type(type) {
+        flags = 0;
         next = nullptr;
     }
 };

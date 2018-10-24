@@ -6,10 +6,6 @@ class Token(
         val type: TokenType
 ) {
     override fun toString(): String = "$startOffset@${type.name}@\"$text\""
-
-    fun withType(newType: TokenType): Token {
-        return Token(startOffset, text, newType)
-    }
 }
 
 enum class TokenType {
@@ -23,9 +19,6 @@ enum class TokenType {
     Int,
 
     String,
-    LetKw,
-    DefineKw,
-    IfKw,
     Whitespace,
     Comment,
 }

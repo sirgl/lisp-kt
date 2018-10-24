@@ -9,9 +9,11 @@ fun AstNode.prettyPrint(): String {
 private fun AstNode.prettyPrint(sb: StringBuilder, level: Int = 0) {
     pad(sb, level)
     sb.append(toString())
-    for (child in children) {
-        sb.append("\n")
-        child.prettyPrint(sb, level + 1)
+    if (this is ListNode) {
+        for (child in children) {
+            sb.append("\n")
+            child.prettyPrint(sb, level + 1)
+        }
     }
 }
 

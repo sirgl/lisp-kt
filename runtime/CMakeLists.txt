@@ -7,4 +7,4 @@ add_executable(runtime main.cpp memory/Memory.cpp memory/Memory.h Gc.cpp Gc.h Er
         StackWalker.cpp StackWalker.h Runtime.cpp Runtime.h utils/Utils.cpp utils/Utils.h
         memory/Symbol.cpp memory/Symbol.h
         memory/List.h memory/List.cpp memory/Vector.cpp memory/Vector.h memory/Function.cpp memory/Function.h
-        memory/Allocation.cpp memory/Allocation.h Environment.cpp Environment.h stdlib/StdLib.cpp stdlib/StdLib.h)
+        memory/Allocation.cpp memory/Allocation.h Environment.cpp Environment.h stdlib/StdLib.cpp stdlib/StdLib.h gc/RootContributor.h gc/EnvironmentRootContributor.cpp gc/EnvironmentRootContributor.h)

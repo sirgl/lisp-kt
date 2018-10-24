@@ -2,6 +2,7 @@ package parser
 
 import lexer.Token
 import lexer.TokenType
+import java.lang.Exception
 
 /**
  * Grammar:
@@ -12,10 +13,26 @@ import lexer.TokenType
  * boolLiteral -> true | false
  */
 class Parser {
-    fun parse(tokens: List<Token>) : AstNode {
-        return ParseSession(tokens).parseFile()
+    fun parse(tokens: List<Token>) : ParseResult {
+        return try {
+            ParseResult.Ok(ParseSession(tokens).parseFile())
+        } catch (e: ParseException) {
+            ParseResult.Error(e.text, e.range)
+        }
     }
 }
+
+sealed class ParseResult {
+    class Ok(val node: AstNode) : ParseResult() {
+        override fun toString(): String = node.prettyPrint()
+    }
+    class Error(val text: String, val textRange: TextRange) : ParseResult() {
+        override fun toString(): String = "ParseError $textRange : $text"
+    }
+}
+
+private class ParseException(val text: String, val range: TextRange) :
+        Exception("ParseError [${range.startOffset}, ${range.endOffset}): $text")
 
 internal class ParseSession(private val tokens: List<Token>, private var index: Int = 0) {
     /**
@@ -46,62 +63,32 @@ internal class ParseSession(private val tokens: List<Token>, private var index: 
         while (true) {
             if (current().type == TokenType.End) {
                 val range = TextRange(children.first().textRange.startOffset, children.last().textRange.endOffset)
-                return FileNode(range, children)
+                return ListNode(children, range)
             }
             val node = parseExpr()
             children.add(node)
         }
     }
 
-    fun parseAtom() : AstNode {
+    private fun parseAtom() : AstNode {
         val token = advance()
-        val range = TextRange(token)
         return when (token.type) {
-            TokenType.Identifier -> IdentifierNode(range, token.text)
-            TokenType.TrueLiteral -> BoolLiteralNode(range, true)
-            TokenType.FalseLiteral -> BoolLiteralNode(range, false)
-            TokenType.Int -> {
-                val value = token.text.toIntOrNull()
-                if (value == null) {
-                    BadIntLiteral(range, token, "Number doesn't fit into integer")
-                } else {
-                    IntLiteralNode(range, value)
-                }
-            }
-            TokenType.String -> StringLiteralNode(range, token.text)
-            else -> UnexpectedTokenNode(range, token, "Atom node expected")
+            TokenType.Identifier -> LeafNode(token, SyntaxKind.Identifier)
+            TokenType.TrueLiteral, TokenType.FalseLiteral -> LeafNode(token, SyntaxKind.BoolLiteral)
+            TokenType.Int -> LeafNode(token, SyntaxKind.IntLiteral)
+            TokenType.String -> LeafNode(token, SyntaxKind.StringLiteral)
+            else -> throw ParseException("Atom node expected", token.textRange)
         }
     }
 
     private fun parseList() : AstNode {
-        val (lParNode, lParToken) = parseServiceNode(TokenType.Lpar, "lPar")
-        val first = current()
+        val first = advance()
         val innerNodes = mutableListOf<AstNode>()
-        val firstType = first.type
-        val specialFormType = firstType.toSpecialFormType()
-        if (specialFormType != null) {
-            innerNodes.add(ServiceNode(first.textRange))
-            advance()
-        }
         while (current().type != TokenType.Rpar) {
             innerNodes.add(parseExpr())
         }
-        val (rParNode, rParToken) = parseServiceNode(TokenType.Rpar, "rPar")
-        return if (specialFormType == null) {
-            ListNode(TextRange(lParToken, rParToken), SyntaxKind.List, lParNode, rParNode, innerNodes)
-        } else {
-            SpecialFormNode(TextRange(lParToken, rParToken), specialFormType.syntaxKind, lParNode, rParNode, innerNodes, specialFormType)
-        }
-    }
-
-    private fun parseServiceNode(tokenType: TokenType, expectedTokenTypeMessage: String): Pair<LeafNode, Token> {
-        val lPar = expect(tokenType)
-        return if (lPar == null) {
-            val errorNode = advance()
-            UnexpectedTokenNode(errorNode.textRange, errorNode, expectedTokenTypeMessage) to errorNode
-        } else {
-            ServiceNode(lPar.textRange) to lPar
-        }
+        val last = expect(TokenType.Rpar) ?: throw ParseException("')' expected", current().textRange)
+        return ListNode(innerNodes, TextRange(first, last))
     }
 
     private fun parseExpr() : AstNode {

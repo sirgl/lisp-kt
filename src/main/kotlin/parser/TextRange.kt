@@ -18,6 +18,8 @@ class TextRange(private val storage: LongStorage) {
         get() = storage.first
     val endOffset: Int
         get() = storage.second
+
+    override fun toString(): String = "[$startOffset, $endOffset)"
 }
 
 val Token.textRange: TextRange
