@@ -76,13 +76,13 @@ class BasicBlock(
 }
 
 fun main(args: Array<String>) {
-    val storage = TypeStorage()
-    storage.addType(I32Type)
-    storage.addType(I8Type)
-    val block = BasicBlock(arrayOf(
-            BBInstruction(Opcodes.OP_DEC, Operand(0)),
-            BBInstruction(Opcodes.OP_INC, Operand(1))
-    ), TypeIndexList(intListOf(0, 0, 0)), UnreachableInstruction, 1)
-    block.id = BlockId(0)
-    println(block.pretty(storage))
+//    val storage = TypeStorage()
+//    storage.addType(I32Type)
+//    storage.addType(I8Type)
+//    val block = BasicBlock(arrayOf(
+//            BBInstruction(Opcodes.OP_DEC, Operand(0)),
+//            BBInstruction(Opcodes.OP_INC, Operand(1))
+//    ), TypeIndexList(intListOf(0, 0, 0)), UnreachableInstruction, 1)
+//    block.id = BlockId(0)
+//    println(block.pretty(storage))
 }
