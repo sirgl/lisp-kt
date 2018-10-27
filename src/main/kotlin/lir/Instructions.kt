@@ -18,7 +18,7 @@ class InstructionAdd(val storage: Long) {
     }
 }
 
-fun constructInstructionAdd(opcode: Byte, firstOperand: Short, secondOperand: Short): BBInstruction {
+fun constructAdd(opcode: Byte, firstOperand: Short, secondOperand: Short): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 32) or firstOperand.toLong()
@@ -48,7 +48,7 @@ class InstructionSub(val storage: Long) {
     }
 }
 
-fun constructInstructionSub(opcode: Byte, firstOperand: Short, secondOperand: Short): BBInstruction {
+fun constructSub(opcode: Byte, firstOperand: Short, secondOperand: Short): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 32) or firstOperand.toLong()
@@ -78,7 +78,7 @@ class InstructionMul(val storage: Long) {
     }
 }
 
-fun constructInstructionMul(opcode: Byte, firstOperand: Short, secondOperand: Short): BBInstruction {
+fun constructMul(opcode: Byte, firstOperand: Short, secondOperand: Short): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 32) or firstOperand.toLong()
@@ -108,7 +108,7 @@ class InstructionDiv(val storage: Long) {
     }
 }
 
-fun constructInstructionDiv(opcode: Byte, firstOperand: Short, secondOperand: Short): BBInstruction {
+fun constructDiv(opcode: Byte, firstOperand: Short, secondOperand: Short): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 32) or firstOperand.toLong()
@@ -138,7 +138,7 @@ class InstructionRem(val storage: Long) {
     }
 }
 
-fun constructInstructionRem(opcode: Byte, firstOperand: Short, secondOperand: Short): BBInstruction {
+fun constructRem(opcode: Byte, firstOperand: Short, secondOperand: Short): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 32) or firstOperand.toLong()
@@ -163,7 +163,7 @@ class InstructionInv(val storage: Long) {
     }
 }
 
-fun constructInstructionInv(opcode: Byte, operand: Short): BBInstruction {
+fun constructInv(opcode: Byte, operand: Short): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 48) or operand.toLong()
@@ -187,7 +187,7 @@ class InstructionIconstInplaceI32(val storage: Long) {
     }
 }
 
-fun constructInstructionIconstInplaceI32(opcode: Byte, inlineValue: Int): BBInstruction {
+fun constructIconstInplaceI32(opcode: Byte, inlineValue: Int): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 32) or inlineValue.toLong()
@@ -206,7 +206,7 @@ class InstructionBitcast(val storage: Long) {
     }
 }
 
-fun constructInstructionBitcast(opcode: Byte): BBInstruction {
+fun constructBitcast(opcode: Byte): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = v1 shl 56
@@ -244,7 +244,7 @@ class InstructionCall(val storage: Long) {
     }
 }
 
-fun constructInstructionCall(opcode: Byte, argsHolded: Byte, functionIndex: Short, firstArg: Short, secondArg: Short): BBInstruction {
+fun constructCall(opcode: Byte, argsHolded: Byte, functionIndex: Short, firstArg: Short, secondArg: Short): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 8) or argsHolded.toLong()
@@ -286,7 +286,7 @@ class InstructionCallByPtr(val storage: Long) {
     }
 }
 
-fun constructInstructionCallByPtr(opcode: Byte, argsHolded: Byte, ptrOperand: Short, firstArg: Short, secondArg: Short): BBInstruction {
+fun constructCallByPtr(opcode: Byte, argsHolded: Byte, ptrOperand: Short, firstArg: Short, secondArg: Short): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 8) or argsHolded.toLong()
@@ -328,7 +328,7 @@ class InstructionArgs(val storage: Long) {
     }
 }
 
-fun constructInstructionArgs(opcode: Byte, argsHolded: Byte, firstArg: Short, secondArg: Short, thirdArg: Short): BBInstruction {
+fun constructArgs(opcode: Byte, argsHolded: Byte, firstArg: Short, secondArg: Short, thirdArg: Short): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 8) or argsHolded.toLong()
@@ -355,7 +355,7 @@ class InstructionFunctionPtr(val storage: Long) {
     }
 }
 
-fun constructInstructionFunctionPtr(opcode: Byte, functionIndex: Short): BBInstruction {
+fun constructFunctionPtr(opcode: Byte, functionIndex: Short): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 16) or functionIndex.toLong()
@@ -389,7 +389,7 @@ class InstructionLoad(val storage: Long) {
     }
 }
 
-fun constructInstructionLoad(opcode: Byte, startPtr: Short, value: Short, typeIndex: Short): BBInstruction {
+fun constructLoad(opcode: Byte, startPtr: Short, value: Short, typeIndex: Short): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 16) or startPtr.toLong()
@@ -425,7 +425,7 @@ class InstructionStore(val storage: Long) {
     }
 }
 
-fun constructInstructionStore(opcode: Byte, startPtr: Short, value: Short, typeIndex: Short): BBInstruction {
+fun constructStore(opcode: Byte, startPtr: Short, value: Short, typeIndex: Short): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 16) or startPtr.toLong()
@@ -446,7 +446,7 @@ class InstructionAlloca(val storage: Long) {
     }
 }
 
-fun constructInstructionAlloca(opcode: Byte): BBInstruction {
+fun constructAlloca(opcode: Byte): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = v1 shl 56
@@ -469,7 +469,7 @@ class InstructionGetElementPtr(val storage: Long) {
     }
 }
 
-fun constructInstructionGetElementPtr(opcode: Byte, elementVar: Short): BBInstruction {
+fun constructGetElementPtr(opcode: Byte, elementVar: Short): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 16) or elementVar.toLong()
@@ -493,7 +493,7 @@ class InstructionIconstI64(val storage: Long) {
     }
 }
 
-fun constructInstructionIconstI64(opcode: Byte, globalVarIndex: Short): BBInstruction {
+fun constructIconstI64(opcode: Byte, globalVarIndex: Short): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 16) or globalVarIndex.toLong()
@@ -517,7 +517,7 @@ class InstructionGetElementPtrVar(val storage: Long) {
     }
 }
 
-fun constructInstructionGetElementPtrVar(opcode: Byte, globalVarIndex: Short): BBInstruction {
+fun constructGetElementPtrVar(opcode: Byte, globalVarIndex: Short): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = (v1 shr 16) or globalVarIndex.toLong()
@@ -536,7 +536,7 @@ class InstructionNoop(val storage: Long) {
     }
 }
 
-fun constructInstructionNoop(opcode: Byte): BBInstruction {
+fun constructNoop(opcode: Byte): BBInstruction {
   val v0: Long = 0
   val v1: Long = (v0 shr 0) or opcode.toLong()
   val v2: Long = v1 shl 56

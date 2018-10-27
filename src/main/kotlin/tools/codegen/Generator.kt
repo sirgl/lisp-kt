@@ -10,7 +10,7 @@ class GeneratedData(
 
 // TODO it would be better to generate constructors by layout
 class AccessorsAndConstructorsGenerator(private val descr: InstructionDescription) {
-    private val titledName = "Instruction${descr.name.joinToString("") { it.toTitle() }}"
+    private val className = "Instruction${descr.name.joinToString("") { it.toTitle() }}"
 
     fun generateInstructionData(): GeneratedData {
         val classWithAccessors = generateClass()
@@ -19,12 +19,12 @@ class AccessorsAndConstructorsGenerator(private val descr: InstructionDescriptio
     }
 
     private fun generateExtension() : KtFunTempl {
-        val instructionClass = KtCallExprTempl(null, titledName, listOf(KtTextExprTempl("this.storage")))
+        val instructionClass = KtCallExprTempl(null, className, listOf(KtTextExprTempl("this.storage")))
         val action = KtCallExprTempl(instructionClass, "block", listOf())
         return KtFunTempl(
                 "BBInstruction.as${descr.titledName}",
                 "T",
-                listOf(KtParamTempl("block", "$titledName.()->T")),
+                listOf(KtParamTempl("block", "$className.()->T")),
                 listOf(KtReturnStmt(action)),
                 listOf(KtFunModifier.Inline),
                 listOf("T")
@@ -65,7 +65,7 @@ class AccessorsAndConstructorsGenerator(private val descr: InstructionDescriptio
         val params = descr.instructionLayout.values
                 .filter { it.generationNeeded }
                 .map { KtParamTempl(it.propertyName, it.typeName) }
-        return KtFunTempl("construct$titledName", "BBInstruction", params, statements)
+        return KtFunTempl("construct${descr.titledName}", "BBInstruction", params, statements)
     }
 
     private fun generateClass(): KtClassTempl {
@@ -84,7 +84,7 @@ class AccessorsAndConstructorsGenerator(private val descr: InstructionDescriptio
             }
             offset += value.size
         }
-        return KtClassTempl(titledName, listOf(KtParamTempl("storage", "Long", ParamKind.Val)), members)
+        return KtClassTempl(className, listOf(KtParamTempl("storage", "Long", ParamKind.Val)), members)
     }
 
 
