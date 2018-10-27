@@ -1,5 +1,7 @@
 package tools.codegen
 
+import java.io.File
+
 class GeneratedData(
         val classWithAccessors: KtClassTempl,
         val constructor: KtFunTempl,
@@ -8,7 +10,7 @@ class GeneratedData(
 
 // TODO it would be better to generate constructors by layout
 class AccessorsAndConstructorsGenerator(private val descr: InstructionDescription) {
-    private val titledName = "Instruction${descr.lowercasedName.toTitle()}"
+    private val titledName = "Instruction${descr.name.joinToString("") { it.toTitle() }}"
 
     fun generateInstructionData(): GeneratedData {
         val classWithAccessors = generateClass()
@@ -20,7 +22,7 @@ class AccessorsAndConstructorsGenerator(private val descr: InstructionDescriptio
         val instructionClass = KtCallExprTempl(null, titledName, listOf(KtTextExprTempl("this.storage")))
         val action = KtCallExprTempl(instructionClass, "block", listOf())
         return KtFunTempl(
-                "BBInstruction.as${descr.lowercasedName.toTitle()}",
+                "BBInstruction.as${descr.titledName}",
                 "T",
                 listOf(KtParamTempl("block", "$titledName.()->T")),
                 listOf(KtReturnStmt(action)),
@@ -34,6 +36,7 @@ class AccessorsAndConstructorsGenerator(private val descr: InstructionDescriptio
         var prevIndex = 0
         statements.add(KtValStmt("v0", "Long", KtTextExprTempl("0")))
         var offsetFromPreviousSet = 0
+        var emptySizeInTail = 0
         for (value in descr.instructionLayout.values) {
             if (value.generationNeeded) {
                 val paramCast = KtCallExprTempl(KtTextExprTempl(value.propertyName), "toLong", listOf())
@@ -44,8 +47,18 @@ class AccessorsAndConstructorsGenerator(private val descr: InstructionDescriptio
                 statements.add(KtValStmt("v${prevIndex + 1}", "Long", init))
                 prevIndex++
                 offsetFromPreviousSet = 0
+                emptySizeInTail = 0
+            } else {
+                emptySizeInTail += value.size
             }
             offsetFromPreviousSet += value.size
+        }
+        // If empty in the end, shifting
+        if (offsetFromPreviousSet != 0) {
+            val offset = KtTextExprTempl((emptySizeInTail * 8).toString())
+            val prev = KtInfixCallExprTempl(KtTextExprTempl("v$prevIndex"), offset, "shl")
+            statements.add(KtValStmt("v${prevIndex + 1}", "Long", prev))
+            prevIndex++
         }
         val instruction = KtCallExprTempl(null, "BBInstruction", listOf(KtTextExprTempl("v$prevIndex")))
         statements.add(KtReturnStmt(instruction))
@@ -60,7 +73,6 @@ class AccessorsAndConstructorsGenerator(private val descr: InstructionDescriptio
 
         var offset = 0
 
-        // fun f(a, b, c) { val v0: Long = 0; val v1 = v0 shl sizeofFirst }
         for (value in descr.instructionLayout.values) {
             if (value.generationNeeded) {
 
@@ -128,10 +140,11 @@ fun main(args: Array<String>) {
         topLevelElements.add(generatedData.extension)
     }
     val file = KtFileTempl(topLevelElements, "lir")
-    println(file)
+    // TODO avoid using java api
+    File("src/main/kotlin/lir/Instructions.kt").writeText(file.toString())
 
 }
 
-private fun String.toTitle(): String {
+internal fun String.toTitle(): String {
     return this[0].toUpperCase().toString() + this.substring(1)
 }

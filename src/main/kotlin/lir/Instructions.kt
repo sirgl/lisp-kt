@@ -2,169 +2,547 @@
 package lir
 
 class InstructionAdd(val storage: Long) {
-    val opcode: Byte
-        get() {
-            return (storage shr 56).toByte()
-        }
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
 
-    val firstOperand: Short
-        get() {
-            return (storage shr 16).toShort()
-        }
+  val firstOperand: Short
+    get() {
+      return (storage shr 16).toShort()
+    }
 
-    val secondOperand: Short
-        get() {
-            return (storage shr 0).toShort()
-        }
+  val secondOperand: Short
+    get() {
+      return (storage shr 0).toShort()
+    }
 }
 
 fun constructInstructionAdd(opcode: Byte, firstOperand: Short, secondOperand: Short): BBInstruction {
-    val v0: Long = 0
-    val v1: Long = (v0 shr 0) or opcode.toLong()
-    val v2: Long = (v1 shr 32) or firstOperand.toLong()
-    val v3: Long = (v2 shr 16) or secondOperand.toLong()
-    return BBInstruction(v3)
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 32) or firstOperand.toLong()
+  val v3: Long = (v2 shr 16) or secondOperand.toLong()
+  val v4: Long = v3 shl 0
+  return BBInstruction(v4)
 }
 
 inline fun <T> BBInstruction.asAdd(block: InstructionAdd.()->T): T {
-    return InstructionAdd(this.storage).block()
+  return InstructionAdd(this.storage).block()
 }
 
 class InstructionSub(val storage: Long) {
-    val opcode: Byte
-        get() {
-            return (storage shr 56).toByte()
-        }
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
 
-    val firstOperand: Short
-        get() {
-            return (storage shr 16).toShort()
-        }
+  val firstOperand: Short
+    get() {
+      return (storage shr 16).toShort()
+    }
 
-    val secondOperand: Short
-        get() {
-            return (storage shr 0).toShort()
-        }
+  val secondOperand: Short
+    get() {
+      return (storage shr 0).toShort()
+    }
 }
 
 fun constructInstructionSub(opcode: Byte, firstOperand: Short, secondOperand: Short): BBInstruction {
-    val v0: Long = 0
-    val v1: Long = (v0 shr 0) or opcode.toLong()
-    val v2: Long = (v1 shr 32) or firstOperand.toLong()
-    val v3: Long = (v2 shr 16) or secondOperand.toLong()
-    return BBInstruction(v3)
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 32) or firstOperand.toLong()
+  val v3: Long = (v2 shr 16) or secondOperand.toLong()
+  val v4: Long = v3 shl 0
+  return BBInstruction(v4)
 }
 
 inline fun <T> BBInstruction.asSub(block: InstructionSub.()->T): T {
-    return InstructionSub(this.storage).block()
+  return InstructionSub(this.storage).block()
 }
 
 class InstructionMul(val storage: Long) {
-    val opcode: Byte
-        get() {
-            return (storage shr 56).toByte()
-        }
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
 
-    val firstOperand: Short
-        get() {
-            return (storage shr 16).toShort()
-        }
+  val firstOperand: Short
+    get() {
+      return (storage shr 16).toShort()
+    }
 
-    val secondOperand: Short
-        get() {
-            return (storage shr 0).toShort()
-        }
+  val secondOperand: Short
+    get() {
+      return (storage shr 0).toShort()
+    }
 }
 
 fun constructInstructionMul(opcode: Byte, firstOperand: Short, secondOperand: Short): BBInstruction {
-    val v0: Long = 0
-    val v1: Long = (v0 shr 0) or opcode.toLong()
-    val v2: Long = (v1 shr 32) or firstOperand.toLong()
-    val v3: Long = (v2 shr 16) or secondOperand.toLong()
-    return BBInstruction(v3)
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 32) or firstOperand.toLong()
+  val v3: Long = (v2 shr 16) or secondOperand.toLong()
+  val v4: Long = v3 shl 0
+  return BBInstruction(v4)
 }
 
 inline fun <T> BBInstruction.asMul(block: InstructionMul.()->T): T {
-    return InstructionMul(this.storage).block()
+  return InstructionMul(this.storage).block()
 }
 
 class InstructionDiv(val storage: Long) {
-    val opcode: Byte
-        get() {
-            return (storage shr 56).toByte()
-        }
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
 
-    val firstOperand: Short
-        get() {
-            return (storage shr 16).toShort()
-        }
+  val firstOperand: Short
+    get() {
+      return (storage shr 16).toShort()
+    }
 
-    val secondOperand: Short
-        get() {
-            return (storage shr 0).toShort()
-        }
+  val secondOperand: Short
+    get() {
+      return (storage shr 0).toShort()
+    }
 }
 
 fun constructInstructionDiv(opcode: Byte, firstOperand: Short, secondOperand: Short): BBInstruction {
-    val v0: Long = 0
-    val v1: Long = (v0 shr 0) or opcode.toLong()
-    val v2: Long = (v1 shr 32) or firstOperand.toLong()
-    val v3: Long = (v2 shr 16) or secondOperand.toLong()
-    return BBInstruction(v3)
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 32) or firstOperand.toLong()
+  val v3: Long = (v2 shr 16) or secondOperand.toLong()
+  val v4: Long = v3 shl 0
+  return BBInstruction(v4)
 }
 
 inline fun <T> BBInstruction.asDiv(block: InstructionDiv.()->T): T {
-    return InstructionDiv(this.storage).block()
+  return InstructionDiv(this.storage).block()
 }
 
 class InstructionRem(val storage: Long) {
-    val opcode: Byte
-        get() {
-            return (storage shr 56).toByte()
-        }
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
 
-    val firstOperand: Short
-        get() {
-            return (storage shr 16).toShort()
-        }
+  val firstOperand: Short
+    get() {
+      return (storage shr 16).toShort()
+    }
 
-    val secondOperand: Short
-        get() {
-            return (storage shr 0).toShort()
-        }
+  val secondOperand: Short
+    get() {
+      return (storage shr 0).toShort()
+    }
 }
 
 fun constructInstructionRem(opcode: Byte, firstOperand: Short, secondOperand: Short): BBInstruction {
-    val v0: Long = 0
-    val v1: Long = (v0 shr 0) or opcode.toLong()
-    val v2: Long = (v1 shr 32) or firstOperand.toLong()
-    val v3: Long = (v2 shr 16) or secondOperand.toLong()
-    return BBInstruction(v3)
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 32) or firstOperand.toLong()
+  val v3: Long = (v2 shr 16) or secondOperand.toLong()
+  val v4: Long = v3 shl 0
+  return BBInstruction(v4)
 }
 
 inline fun <T> BBInstruction.asRem(block: InstructionRem.()->T): T {
-    return InstructionRem(this.storage).block()
+  return InstructionRem(this.storage).block()
 }
 
 class InstructionInv(val storage: Long) {
-    val opcode: Byte
-        get() {
-            return (storage shr 56).toByte()
-        }
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
 
-    val operand: Short
-        get() {
-            return (storage shr 0).toShort()
-        }
+  val operand: Short
+    get() {
+      return (storage shr 0).toShort()
+    }
 }
 
 fun constructInstructionInv(opcode: Byte, operand: Short): BBInstruction {
-    val v0: Long = 0
-    val v1: Long = (v0 shr 0) or opcode.toLong()
-    val v2: Long = (v1 shr 48) or operand.toLong()
-    return BBInstruction(v2)
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 48) or operand.toLong()
+  val v3: Long = v2 shl 0
+  return BBInstruction(v3)
 }
 
 inline fun <T> BBInstruction.asInv(block: InstructionInv.()->T): T {
-    return InstructionInv(this.storage).block()
+  return InstructionInv(this.storage).block()
+}
+
+class InstructionIconstInplaceI32(val storage: Long) {
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
+
+  val inlineValue: Int
+    get() {
+      return (storage shr 0).toInt()
+    }
+}
+
+fun constructInstructionIconstInplaceI32(opcode: Byte, inlineValue: Int): BBInstruction {
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 32) or inlineValue.toLong()
+  val v3: Long = v2 shl 0
+  return BBInstruction(v3)
+}
+
+inline fun <T> BBInstruction.asIconstInplaceI32(block: InstructionIconstInplaceI32.()->T): T {
+  return InstructionIconstInplaceI32(this.storage).block()
+}
+
+class InstructionBitcast(val storage: Long) {
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
+}
+
+fun constructInstructionBitcast(opcode: Byte): BBInstruction {
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = v1 shl 56
+  return BBInstruction(v2)
+}
+
+inline fun <T> BBInstruction.asBitcast(block: InstructionBitcast.()->T): T {
+  return InstructionBitcast(this.storage).block()
+}
+
+class InstructionCall(val storage: Long) {
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
+
+  val argsHolded: Byte
+    get() {
+      return (storage shr 48).toByte()
+    }
+
+  val functionIndex: Short
+    get() {
+      return (storage shr 32).toShort()
+    }
+
+  val firstArg: Short
+    get() {
+      return (storage shr 16).toShort()
+    }
+
+  val secondArg: Short
+    get() {
+      return (storage shr 0).toShort()
+    }
+}
+
+fun constructInstructionCall(opcode: Byte, argsHolded: Byte, functionIndex: Short, firstArg: Short, secondArg: Short): BBInstruction {
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 8) or argsHolded.toLong()
+  val v3: Long = (v2 shr 8) or functionIndex.toLong()
+  val v4: Long = (v3 shr 16) or firstArg.toLong()
+  val v5: Long = (v4 shr 16) or secondArg.toLong()
+  val v6: Long = v5 shl 0
+  return BBInstruction(v6)
+}
+
+inline fun <T> BBInstruction.asCall(block: InstructionCall.()->T): T {
+  return InstructionCall(this.storage).block()
+}
+
+class InstructionCallByPtr(val storage: Long) {
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
+
+  val argsHolded: Byte
+    get() {
+      return (storage shr 48).toByte()
+    }
+
+  val ptrOperand: Short
+    get() {
+      return (storage shr 32).toShort()
+    }
+
+  val firstArg: Short
+    get() {
+      return (storage shr 16).toShort()
+    }
+
+  val secondArg: Short
+    get() {
+      return (storage shr 0).toShort()
+    }
+}
+
+fun constructInstructionCallByPtr(opcode: Byte, argsHolded: Byte, ptrOperand: Short, firstArg: Short, secondArg: Short): BBInstruction {
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 8) or argsHolded.toLong()
+  val v3: Long = (v2 shr 8) or ptrOperand.toLong()
+  val v4: Long = (v3 shr 16) or firstArg.toLong()
+  val v5: Long = (v4 shr 16) or secondArg.toLong()
+  val v6: Long = v5 shl 0
+  return BBInstruction(v6)
+}
+
+inline fun <T> BBInstruction.asCallByPtr(block: InstructionCallByPtr.()->T): T {
+  return InstructionCallByPtr(this.storage).block()
+}
+
+class InstructionArgs(val storage: Long) {
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
+
+  val argsHolded: Byte
+    get() {
+      return (storage shr 48).toByte()
+    }
+
+  val firstArg: Short
+    get() {
+      return (storage shr 32).toShort()
+    }
+
+  val secondArg: Short
+    get() {
+      return (storage shr 16).toShort()
+    }
+
+  val thirdArg: Short
+    get() {
+      return (storage shr 0).toShort()
+    }
+}
+
+fun constructInstructionArgs(opcode: Byte, argsHolded: Byte, firstArg: Short, secondArg: Short, thirdArg: Short): BBInstruction {
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 8) or argsHolded.toLong()
+  val v3: Long = (v2 shr 8) or firstArg.toLong()
+  val v4: Long = (v3 shr 16) or secondArg.toLong()
+  val v5: Long = (v4 shr 16) or thirdArg.toLong()
+  val v6: Long = v5 shl 0
+  return BBInstruction(v6)
+}
+
+inline fun <T> BBInstruction.asArgs(block: InstructionArgs.()->T): T {
+  return InstructionArgs(this.storage).block()
+}
+
+class InstructionFunctionPtr(val storage: Long) {
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
+
+  val functionIndex: Short
+    get() {
+      return (storage shr 32).toShort()
+    }
+}
+
+fun constructInstructionFunctionPtr(opcode: Byte, functionIndex: Short): BBInstruction {
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 16) or functionIndex.toLong()
+  val v3: Long = v2 shl 32
+  return BBInstruction(v3)
+}
+
+inline fun <T> BBInstruction.asFunctionPtr(block: InstructionFunctionPtr.()->T): T {
+  return InstructionFunctionPtr(this.storage).block()
+}
+
+class InstructionLoad(val storage: Long) {
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
+
+  val startPtr: Short
+    get() {
+      return (storage shr 32).toShort()
+    }
+
+  val value: Short
+    get() {
+      return (storage shr 16).toShort()
+    }
+
+  val typeIndex: Short
+    get() {
+      return (storage shr 0).toShort()
+    }
+}
+
+fun constructInstructionLoad(opcode: Byte, startPtr: Short, value: Short, typeIndex: Short): BBInstruction {
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 16) or startPtr.toLong()
+  val v3: Long = (v2 shr 16) or value.toLong()
+  val v4: Long = (v3 shr 16) or typeIndex.toLong()
+  val v5: Long = v4 shl 0
+  return BBInstruction(v5)
+}
+
+inline fun <T> BBInstruction.asLoad(block: InstructionLoad.()->T): T {
+  return InstructionLoad(this.storage).block()
+}
+
+class InstructionStore(val storage: Long) {
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
+
+  val startPtr: Short
+    get() {
+      return (storage shr 32).toShort()
+    }
+
+  val value: Short
+    get() {
+      return (storage shr 16).toShort()
+    }
+
+  val typeIndex: Short
+    get() {
+      return (storage shr 0).toShort()
+    }
+}
+
+fun constructInstructionStore(opcode: Byte, startPtr: Short, value: Short, typeIndex: Short): BBInstruction {
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 16) or startPtr.toLong()
+  val v3: Long = (v2 shr 16) or value.toLong()
+  val v4: Long = (v3 shr 16) or typeIndex.toLong()
+  val v5: Long = v4 shl 0
+  return BBInstruction(v5)
+}
+
+inline fun <T> BBInstruction.asStore(block: InstructionStore.()->T): T {
+  return InstructionStore(this.storage).block()
+}
+
+class InstructionAlloca(val storage: Long) {
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
+}
+
+fun constructInstructionAlloca(opcode: Byte): BBInstruction {
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = v1 shl 56
+  return BBInstruction(v2)
+}
+
+inline fun <T> BBInstruction.asAlloca(block: InstructionAlloca.()->T): T {
+  return InstructionAlloca(this.storage).block()
+}
+
+class InstructionGetElementPtr(val storage: Long) {
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
+
+  val elementVar: Short
+    get() {
+      return (storage shr 32).toShort()
+    }
+}
+
+fun constructInstructionGetElementPtr(opcode: Byte, elementVar: Short): BBInstruction {
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 16) or elementVar.toLong()
+  val v3: Long = v2 shl 32
+  return BBInstruction(v3)
+}
+
+inline fun <T> BBInstruction.asGetElementPtr(block: InstructionGetElementPtr.()->T): T {
+  return InstructionGetElementPtr(this.storage).block()
+}
+
+class InstructionIconstI64(val storage: Long) {
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
+
+  val globalVarIndex: Short
+    get() {
+      return (storage shr 32).toShort()
+    }
+}
+
+fun constructInstructionIconstI64(opcode: Byte, globalVarIndex: Short): BBInstruction {
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 16) or globalVarIndex.toLong()
+  val v3: Long = v2 shl 32
+  return BBInstruction(v3)
+}
+
+inline fun <T> BBInstruction.asIconstI64(block: InstructionIconstI64.()->T): T {
+  return InstructionIconstI64(this.storage).block()
+}
+
+class InstructionGetElementPtrVar(val storage: Long) {
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
+
+  val globalVarIndex: Short
+    get() {
+      return (storage shr 32).toShort()
+    }
+}
+
+fun constructInstructionGetElementPtrVar(opcode: Byte, globalVarIndex: Short): BBInstruction {
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = (v1 shr 16) or globalVarIndex.toLong()
+  val v3: Long = v2 shl 32
+  return BBInstruction(v3)
+}
+
+inline fun <T> BBInstruction.asGetElementPtrVar(block: InstructionGetElementPtrVar.()->T): T {
+  return InstructionGetElementPtrVar(this.storage).block()
+}
+
+class InstructionNoop(val storage: Long) {
+  val opcode: Byte
+    get() {
+      return (storage shr 56).toByte()
+    }
+}
+
+fun constructInstructionNoop(opcode: Byte): BBInstruction {
+  val v0: Long = 0
+  val v1: Long = (v0 shr 0) or opcode.toLong()
+  val v2: Long = v1 shl 56
+  return BBInstruction(v2)
+}
+
+inline fun <T> BBInstruction.asNoop(block: InstructionNoop.()->T): T {
+  return InstructionNoop(this.storage).block()
 }
