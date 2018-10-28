@@ -153,7 +153,7 @@ class AccessorsAndConstructorsGenerator(private val descr: InstructionDescriptio
         val properties = descr.instructionLayout.values
                 .drop(1)
                 .filter { it.generationNeeded }
-                .joinToString { "${it.propertyName}=\$${it.propertyName}" }
+                .joinToString { "${it.propertyName}=${toStringPropertyRenderer(it)}" }
         val value = KtTextExprTempl("\"${descr.snakeName} $properties\"")
         return KtFunTempl(
                 "toString",
@@ -162,6 +162,11 @@ class AccessorsAndConstructorsGenerator(private val descr: InstructionDescriptio
                 listOf(KtReturnStmt(value)),
                 listOf(KtModifier.Override)
         )
+    }
+
+    private fun toStringPropertyRenderer(it: InstructionInlineValue): String = when (it) {
+        is OperandValue -> "%\$" + it.propertyName
+        else -> "\$" + it.propertyName
     }
 
 

@@ -44,7 +44,7 @@ inline class InstructionAdd(val storage: Long) {
     }
 
   override fun toString(): String {
-    return "add firstOperand=$firstOperand, secondOperand=$secondOperand"
+    return "add firstOperand=%$firstOperand, secondOperand=%$secondOperand"
   }
 
 }
@@ -81,7 +81,7 @@ inline class InstructionSub(val storage: Long) {
     }
 
   override fun toString(): String {
-    return "sub firstOperand=$firstOperand, secondOperand=$secondOperand"
+    return "sub firstOperand=%$firstOperand, secondOperand=%$secondOperand"
   }
 
 }
@@ -118,7 +118,7 @@ inline class InstructionMul(val storage: Long) {
     }
 
   override fun toString(): String {
-    return "mul firstOperand=$firstOperand, secondOperand=$secondOperand"
+    return "mul firstOperand=%$firstOperand, secondOperand=%$secondOperand"
   }
 
 }
@@ -155,7 +155,7 @@ inline class InstructionDiv(val storage: Long) {
     }
 
   override fun toString(): String {
-    return "div firstOperand=$firstOperand, secondOperand=$secondOperand"
+    return "div firstOperand=%$firstOperand, secondOperand=%$secondOperand"
   }
 
 }
@@ -192,7 +192,7 @@ inline class InstructionRem(val storage: Long) {
     }
 
   override fun toString(): String {
-    return "rem firstOperand=$firstOperand, secondOperand=$secondOperand"
+    return "rem firstOperand=%$firstOperand, secondOperand=%$secondOperand"
   }
 
 }
@@ -224,7 +224,7 @@ inline class InstructionInv(val storage: Long) {
     }
 
   override fun toString(): String {
-    return "inv operand=$operand"
+    return "inv operand=%$operand"
   }
 
 }
@@ -327,7 +327,7 @@ inline class InstructionCall(val storage: Long) {
     }
 
   override fun toString(): String {
-    return "call argsHolded=$argsHolded, functionIndex=$functionIndex, firstArg=$firstArg, secondArg=$secondArg"
+    return "call argsHolded=$argsHolded, functionIndex=$functionIndex, firstArg=%$firstArg, secondArg=%$secondArg"
   }
 
 }
@@ -376,7 +376,7 @@ inline class InstructionCallByPtr(val storage: Long) {
     }
 
   override fun toString(): String {
-    return "call_by_ptr argsHolded=$argsHolded, ptrOperand=$ptrOperand, firstArg=$firstArg, secondArg=$secondArg"
+    return "call_by_ptr argsHolded=$argsHolded, ptrOperand=%$ptrOperand, firstArg=%$firstArg, secondArg=%$secondArg"
   }
 
 }
@@ -425,7 +425,7 @@ inline class InstructionArgs(val storage: Long) {
     }
 
   override fun toString(): String {
-    return "args argsHolded=$argsHolded, firstArg=$firstArg, secondArg=$secondArg, thirdArg=$thirdArg"
+    return "args argsHolded=$argsHolded, firstArg=%$firstArg, secondArg=%$secondArg, thirdArg=%$thirdArg"
   }
 
 }
@@ -491,7 +491,7 @@ inline class InstructionLoad(val storage: Long) {
     }
 
   override fun toString(): String {
-    return "load startPtr=$startPtr"
+    return "load startPtr=%$startPtr"
   }
 
 }
@@ -533,7 +533,7 @@ inline class InstructionStore(val storage: Long) {
     }
 
   override fun toString(): String {
-    return "store startPtr=$startPtr, value=$value, typeIndex=$typeIndex"
+    return "store startPtr=%$startPtr, value=%$value, typeIndex=$typeIndex"
   }
 
 }
@@ -592,7 +592,7 @@ inline class InstructionGetElementPtr(val storage: Long) {
     }
 
   override fun toString(): String {
-    return "get_element_ptr elementVar=$elementVar"
+    return "get_element_ptr elementVar=%$elementVar"
   }
 
 }
