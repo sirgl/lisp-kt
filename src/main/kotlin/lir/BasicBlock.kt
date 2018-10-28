@@ -1,5 +1,6 @@
 package lir
 
+import backend.x64.LispCallingConvention
 import lir.types.*
 import util.collection.intListOf
 
@@ -23,7 +24,8 @@ class BasicBlock(
     var id = BlockId(-1)
 
     override fun toString(): String {
-        return "block$id parameters: $parametersCount \n${instructions.joinToString("\n") { "\t" + it }}\n"
+        return "block" + id + " parameters: " + parametersCount + " \n" +
+                instructions.joinToString("\n") { "\t" + it } + "\n\t" + tailInstruction.pretty(parametersCount)
     }
 
     fun pretty(typeStorage: TypeStorage): String {
@@ -89,5 +91,6 @@ fun main(args: Array<String>) {
             inplaceI32
     ), TypeIndexList(intListOf(0, 0, 0, 0)), UnreachableInstruction, 1)
     block.id = BlockId(0)
-    println(block.pretty(storage))
+    val function = LirFunction("foo", listOf(block, block), FunctionId(12), I32Type, LirFunctionVisibility.Private, LispCallingConvention)
+    println(function.pretty(storage))
 }

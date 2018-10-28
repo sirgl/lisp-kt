@@ -30,13 +30,6 @@ object UnreachableInstruction : TailInstruction() {
     override fun pretty(blockParameterCount: Int): String = "unreachable"
 }
 
-class CallInstruction(
-        val funcitonId: FunctionId,
-        val arguments: Arguments
-) : TailInstruction() {
-    override fun pretty(blockParameterCount: Int): String = "call $funcitonId ($arguments)"
-}
-
 inline class Arguments(private val args: ShortList) {
     operator fun get(index: Int): InstructionIndex = InstructionIndex(args[index])
 

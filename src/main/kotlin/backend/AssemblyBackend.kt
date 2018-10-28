@@ -13,7 +13,8 @@ class AssemblyBackend : Backend {
         for (unit in world.compilationUnits) {
             val unitAssembler = TextAssembler()
             for (function in unit.functions) {
-                unitAssembler.writeFunction(function.name) {
+                // TODO anon number
+                unitAssembler.writeFunction(function.name ?: "anon") {
                     // TODO
                     it.emitMov(X64Registers.rdi, X64Registers.rax)
                     it.emitRet()
