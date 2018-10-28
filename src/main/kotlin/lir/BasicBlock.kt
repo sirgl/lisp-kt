@@ -76,13 +76,23 @@ class BasicBlock(
 }
 
 fun main(args: Array<String>) {
-//    val storage = TypeStorage()
-//    storage.addType(I32Type)
-//    storage.addType(I8Type)
-//    val block = BasicBlock(arrayOf(
+    val storage = TypeStorage()
+    storage.addType(I32Type)
+    storage.addType(I8Type)
+    val call = constructCall(2, 12, 33, 34)
+
+    val l = call.storage shr 54
+
+//    println(call.asCall { opcode })
+//    println(call.asCall { argsHolded })
+//    println(call.asCall { functionIndex })
+//    val functionPtr = constructFunctionPtr(12)
+//    println(functionPtr.asFunctionPtr { this.functionIndex })
+    val block = BasicBlock(arrayOf(
+            call
 //            BBInstruction(Opcodes.OP_DEC, Operand(0)),
 //            BBInstruction(Opcodes.OP_INC, Operand(1))
-//    ), TypeIndexList(intListOf(0, 0, 0)), UnreachableInstruction, 1)
-//    block.id = BlockId(0)
-//    println(block.pretty(storage))
+    ), TypeIndexList(intListOf(0, 0, 0)), UnreachableInstruction, 1)
+    block.id = BlockId(0)
+    println(block.pretty(storage))
 }

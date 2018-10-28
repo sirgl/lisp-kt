@@ -2,80 +2,135 @@ package tools.codegen
 
 import java.io.File
 
-class GeneratedData(
+private val objectName = "Instructions"
+private val instructionInlineClass = "BBInstruction"
+
+fun generateInstructionsFile() : KtFileTempl {
+    val topLevelElements = mutableListOf<KtTopLevelTempl>()
+    for (instruction in InstructionDescriptions.instructions) {
+        val generatedData = AccessorsAndConstructorsGenerator(instruction).generateInstructionData()
+        topLevelElements.add(generatedData.classWithAccessors)
+        topLevelElements.add(generatedData.constructor)
+        topLevelElements.add(generatedData.extensionWith)
+        topLevelElements.add(generatedData.extensionAs)
+    }
+
+    val instructionsObject = createInstructionObject()
+    topLevelElements.add(instructionsObject)
+
+    return KtFileTempl(topLevelElements, "lir")
+}
+
+private fun createInstructionObject(): KtClassTempl {
+    val members = mutableListOf<KtClassMemberTempl>()
+    for (instruction in InstructionDescriptions.instructions) {
+        members.add(KtValTempl(instruction.constantName, "Byte", KtTextExprTempl(instruction.opcode.toString())))
+    }
+    members.add(generateToStringArray())
+    return KtClassTempl(
+            name = objectName,
+            params = listOf(),
+            members = members,
+            kind = ClassKind.Object
+    )
+}
+
+private fun generateToStringArray() : KtValArrayTempl {
+    val lambdas = InstructionDescriptions.instructions
+            .map { KtTextExprTempl("{ it.as${it.titledName}().toString() }") }
+    return KtValArrayTempl("toStrings", "(BBInstruction)->String", lambdas)
+}
+
+internal class InstructionData(
         val classWithAccessors: KtClassTempl,
         val constructor: KtFunTempl,
-        val extension: KtFunTempl
+        val extensionWith: KtFunTempl,
+        val extensionAs: KtFunTempl
 )
 
 // TODO it would be better to generate constructors by layout
 class AccessorsAndConstructorsGenerator(private val descr: InstructionDescription) {
     private val className = "Instruction${descr.name.joinToString("") { it.toTitle() }}"
 
-    fun generateInstructionData(): GeneratedData {
-        val classWithAccessors = generateClass()
-        val constructor = generateConstructorFunction()
-        return GeneratedData(classWithAccessors, constructor, generateExtension())
+    internal fun generateInstructionData(): InstructionData {
+        return InstructionData(
+                classWithAccessors = generateClass(),
+                constructor = generateConstructorFunction(),
+                extensionWith = generateExtensionWith(),
+                extensionAs = generateExtensionAs()
+        )
     }
 
-    private fun generateExtension() : KtFunTempl {
+    private fun generateExtensionWith() : KtFunTempl {
         val instructionClass = KtCallExprTempl(null, className, listOf(KtTextExprTempl("this.storage")))
         val action = KtCallExprTempl(instructionClass, "block", listOf())
         return KtFunTempl(
-                "BBInstruction.as${descr.titledName}",
+                "$instructionInlineClass.with${descr.titledName}",
                 "T",
                 listOf(KtParamTempl("block", "$className.()->T")),
                 listOf(KtReturnStmt(action)),
-                listOf(KtFunModifier.Inline),
+                listOf(KtModifier.Inline),
                 listOf("T")
+        )
+    }
+
+    private fun generateExtensionAs() : KtFunTempl {
+        val instructionConstr = KtCallExprTempl(null, className, listOf(KtTextExprTempl("this.storage")))
+        return KtFunTempl(
+                "$instructionInlineClass.as${descr.titledName}",
+                className,
+                listOf(),
+                listOf(KtReturnStmt(instructionConstr)),
+                listOf(KtModifier.Inline)
         )
     }
 
     private fun generateConstructorFunction(): KtFunTempl {
         val statements = mutableListOf<KtStmtTempl>()
         var prevIndex = 0
-        statements.add(KtValStmt("v0", "Long", KtTextExprTempl("0")))
-        var offsetFromPreviousSet = 0
+        statements.add(KtValStmt("v0", "Long", KtTextExprTempl("$objectName." + descr.constantName + ".toLong()")))
         var emptySizeInTail = 0
+        var isFirst = true
         for (value in descr.instructionLayout.values) {
+            // Is required for omitting opcode generation
+            if (isFirst) {
+                isFirst = false
+                continue
+            }
             if (value.generationNeeded) {
                 val paramCast = KtCallExprTempl(KtTextExprTempl(value.propertyName), "toLong", listOf())
                 val previous = KtTextExprTempl("v$prevIndex")
-                val offsetExpr = KtTextExprTempl((offsetFromPreviousSet * 8).toString())
-                val shifted = KtInfixCallExprTempl(previous, offsetExpr, "shr").withParens()
+                val offsetExpr = KtTextExprTempl(((emptySizeInTail + value.size) * 8).toString())
+                val shifted = KtInfixCallExprTempl(previous, offsetExpr, "shl").withParens()
                 val init = KtInfixCallExprTempl(shifted, paramCast, "or")
                 statements.add(KtValStmt("v${prevIndex + 1}", "Long", init))
                 prevIndex++
-                offsetFromPreviousSet = 0
                 emptySizeInTail = 0
             } else {
                 emptySizeInTail += value.size
             }
-            offsetFromPreviousSet += value.size
         }
         // If empty in the end, shifting
-        if (offsetFromPreviousSet != 0) {
+        if (emptySizeInTail != 0) {
             val offset = KtTextExprTempl((emptySizeInTail * 8).toString())
             val prev = KtInfixCallExprTempl(KtTextExprTempl("v$prevIndex"), offset, "shl")
             statements.add(KtValStmt("v${prevIndex + 1}", "Long", prev))
             prevIndex++
         }
-        val instruction = KtCallExprTempl(null, "BBInstruction", listOf(KtTextExprTempl("v$prevIndex")))
+        val instruction = KtCallExprTempl(null, instructionInlineClass, listOf(KtTextExprTempl("v$prevIndex")))
         statements.add(KtReturnStmt(instruction))
         val params = descr.instructionLayout.values
+                .drop(1) // skipping opcode
                 .filter { it.generationNeeded }
                 .map { KtParamTempl(it.propertyName, it.typeName) }
-        return KtFunTempl("construct${descr.titledName}", "BBInstruction", params, statements)
+        return KtFunTempl("construct${descr.titledName}", instructionInlineClass, params, statements)
     }
 
     private fun generateClass(): KtClassTempl {
         val members = mutableListOf<KtClassMemberTempl>()
-
         var offset = 0
-
         for (value in descr.instructionLayout.values) {
             if (value.generationNeeded) {
-
                 members.add(KtValWithGetter(
                         value.propertyName,
                         value.typeName,
@@ -84,7 +139,29 @@ class AccessorsAndConstructorsGenerator(private val descr: InstructionDescriptio
             }
             offset += value.size
         }
-        return KtClassTempl(className, listOf(KtParamTempl("storage", "Long", ParamKind.Val)), members)
+        members.add(generateToString())
+        return KtClassTempl(
+                name = className,
+                params = listOf(KtParamTempl("storage", "Long", ParamKind.Val)),
+                members = members,
+                kind = ClassKind.Class,
+                modifiers = listOf(KtModifier.Inline)
+        )
+    }
+
+    private fun generateToString() : KtFunTempl {
+        val properties = descr.instructionLayout.values
+                .drop(1)
+                .filter { it.generationNeeded }
+                .joinToString { "${it.propertyName}=\$${it.propertyName}" }
+        val value = KtTextExprTempl("\"${descr.snakeName} $properties\"")
+        return KtFunTempl(
+                "toString",
+                "String",
+                listOf(),
+                listOf(KtReturnStmt(value)),
+                listOf(KtModifier.Override)
+        )
     }
 
 
@@ -132,16 +209,9 @@ class AccessorsAndConstructorsGenerator(private val descr: InstructionDescriptio
 
 
 fun main(args: Array<String>) {
-    val topLevelElements = mutableListOf<KtTopLevelTempl>()
-    for (instruction in Instructions.instructions) {
-        val generatedData = AccessorsAndConstructorsGenerator(instruction).generateInstructionData()
-        topLevelElements.add(generatedData.classWithAccessors)
-        topLevelElements.add(generatedData.constructor)
-        topLevelElements.add(generatedData.extension)
-    }
-    val file = KtFileTempl(topLevelElements, "lir")
+    val instructionsFile = generateInstructionsFile()
     // TODO avoid using java api
-    File("src/main/kotlin/lir/Instructions.kt").writeText(file.toString())
+    File("src/main/kotlin/lir/Instructions.kt").writeText(instructionsFile.toString())
 
 }
 

@@ -89,9 +89,10 @@ class KtParamTempl(val name: String, val type: String, val paramKind: ParamKind 
     }
 }
 
-enum class KtFunModifier {
+enum class KtModifier {
     Private,
-    Inline
+    Inline,
+    Override
 }
 
 class KtFunTempl(
@@ -99,7 +100,7 @@ class KtFunTempl(
         val returnType: String,
         val params: List<KtParamTempl>,
         val statements: List<KtStmtTempl>,
-        val modifiers: List<KtFunModifier> = emptyList(),
+        val modifiers: List<KtModifier> = emptyList(),
         val typeParameters: List<String> = emptyList()
 ) : KtTemplIndentable, KtClassMemberTempl, KtTopLevelTempl {
     override fun str(indent: Int) : String = buildString {
@@ -116,6 +117,22 @@ class KtFunTempl(
         append("$name(${params.joinToString(", ")}): $returnType {\n")
         append(statements.joinToString(separator = "\n", postfix = "\n") { it.str(indent + 1) })
         append(getIndent(indent) + "}\n")
+    }
+}
+
+class KtValTempl(val name: String, val type: String, val init: KtExprTempl) : KtTemplIndentable , KtClassMemberTempl{
+    override fun str(indent: Int): String {
+        return "${getIndent(indent)}val $name: $type = $init"
+    }
+}
+
+class KtValArrayTempl(val name: String, val type: String, val initList: List<KtExprTempl>) : KtTemplIndentable , KtClassMemberTempl, KtTopLevelTempl{
+    override fun str(indent: Int): String {
+        return buildString {
+            append("${getIndent(indent)}val $name = arrayOf<$type>(\n")
+            append(initList.joinToString(",\n", postfix = "\n") { getIndent(indent + 1) + it })
+            append(getIndent(indent) + ")")
+        }
     }
 }
 
@@ -136,12 +153,36 @@ class KtValWithGetter(
 
 interface KtClassMemberTempl : KtTemplIndentable
 
+enum class ClassKind {
+    Class,
+    EnumClass,
+    Object,
+    Interface
+}
 
-class KtClassTempl(val name: String, val params: List<KtParamTempl>, val members: List<KtClassMemberTempl>) : KtTemplIndentable, KtTopLevelTempl {
+class KtClassTempl(
+        val name: String,
+        val params: List<KtParamTempl>,
+        val members: List<KtClassMemberTempl>,
+        val kind: ClassKind = ClassKind.Class,
+        val modifiers: List<KtModifier> = listOf()
+) : KtTemplIndentable, KtTopLevelTempl {
     override fun str(indent: Int): String {
         return buildString {
-            append("${getIndent(indent)}class $name(${params.joinToString(", ")}) {\n")
-            append(members.joinToString(separator = "\n") { it.str(indent + 1)})
+            append(getIndent(indent))
+            if (modifiers.isNotEmpty()) {
+                for (modifier in modifiers) {
+                    append(modifier.toString().toLowerCase() + " ")
+                }
+            }
+            append("${kind.toString().toLowerCase()} $name")
+            if (params.isNotEmpty()) {
+                append("(")
+                append(params.joinToString(", "))
+                append(")")
+            }
+            append(" {\n")
+            append(members.joinToString(separator = "\n", postfix = "\n") { it.str(indent + 1)})
             append("${getIndent(indent)}}\n")
         }
     }

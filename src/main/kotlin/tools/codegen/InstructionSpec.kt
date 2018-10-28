@@ -169,6 +169,8 @@ class InstructionDescription(
 ) {
     val titledName: String
         get() = name.joinToString("") { it.toTitle() }
+    val constantName: String
+        get() = name.joinToString("_") { it.toUpperCase() }
     val snakeName: String
         get() = name.joinToString("_")
 }
@@ -180,7 +182,7 @@ class InstructionDescription(
 //}
 
 
-object Instructions {
+internal object InstructionDescriptions {
     val instructions = mutableListOf<InstructionDescription>()
     var nextInstructionIndex = 0
 
@@ -308,6 +310,7 @@ object Instructions {
     private fun unaryInstruction(name: List<String>, description: String)= instruction(name, unaryLayout, description)
 
     init {
+        instruction(listOf("noop"), noopLayout, "Operation, that do nothing")
         binaryInstruction(listOf("add"), "Integer addition")
         binaryInstruction(listOf("sub"), "Integer subtraction")
         binaryInstruction(listOf("mul"), "Integer multiplication")
@@ -320,13 +323,12 @@ object Instructions {
         instruction(listOf("call", "by", "ptr"), callByPtrLayout, "Call of function, which address stored in variable")
         instruction(listOf("args"), argsLayout, "Additional args to the preceding call instruction")
         instruction(listOf("function", "ptr"), functionPtrLayout, "Obtains function pointer from some function")
-        instruction(listOf("load"), storeLayout, "Store value from operand with a given type to memory")
-        instruction(listOf("store"), storeLayout, "Load value from memory with a given type to operand")
+        instruction(listOf("load"), loadLayout, "Load value from memory with a given type to operand")
+        instruction(listOf("store"), storeLayout, "Store value from operand with a given type to memory")
         instruction(listOf("alloca"), allocaLayout, "Allocates enough memory on stack to store value of operand type")
         instruction(listOf("get", "element", "ptr"), getElementPtrLayout, "Returns pointer to a given operand")
         instruction(listOf("iconst", "i64"), iconstI64Layout, "Loads i64 from constant table of current compilation unit")
         instruction(listOf("get", "element", "ptr", "var"), getElementPtrVarLayout, "Returns pointer to global var from table")
-        instruction(listOf("noop"), noopLayout, "Operation, that do nothing")
 
         for (instruction in instructions) {
             checkInstruction(instruction)
@@ -339,29 +341,3 @@ object Instructions {
         assert(instruction.instructionLayout.values.sumBy { it.size } == 8)
     }
 }
-
-class InstructionBin(private var instrValue: Long) {
-    val first: Short
-        get() = (instrValue shr 16).toShort()
-//        set(value) {
-//            val mask = (0xFFFF.toLong() shl 16).inv()
-//            val shifted = value.toLong() shl 16
-//            val masked = instrValue and mask
-//            instrValue = masked or shifted
-//        }
-}
-
-inline fun <T> BBInstruction.asBinary(block: InstructionBin.() -> T) : T = InstructionBin(this.storage).block()
-
-fun main(args: Array<String>) {
-//    Instructions.instructions
-//    val bbInstruction = BBInstruction(Opcode(0), Operand(44), Operand(123))
-//    bbInstruction.asBinary {
-//        first = 44
-//    }
-//    println(bbInstruction.asBinary { first })
-}
-
-
-
-
