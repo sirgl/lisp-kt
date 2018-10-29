@@ -3,7 +3,7 @@ package backend.codegen
 import backend.ArtifactBuilder
 import backend.MemoryLocation
 import util.LongStorage
-import util.io.OutputStream
+import java.io.OutputStream
 
 // TODO think how to extract result from
 interface AssemblerX64 {

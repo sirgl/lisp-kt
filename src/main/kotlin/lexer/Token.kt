@@ -17,8 +17,8 @@ enum class TokenType {
     TrueLiteral,
     FalseLiteral,
     Int,
-
     String,
+    Backtick,
     Whitespace,
     Comment,
 }

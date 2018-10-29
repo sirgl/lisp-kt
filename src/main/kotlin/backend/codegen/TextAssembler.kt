@@ -3,7 +3,7 @@ package backend.codegen
 import backend.MemoryLocation
 import util.collection.BiMap
 import util.collection.HashBiMap
-import util.io.OutputStream
+import java.io.OutputStream
 
 class TextAssembler : AssemblerX64 {
     private val labels: BiMap<String, Label> = HashBiMap()

@@ -20,7 +20,7 @@ class AssemblyBackend : Backend {
                     it.emitRet()
                 }
             }
-            artifactBuilder.createFileArtifact(unit.sourceFile) { os -> unitAssembler.save(os) }
+            artifactBuilder.createFileArtifact(unit.sourceFile.path) { os -> unitAssembler.save(os) }
         }
         return emptyList()
     }

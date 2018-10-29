@@ -2,8 +2,7 @@ package backend.codegen.validation
 
 import backend.codegen.AssemblerX64
 import backend.codegen.FunctionX64Assembler
-import util.io.OutputStream
-
+import java.io.OutputStream
 
 
 class CodegenValidatingX64Assembler : AssemblerX64 {

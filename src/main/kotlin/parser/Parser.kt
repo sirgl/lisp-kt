@@ -2,7 +2,6 @@ package parser
 
 import lexer.Token
 import lexer.TokenType
-import java.lang.Exception
 
 /**
  * Grammar:
@@ -23,7 +22,7 @@ class Parser {
 }
 
 sealed class ParseResult {
-    class Ok(val node: AstNode) : ParseResult() {
+    class Ok(val node: FileNode) : ParseResult() {
         override fun toString(): String = node.prettyPrint()
     }
     class Error(val text: String, val textRange: TextRange) : ParseResult() {
@@ -58,12 +57,12 @@ internal class ParseSession(private val tokens: List<Token>, private var index: 
         return tokens[index]
     }
 
-    fun parseFile() : AstNode {
+    fun parseFile() : FileNode {
         val children = mutableListOf<AstNode>()
         while (true) {
             if (current().type == TokenType.End) {
                 val range = TextRange(children.first().textRange.startOffset, children.last().textRange.endOffset)
-                return ListNode(children, range)
+                return FileNode(children, range)
             }
             val node = parseExpr()
             children.add(node)
@@ -92,10 +91,17 @@ internal class ParseSession(private val tokens: List<Token>, private var index: 
     }
 
     private fun parseExpr() : AstNode {
-        return if (current().type == TokenType.Lpar) {
-            parseList()
-        } else {
-            parseAtom()
+        val currentType = current().type
+        return when (currentType) {
+            TokenType.Backtick -> parseDataNode()
+            TokenType.Lpar -> parseList()
+            else -> parseAtom()
         }
+    }
+
+    private fun parseDataNode(): AstNode {
+        val token = advance()
+        val expr = parseExpr()
+        return DataNode(expr, TextRange(token.startOffset, expr.textRange.endOffset))
     }
 }

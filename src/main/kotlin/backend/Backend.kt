@@ -1,9 +1,8 @@
 package backend
 
 import lir.World
-import util.io.InputStream
-import util.io.OutputStream
-import util.io.Path
+import java.io.OutputStream
+import java.nio.file.Path
 
 
 interface Backend {
@@ -20,5 +19,5 @@ interface ArtifactBuilder {
     /**
      * @param relativePath path relative to output directory
      */
-    fun createFileArtifact(relativePath: Path, filler: (OutputStream) -> Unit) : FileArtifact
+    fun createFileArtifact(relativePath: String, filler: (OutputStream) -> Unit) : FileArtifact
 }

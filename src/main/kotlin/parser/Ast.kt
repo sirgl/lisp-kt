@@ -7,16 +7,26 @@ sealed class AstNode(
         val textRange: TextRange
 ) {
     override fun toString(): String = "$textRange@$syntaxKind"
+
+    abstract val children: List<AstNode>
 }
 
 class LeafNode(val token: Token, syntaxKind: SyntaxKind) : AstNode(syntaxKind, token.textRange) {
+    override val children: List<AstNode>
+        get() = emptyList()
+
     override fun toString(): String {
         return "${super.toString()} ${token.text}"
     }
 }
 
-class ListNode(val children: List<AstNode>, textRange: TextRange) : AstNode(SyntaxKind.List, textRange)
+class ListNode(override val children: List<AstNode>, textRange: TextRange) : AstNode(SyntaxKind.List, textRange)
 
+class DataNode(val node: AstNode, textRange: TextRange) : AstNode(SyntaxKind.Data, textRange) {
+    override val children: List<AstNode> = listOf(node)
+}
+
+class FileNode(override val children: List<AstNode>, textRange: TextRange) : AstNode(SyntaxKind.File, textRange)
 
 enum class SyntaxKind {
     List,
@@ -25,4 +35,6 @@ enum class SyntaxKind {
     CharLiteral,
     BoolLiteral,
     Identifier,
+    Data,
+    File
 }

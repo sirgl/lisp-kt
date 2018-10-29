@@ -77,12 +77,19 @@ private class LexerSession(
                 ?: parseBool()
                 ?: parseStringLiteral()
                 ?: parseIdentifier()
+                ?: parseBacktick()
+    }
+
+    private fun parseBacktick(): Token? {
+        return parseBySingleLetter('`', TokenType.Backtick)
     }
 
     private fun parseInt(): Token? = parseByAllCharsRule(TokenType.Int) { it.isDigit() }
 
     private fun parseIdentifier(): Token? =
-            parseByAllCharsRule(TokenType.Identifier) { it in 'a'..'z' || it in 'A'..'Z' }
+            parseByAllCharsRule(TokenType.Identifier) {
+                it in 'a'..'z' || it in 'A'..'Z' || it == '+' || it == '-' || it == '*' || it == '/'
+            }
 
     private inline fun parseByAllCharsRule(type: TokenType, isGoodChar: (Char) -> Boolean): Token? {
         val startOffset = offset

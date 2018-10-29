@@ -1,10 +1,10 @@
 package lir
 
 import lir.types.TypeStorage
-import util.io.Path
+import util.Source
 
 class LirCompilationUnit(
-        val sourceFile: Path,
+        val sourceFile: Source,
         val functions: List<LirFunction>,
         val globalVars: List<LirVar>,
         val typeStorage: TypeStorage
