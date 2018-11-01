@@ -103,7 +103,11 @@ private fun intBoolFunction(interpreter: Interpreter, f: (List<Int>) -> Boolean)
 }
 
 
-class InterpreterException(reason: String, val range: TextRange) : Exception(reason)
+class InterpreterException(reason: String, val range: TextRange) : Exception(reason) {
+    override fun toString(): String {
+        return "Interpreter $range: $message"
+    }
+}
 
 class Env(globalScope: MutableMap<String, EnvironmentEntry>) {
     val envStack = ArrayDeque<MutableMap<String, EnvironmentEntry>>()
@@ -126,11 +130,10 @@ class Env(globalScope: MutableMap<String, EnvironmentEntry>) {
     }
 
     fun resolve(name: String): EnvironmentEntry? {
-        val firstOrNull = envStack.descendingIterator().asSequence()
+        return envStack.asSequence()
                 .map { it[name] }
                 .filterNotNull()
                 .firstOrNull()
-        return firstOrNull
     }
 
     fun addLocal(name: String, value: EnvironmentEntry) {
@@ -155,6 +158,7 @@ class Interpreter(internal val env: Env = Env(hashMapOf())) {
     }
 
     // assumes no macro inside
+    @Throws(InterpreterException::class)
     fun eval(node: AstNode): AstNode {
         return when (node) {
             is DataNode -> node
