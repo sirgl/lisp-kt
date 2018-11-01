@@ -103,6 +103,24 @@ class InterpreterTest {
         """.trimIndent(), "Interpreter [23, 24): No i found in env")
     }
 
+
+    @Test
+    fun `test set`() {
+        testResult("""
+            (let ((i 10))
+                (set i 5)
+                i
+            )
+        """.trimIndent(), "5")
+    }
+
+    @Test
+    fun `test set of non existing var`() {
+        testResult("""
+            (set i 5)
+        """.trimIndent(), "Interpreter [5, 6): Variable i not found")
+    }
+
     private fun testResult(program: String, expectedResult: String) {
         val parseResult = parser.parse(lexer.tokenize(program))
         when (parseResult) {

@@ -228,7 +228,7 @@ class Interpreter(internal val env: Env = Env(hashMapOf())) {
         val nameNode = children[1]
         nameNode as? LeafNode ?: err("Assignment node must be ident", nameNode)
         val varName = nameNode.token.text
-        val variable = env.resolve(varName) as? Variable ?: err("Variable $nameNode not found", nameNode)
+        val variable = env.resolve(varName) as? Variable ?: err("Variable ${nameNode.lispy()} not found", nameNode)
         variable.value = eval(children[2])
         return emptyListNode()
     }
