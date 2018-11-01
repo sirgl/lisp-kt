@@ -88,7 +88,7 @@ private class LexerSession(
 
     private fun parseIdentifier(): Token? =
             parseByAllCharsRule(TokenType.Identifier) {
-                it in 'a'..'z' || it in 'A'..'Z' || it == '+' || it == '-' || it == '*' || it == '/'
+                it in 'a'..'z' || it in 'A'..'Z' || it == '+' || it == '-' || it == '*' || it == '/' || it == '<' || it == '>'
             }
 
     private inline fun parseByAllCharsRule(type: TokenType, isGoodChar: (Char) -> Boolean): Token? {

@@ -8,10 +8,14 @@ sealed class AstNode(
 ) {
     override fun toString(): String = "$textRange@$syntaxKind"
 
+    abstract fun lispy() : String
+
     abstract val children: List<AstNode>
 }
 
 class LeafNode(val token: Token, syntaxKind: SyntaxKind) : AstNode(syntaxKind, token.textRange) {
+    override fun lispy(): String = token.text
+
     override val children: List<AstNode>
         get() = emptyList()
 
@@ -20,13 +24,23 @@ class LeafNode(val token: Token, syntaxKind: SyntaxKind) : AstNode(syntaxKind, t
     }
 }
 
-class ListNode(override val children: List<AstNode>, textRange: TextRange) : AstNode(SyntaxKind.List, textRange)
+class ListNode(override val children: List<AstNode>, textRange: TextRange) : AstNode(SyntaxKind.List, textRange) {
+    override fun lispy(): String = children.joinToString(separator = " ", prefix = "(", postfix = ")") { it.lispy() }
+}
 
 class DataNode(val node: AstNode, textRange: TextRange) : AstNode(SyntaxKind.Data, textRange) {
+    override fun lispy(): String {
+        return "`${node.lispy()}"
+    }
+
     override val children: List<AstNode> = listOf(node)
 }
 
-class FileNode(override val children: List<AstNode>, textRange: TextRange) : AstNode(SyntaxKind.File, textRange)
+class FileNode(override val children: List<AstNode>, textRange: TextRange) : AstNode(SyntaxKind.File, textRange) {
+    override fun lispy(): String {
+        return children.joinToString("\n") { it.lispy() }
+    }
+}
 
 enum class SyntaxKind {
     List,

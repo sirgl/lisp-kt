@@ -18,7 +18,8 @@ abstract class HirLeafNode : HirNode() {
 class HirFile(
         val source: Source,
         val imports: List<HirImport>,
-        val topLevelFunctions: List<HirFunctionDefinition>
+        val topLevelFunctions: List<HirFunctionDefinition>,
+        val libraryName: String?
 ) : HirNode() {
     override val children: List<HirNode> = childrenFrom(imports, topLevelFunctions)
 }

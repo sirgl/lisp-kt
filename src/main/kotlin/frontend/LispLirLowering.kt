@@ -1,13 +1,8 @@
 package frontend
 
-import analysis.FirstElementMatcher
-import linting.Lint
 import lir.LirCompilationUnit
 import lir.types.TypeStorage
-import parser.AstNode
 import parser.FileNode
-import parser.LeafNode
-import parser.ListNode
 import util.ResultWithLints
 import util.Source
 
@@ -25,6 +20,5 @@ class LispLirLowering(val typeStorage: TypeStorage = TypeStorage()) {
     }
 
     companion object {
-        val libraryMatcher = FirstElementMatcher { first -> first is LeafNode && first.token.text == "library" }
     }
 }

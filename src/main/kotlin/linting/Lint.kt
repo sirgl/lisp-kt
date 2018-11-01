@@ -23,7 +23,8 @@ enum class Severity {
 
 enum class Subsystem {
     Lexer,
-    Parser;
-
-    override fun toString(): String = name.toLowerCase()
+    Parser,
+    LoweringToHir,
+    LoweringToLir,
+    Codegen;
 }
