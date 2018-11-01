@@ -121,6 +121,15 @@ class InterpreterTest {
         """.trimIndent(), "Interpreter [5, 6): Variable i not found")
     }
 
+
+    @Test
+    fun `test defn`() {
+        testResult("""
+            (defn sqr (x) (* x x))
+            (sqr 12)
+        """.trimIndent(), "144")
+    }
+
     private fun testResult(program: String, expectedResult: String) {
         val parseResult = parser.parse(lexer.tokenize(program))
         when (parseResult) {
