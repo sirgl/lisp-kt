@@ -52,7 +52,7 @@ class Macro(val name: String, val parameters: List<String>, val body: List<AstNo
             result = interpreter.eval(node)
         }
         val resultNode = if (result is DataNode) {
-            interpreter.eval(result.node)
+            result.node
         } else {
             when (result) {
                 null -> emptyListNode()

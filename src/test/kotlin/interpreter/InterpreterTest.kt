@@ -130,6 +130,22 @@ class InterpreterTest {
         """.trimIndent(), "144")
     }
 
+    @Test
+    fun `test macro expand data node`() {
+        testResult("""
+            (macro sqr (x) `(* x x))
+            (sqr 12)
+        """.trimIndent(), "(* 12 12)")
+    }
+
+    @Test
+    fun `test macro expand same as defn`() {
+        testResult("""
+            (macro sqr (x) (* x x))
+            (sqr 12)
+        """.trimIndent(), "144")
+    }
+
     private fun testResult(program: String, expectedResult: String) {
         val parseResult = parser.parse(lexer.tokenize(program))
         when (parseResult) {
