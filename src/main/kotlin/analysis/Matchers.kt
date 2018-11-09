@@ -42,6 +42,7 @@ object Matchers {
 
     val MODULE = ListMatcher(Keywords.MODULE_KW, object: Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
+            verifyCountExact(node, "Module", 2, source, lintSink)
             verifyName(node.children[1], "Module", source, lintSink)
         }
     }) { node ->
@@ -50,6 +51,7 @@ object Matchers {
 
     val IMPORT = ListMatcher(Keywords.MODULE_KW, object: Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
+            verifyCountExact(node, "Import", 2, source, lintSink)
             verifyName(node.children[1], "Import", source, lintSink)
         }
     }) { node ->
@@ -81,6 +83,12 @@ object Matchers {
                     Subsystem.Verification,
                     source
             ))
+        }
+    }
+
+    private fun verifyCountExact(node: AstNode, nodeName: String, count: Int, source: Source, lintSink: LintSink) {
+        if (node.children.size != count) {
+            lintSink.addError("$nodeName must have $count children", node, source)
         }
     }
 }

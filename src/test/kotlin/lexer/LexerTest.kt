@@ -41,6 +41,16 @@ class LexerTest {
     }
 
     @Test
+    fun `test identifiers with digits`() {
+        testLexer("foo12 34bar", """
+            0@Identifier@"foo12"
+            6@Int@"34"
+            8@Identifier@"bar"
+            11@End@""
+        """)
+    }
+
+    @Test
     fun `test string literal`() {
         testLexer("\"foo\"", """
             0@String@""foo""

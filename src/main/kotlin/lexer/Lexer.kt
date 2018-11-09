@@ -86,10 +86,23 @@ private class LexerSession(
 
     private fun parseInt(): Token? = parseByAllCharsRule(TokenType.Int) { it.isDigit() }
 
-    private fun parseIdentifier(): Token? =
-            parseByAllCharsRule(TokenType.Identifier) {
-                it in 'a'..'z' || it in 'A'..'Z' || it == '+' || it == '-' || it == '*' || it == '/' || it == '<' || it == '>'
-            }
+    private fun parseIdentifier(): Token? {
+        val startOffset = offset
+        if (!isIdentifierStart(current())) return null
+        var endOffset = startOffset + 1
+        while (!endReached(endOffset) && isIdentifierTail(at(endOffset))) {
+            endOffset++
+        }
+        return createTokenIfPresent(startOffset, endOffset, TokenType.Identifier)
+    }
+
+    private fun isIdentifierStart(it: Char): Boolean {
+        return it in 'a'..'z' || it in 'A'..'Z' || it == '+' || it == '-' || it == '*' || it == '/' || it == '<' || it == '>'
+    }
+
+    private fun isIdentifierTail(it: Char): Boolean {
+        return it in 'a'..'z' || it in 'A'..'Z' || it == '+' || it == '-' || it == '*' || it == '/' || it == '<' || it == '>' || it.isDigit()
+    }
 
     private inline fun parseByAllCharsRule(type: TokenType, isGoodChar: (Char) -> Boolean): Token? {
         val startOffset = offset
