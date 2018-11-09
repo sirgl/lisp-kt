@@ -8,8 +8,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class DependencyTest {
-    val lexer = LexerImpl()
-    val parser = Parser()
+    private val lexer = LexerImpl()
+    private val parser = Parser()
 
     @Test
     fun `test single dep`() {
@@ -52,6 +52,16 @@ libB
                 "main" withText "(module main)(import libA)",
                 "libA" withText "(module libA)(import libB)",
                 "libB" withText "(module libB)(import main)"
+        ))
+    }
+
+    @Test
+    fun `test unsatisfied`() {
+        testDependencies("""
+main
+	unknown-mod <unsatisfied>
+        """.trim(), listOf(
+                "main" withText "(module main)(import unknown-mod)"
         ))
     }
 
