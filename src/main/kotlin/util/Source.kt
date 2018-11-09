@@ -15,12 +15,8 @@ class FileSource(override val path: String) : Source {
     }
 }
 
-class InMemorySource(val text: String) : Source {
+class InMemorySource(val text: String, override val path: String = "<memory>") : Source {
     override fun getInputStream(): InputStream {
         return text.byteInputStream()
     }
-
-    override val path: String
-        get() = "<memory>"
-
 }

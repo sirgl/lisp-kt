@@ -26,5 +26,6 @@ enum class Subsystem {
     Parser,
     LoweringToHir,
     LoweringToLir,
-    Codegen;
+    Codegen,
+    Verification
 }

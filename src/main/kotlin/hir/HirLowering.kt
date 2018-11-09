@@ -4,7 +4,6 @@ import analysis.*
 import analysis.Keywords.DEFN_KW
 import analysis.Keywords.IF_KW
 import analysis.Keywords.IMPORT_KW
-import analysis.Keywords.LIBRARY_KW
 import analysis.Keywords.WHILE_KW
 import linting.Lint
 import linting.Severity
@@ -83,8 +82,10 @@ private class UnitHirLowering(val root: AstNode, val lowering: HirLowering, val 
     }
 
     companion object {
-        private val libraryMatcher = firstMatches { it is LeafNode && it.token.text == LIBRARY_KW }
-                .withNthElement(1) { it.syntaxKind == SyntaxKind.Identifier }
+//        TODO use new Matcher API
+
+//        private val libraryMatcher = firstMatches { it is LeafNode && it.token.text == LIBRARY_KW }
+//                .withNthElement(1) { it.syntaxKind == SyntaxKind.Identifier }
 
 
         private val importMatcher = firstMatches { it is LeafNode && it.token.text == IMPORT_KW }
@@ -95,8 +96,8 @@ private class UnitHirLowering(val root: AstNode, val lowering: HirLowering, val 
                 .withNthElement(1) { it is ListNode }
                 .withSizeRestriction { it > 2 }
 
-        private val libraryMatcherToMapper: Pair<AstNodeMatcher, (AstNode) -> TopLevelResult> =
-                libraryMatcher to { node -> TopLevelResult.Lib((node.children[1] as LeafNode).token.text) }
+//        private val libraryMatcherToMapper: Pair<AstNodeMatcher, (AstNode) -> TopLevelResult> =
+//                libraryMatcher to { node -> TopLevelResult.Lib((node.children[1] as LeafNode).token.text) }
 
         private val importMatcherToMapper: Pair<AstNodeMatcher, (AstNode) -> TopLevelResult> =
                 importMatcher to { node -> TopLevelResult.Lib((node.children[1] as LeafNode).token.text) }
@@ -106,7 +107,7 @@ private class UnitHirLowering(val root: AstNode, val lowering: HirLowering, val 
 
 
         private val firstNodeMatchChain = MatchChain(listOf(
-                libraryMatcherToMapper,
+//                libraryMatcherToMapper,
                 importMatcherToMapper,
                 functionMatcherToMapper
         ))

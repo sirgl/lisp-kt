@@ -1,6 +1,12 @@
 package parser
 
 import lexer.Token
+import util.Source
+
+class Ast(
+        val root: FileNode,
+        val source: Source
+)
 
 sealed class AstNode(
         val syntaxKind: SyntaxKind,
