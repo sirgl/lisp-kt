@@ -1,5 +1,8 @@
 package frontend
 
+import analysis.AppendingSink
+import deps.DependencyGraphBuilder
+import deps.DependencyVerifier
 import hir.HirLowering
 import lexer.Lexer
 import lexer.TokenValidator
@@ -8,8 +11,8 @@ import linting.Severity
 import linting.Subsystem
 import lir.LirCompilationUnit
 import lir.World
-import parser.ParseResult
-import parser.Parser
+import macro.MacroExpander
+import parser.*
 import util.ResultWithLints
 import util.Source
 
@@ -20,18 +23,23 @@ class LispFrontend(
         val parser: Parser,
         val tokenValidator: TokenValidator,
         val hirLowering: HirLowering,
-        val lirLowering: LispLirLowering
+        val lirLowering: LispLirLowering,
+        val targetIndex: Int,
+        val dependencyVerifier: DependencyVerifier,
+        val macroExpander: MacroExpander
 ) : Frontend {
     override fun run(): ResultWithLints<World> {
         val lints = mutableListOf<Lint>()
         val compilationUnits = mutableListOf<LirCompilationUnit>()
-        for (source in sources) {
+        val asts = mutableListOf<Ast>()
+        val lintSink = AppendingSink(lints)
+        val mergedSources = sources + stdLib
+        for (source in mergedSources) {
             val text = source.getInputStream().bufferedReader().readText()
             val tokens = lexer.tokenize(text)
-            val lexerLints = tokenValidator.validate(tokens, source)
-            lints.addAll(lexerLints)
-            if (lexerLints.any { it.severity == Severity.Error }) {
-                return ResultWithLints.Error(lexerLints)
+            tokenValidator.validate(tokens, source, lintSink)
+            if (lints.any { it.severity == Severity.Error }) {
+                return ResultWithLints.Error(lints)
             }
             val parseResult = parser.parse(tokens)
             val root = when (parseResult) {
@@ -41,20 +49,24 @@ class LispFrontend(
                     return ResultWithLints.Error(lints + parseLint)
                 }
             }
-
-            // TODO macro expansion
-            // TODO hir lowering
-
-
-            val loweringResult = lirLowering.lower(root, source)
-            lints.addAll(loweringResult.lints)
-            when (loweringResult) {
-                is ResultWithLints.Ok -> loweringResult.value
-                is ResultWithLints.Error -> return ResultWithLints.Error(lints)
-            }
-
-//            compilationUnits.add(loweringResult)
+            asts.add(Ast(root, source))
         }
+        val dependencyGraphBuilder = DependencyGraphBuilder(asts)
+        val dependencyGraphResult = dependencyGraphBuilder.build()
+        lints.addAll(dependencyGraphResult.lints)
+        if (dependencyGraphResult !is ResultWithLints.Ok) return ResultWithLints.Error(lints)
+        val dependencyGraph = dependencyGraphResult.value
+        dependencyVerifier.verifyDependencies(dependencyGraph, lintSink)
+        if (lints.any { it.severity == Severity.Error }) {
+            return ResultWithLints.Error(lints)
+        }
+        val target = dependencyGraph[targetIndex]
+        val macroExpansionResult = macroExpander.expand(asts, targetIndex, target)
+
+
+
+
+
         return ResultWithLints.Ok(World(compilationUnits, lirLowering.typeStorage) , lints)
     }
 

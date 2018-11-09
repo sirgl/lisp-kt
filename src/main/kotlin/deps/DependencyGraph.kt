@@ -41,7 +41,7 @@ fun DependencyEntry.bfs(f: (DependencyEntry) -> Unit) {
 
 
 class DependencyGraphBuilder(val asts: List<Ast>) {
-    fun buildDependencyGraph() : ResultWithLints<List<DependencyEntry>> {
+    fun build() : ResultWithLints<List<DependencyEntry>> {
         val nameToIndex = HashMap<String, Int>() // module name to index
         val dependencyMap = HashMap<Int, MutableList<String>>() // index of module to list of module names as dependencies
         for ((index, ast) in asts.withIndex()) {

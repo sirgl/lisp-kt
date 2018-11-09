@@ -31,6 +31,12 @@ class CollectingSink : LintSink {
     }
 }
 
+class AppendingSink(val collection: MutableCollection<Lint>) : LintSink {
+    override fun addLint(lint: Lint) {
+        collection.add(lint)
+    }
+}
+
 interface Validator {
     fun validate(node: AstNode, lintSink: LintSink, source: Source)
 }

@@ -74,7 +74,7 @@ main
             }, InMemorySource(it.text, it.name))
         }
         val dependencyGraphBuilder = DependencyGraphBuilder(asts)
-        val graph = dependencyGraphBuilder.buildDependencyGraph()
+        val graph = dependencyGraphBuilder.build()
         val lintsText = graph.lints.joinToString { it.toString() }
         graph as ResultWithLints.Ok
         val actual = buildString {

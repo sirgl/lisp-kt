@@ -1,7 +1,8 @@
 package macro
 
-import analysis.Matchers
-import analysis.extractOrNull
+import deps.DependencyEntry
+import deps.DependencyGraphBuilder
+import deps.bfs
 import parser.Ast
 import util.ResultWithLints
 
@@ -20,13 +21,16 @@ class MacroExpander {
     /**
      * @return list of ast with the same order
      */
-    fun expand(asts: List<Ast>, targetIndex: Int) : ResultWithLints<List<Ast>> {
-        return MacroExpansionContext(asts, targetIndex).expand()
+    fun expand(asts: List<Ast>, targetIndex: Int, target: DependencyEntry) : ResultWithLints<List<Ast>> {
+        return MacroExpansionContext(asts, targetIndex, target).expand()
     }
 }
 
-private class MacroExpansionContext(val asts: List<Ast>, val targetIndex: Int) {
+private class MacroExpansionContext(val asts: List<Ast>, val targetIndex: Int, val target: DependencyEntry) {
     fun expand() : ResultWithLints<List<Ast>> {
+        target.bfs {
+
+        }
 
 
         TODO()
