@@ -100,6 +100,21 @@ class ParserTest {
 """)
     }
 
+    @Test
+    fun `data node hierarchy`() {
+        testParse("`(if #t 22 (#f 33))", """
+[0, 19)@File
+  [0, 19)@Data
+    [1, 19)@List
+      [2, 4)@Identifier if
+      [5, 7)@BoolLiteral #t
+      [8, 10)@IntLiteral 22
+      [11, 18)@List
+        [12, 14)@BoolLiteral #f
+        [15, 17)@IntLiteral 33
+""")
+    }
+
     private fun testParse(text: String, expected: String) {
         val tokens = lexer.tokenize(text)
         val result = parser.parse(tokens)

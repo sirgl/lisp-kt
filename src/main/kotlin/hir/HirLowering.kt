@@ -1,141 +1,252 @@
 package hir
 
-import analysis.*
-import analysis.Keywords.DEFN_KW
-import analysis.Keywords.IF_KW
-import analysis.Keywords.IMPORT_KW
-import analysis.Keywords.WHILE_KW
+import analysis.Matchers
+import lexer.TokenType
 import linting.Lint
 import linting.Severity
 import linting.Subsystem
 import parser.*
 import util.ResultWithLints
 import util.Source
+import java.util.*
+import kotlin.collections.HashMap
 
 class HirLowering(val implicitImports: List<HirImport>) {
-    fun lower(root: FileNode, source: Source): ResultWithLints<HirFile> {
-
-        TODO()
+    /**
+     * It is important to lower in dfs order to make sure all dependencies get into context before lowering unit
+     */
+    fun lower(root: FileNode, source: Source, context: LoweringContext): ResultWithLints<HirFile> {
+        return UnitHirLowering(root, this, source, context).lower()
     }
 
 }
 
-private class UnitHirLowering(val root: AstNode, val lowering: HirLowering, val source: Source) {
-    var libraryName: String? = null
+
+class LoweringContext {
+    val resolveStack: Deque<MutableMap<String, HirDeclaration>> = ArrayDeque()
+    init {
+        enterScope()
+    }
+
+    fun enterScope() {
+        resolveStack.push(HashMap())
+    }
+
+    fun leaveScope(count: Int = 1) {
+        for (i in 0 until count) {
+            resolveStack.pop()
+        }
+    }
+
+    fun addToScope(declaration: HirDeclaration) {
+        resolveStack.last[declaration.name] = declaration
+    }
+
+    fun resolve(name: String): HirDeclaration? {
+        return resolveStack
+                .asSequence()
+                .map { scopeDeclarations -> scopeDeclarations[name] }
+                .firstOrNull { it != null }
+    }
+
+    /**
+     * @param f inside all [declarations] will be available
+     */
+    inline fun <T> withDeclarations(declarations: List<HirDeclaration>, f: () -> T): T {
+        enterScope()
+        for (decl in declarations) {
+            addToScope(decl)
+        }
+        val result = f()
+        leaveScope()
+        return result
+    }
+}
+
+private class UnitHirLowering(val root: AstNode, val lowering: HirLowering, val source: Source, val context: LoweringContext) {
     val imports = mutableListOf<HirImport>()
-    var state = State.LibraryOrImportOrFunction
+    val lints = mutableListOf<Lint>()
+    val functions = mutableListOf<HirFunctionDeclaration>()
+    var moduleName: String? = null
 
-    fun lower() : ResultWithLints<HirFile> {
-        val children = root.children
-        imports.addAll(lowering.implicitImports)
-        var state = State.LibraryOrImportOrFunction
-        val lints = mutableListOf<Lint>()
-        for (child in children) {
-            when (state) {
-                State.LibraryOrImportOrFunction -> {
-//                    val lintAndNextState = checkFirstTopLevel(child, source)
-//                    if (!lintAndNextState.isError())
-//                        lintAndNextState.lint?.let { lints.add(it) }
-//                    state = lintAndNextState.nextState
-                    TODO()
-                }
-                State.ImportOrFunction -> {
-//                    if (!tryAddAsImport(child, imports)) {
-//                        state = State.Functions
-//                    }
-                }
-                State.Functions -> {
+    fun wasError(): Boolean {
+        return lints.any { it.severity == Severity.Error }
+    }
 
+
+    fun lower(): ResultWithLints<HirFile> {
+        val block = lowerBlock(root.children, true) ?: return ResultWithLints.Error(lints)
+        // Convention for top level code in file (all code in HIR must be in function, so synthetic one is created)
+        val name = source.path.replace('/', '_') + "__init"
+        functions.add(HirFunctionDeclaration(name, emptyList(), block, true))
+        return ResultWithLints.Ok(HirFile(source, imports, functions, moduleName))
+    }
+
+    fun lowerBlock(nodes: List<AstNode>, isTopLevel: Boolean = false): HirBlockExpr? {
+        if (nodes.isEmpty()) {
+            return emptyBlock()
+        }
+        val stmts = mutableListOf<HirStmt>()
+        for ((index, child) in nodes.withIndex()) {
+            val expr = lowerExpr(child, isTopLevel, index == 0)
+            if (wasError()) return null
+            if (expr != null) {
+                stmts.add(HirExprStmt(expr))
+            }
+        }
+        if (stmts.isEmpty()) {
+            return emptyBlock()
+        }
+        val last = stmts.last() as? HirExprStmt
+                ?: return if (isTopLevel) {
+                    emptyBlock()
+                } else {
+                    errorLint("Last node in block expected to be expr", nodes.last().textRange)
+                    null
+                }
+        val expr = last.expr
+        return HirBlockExpr(stmts.subList(0, stmts.size - 1), expr)
+    }
+
+    fun lowerExpr(node: AstNode, isTopLevel: Boolean = false, isFirst: Boolean = true): HirExpr? {
+        return when (node) {
+            is LeafNode -> {
+                val type = node.token.type
+                if (type == TokenType.Identifier) {
+                    val name = node.token.text
+                    val decl = context.resolve(name) ?: return null
+                    when (decl) {
+                        is HirVarDeclaration -> HirVarReference(name, decl)
+                        is HirFunctionDeclaration -> HirFunctionReference(name, decl)
+                        else -> {
+                            errorLint("Unresolved reference", node.textRange)
+                            return null
+                        }
+                    }
+                } else {
+                    return lowerLiteral(node)
+                }
+            }
+            is DataNode -> lowerLiteral(node)
+            is FileNode -> throw IllegalStateException()
+            is ListNode -> {
+                when {
+                    Matchers.MODULE.matches(node, source) -> {
+                        if (!isTopLevel) {
+                            errorLint("Module declaration are allowed only on top level", node.textRange)
+                            null
+                        } else if (!isFirst) {
+                            errorLint("Module declaration are possible only as first child of file", node.textRange)
+                            null
+                        } else {
+                            val moduleInfo = Matchers.MODULE.extract(node, source).drainTo(lints) ?: return null
+                            moduleName = moduleInfo.name
+                            null
+                        }
+                    }
+                    Matchers.IMPORT.matches(node, source) -> {
+                        if (!isTopLevel) {
+                            errorLint("Imports are allowed only on top level", node.textRange)
+                            return null
+                        }
+                        val importInfo = Matchers.IMPORT.extract(node, source).drainTo(lints) ?: return null
+                        imports.add(HirImport(importInfo.name, true))
+                        null
+                    }
+                    Matchers.DEFN.matches(node, source) -> {
+                        val defnInfo = Matchers.DEFN.extract(node, source).drainTo(lints) ?: return null
+                        val params = defnInfo.parameters.map { HirParameter(it) }
+                        val bodyBlock = context.withDeclarations(params) {
+                            lowerBlock(defnInfo.body) ?: return null
+                        }
+                        val declaration = HirFunctionDeclaration(defnInfo.name, params, bodyBlock)
+                        functions.add(declaration)
+                        context.addToScope(declaration)
+                        HirFunctionReference(defnInfo.name, declaration)
+                    }
+                    Matchers.LET.matches(node, source) -> {
+                        val letInfo = Matchers.LET.extract(node, source).drainTo(lints) ?: return null
+                        val vars = mutableListOf<HirVarDeclStmt>()
+                        for (declaration in letInfo.declarations) {
+                            val varDeclStmt = HirVarDeclStmt(declaration.name, lowerExpr(declaration.initializer) ?: return null)
+                            vars.add(varDeclStmt)
+                            context.enterScope()
+                            context.addToScope(varDeclStmt)
+                        }
+                        val letBlock = lowerBlock(letInfo.body) ?: return null
+                        context.leaveScope(letInfo.declarations.size)
+                        val blockWithDeclarations = HirBlockExpr(vars, letBlock)
+                        blockWithDeclarations
+                    }
+                    Matchers.IF.matches(node, source) -> {
+                        val ifInfo = Matchers.IF.extract(node, source).drainTo(lints) ?: return null
+                        val condition = lowerExpr(ifInfo.condition) ?: return null
+                        val thenBranch = lowerExpr(ifInfo.thenBranch) ?: return null
+                        val elseNode = ifInfo.elseBranch
+                        val elseBranch = if (elseNode == null) {
+                            HirListLiteral(emptyList())
+                        } else {
+                            lowerExpr(elseNode)
+                        } ?: return null
+                        HirIfExpr(condition, thenBranch, elseBranch)
+                    }
+                    Matchers.WHILE.matches(node, source) -> {
+                        val whileInfo = Matchers.WHILE.extract(node, source).drainTo(lints) ?: return null
+                        val condition = lowerExpr(whileInfo.condition) ?: return null
+                        val block = lowerBlock(whileInfo.body) ?: return null
+                        HirWhileExpr(condition, block)
+                    }
+                    else -> {
+                        val children = node.children
+                        if (children.isEmpty()) return null
+                        val first = children[0]
+                        if (first !is LeafNode || first.token.type != TokenType.Identifier) {
+                            errorLint("First node of list must be keyword or identifier", first.textRange)
+                            return null
+                        }
+                        val name = first.token.text
+                        val argsNodes = children.drop(1)
+                        val args = mutableListOf<HirExpr>()
+                        for (argsNode in argsNodes) {
+                            args.add(lowerExpr(argsNode, false,  false) ?: return null)
+                        }
+                        val declaration = context.resolve(name) as? HirFunctionDeclaration
+                        if (declaration == null) {
+                            errorLint("Unresolved function reference: $name", first.textRange)
+                            return null
+                        }
+                        HirLocalCallExpr(name, args, declaration)
+                    }
                 }
             }
         }
-        if (lints.any { it.severity == Severity.Error }) return ResultWithLints.Error(lints)
-        TODO()
-    }
-
-    private fun handleResult(resultWithLints: ResultWithLints<TopLevelResult>) {
 
     }
 
-    private fun checkFirstTopLevel(node: AstNode): ResultWithLints<TopLevelResult> {
-//        val nextState = firstNodeMatchChain.matchThenHandle(node) ?: return TopLevelData(
-//                State.LibraryOrImportOrFunction,
-//                errorLint("Only library declaration, import or function definition are allowed as first element of file", source, node.textRange)
-//        )
-//        return TopLevelData(nextState)
-        TODO()
+
+    private fun lowerLiteral(node: AstNode): HirLiteralExpr {
+        return when (node) {
+            is LeafNode -> {
+                val type = node.token.type
+                val text = node.token.text
+                when (type) {
+                    TokenType.Identifier -> HirIdentifierLiteral(text)
+                    TokenType.TrueLiteral -> HirBoolLiteral(true)
+                    TokenType.FalseLiteral -> HirBoolLiteral(false)
+                    TokenType.Int -> HirIntLiteral(text.toInt())
+                    TokenType.String -> HirStringLiteral(text.substring(1, text.lastIndex))
+                    else -> throw IllegalStateException()
+                }
+            }
+            is DataNode -> HirListLiteral(node.children.map { lowerLiteral(it) })
+            is ListNode, is FileNode -> throw IllegalStateException()
+        }
     }
 
-    private fun checkImportOrFunction(node: AstNode, source: Source): ResultWithLints<TopLevelResult> {
-        val result = importOrFunctionMatchChain.matchThenHandle(node) ?: return ResultWithLints.Error(
-                listOf(errorLint("After library declaration only import or function definition are allowed", source, node.textRange))
-        )
-        return ResultWithLints.Ok(result)
+    private fun emptyBlock() = HirBlockExpr(emptyList(), HirListLiteral(emptyList()))
+
+
+    private fun errorLint(text: String, textRange: TextRange) {
+        lints.add(Lint(text, textRange, Severity.Error, Subsystem.LoweringToHir, source))
     }
-
-    private fun checkFunction() {
-
-    }
-
-    private fun errorLint(text: String, source: Source, textRange: TextRange): Lint {
-        return Lint("", textRange, Severity.Error, Subsystem.LoweringToHir, source)
-    }
-
-    companion object {
-//        TODO use new Matcher API
-
-//        private val libraryMatcher = firstMatches { it is LeafNode && it.token.text == LIBRARY_KW }
-//                .withNthElement(1) { it.syntaxKind == SyntaxKind.Identifier }
-
-
-        private val importMatcher = firstMatches { it is LeafNode && it.token.text == IMPORT_KW }
-                .withNthElement(1) { it.syntaxKind == SyntaxKind.Identifier }
-
-
-        private val defnMatcher = firstMatches { it is LeafNode && it.token.text == DEFN_KW }
-                .withNthElement(1) { it is ListNode }
-                .withSizeRestriction { it > 2 }
-
-//        private val libraryMatcherToMapper: Pair<AstNodeMatcher, (AstNode) -> TopLevelResult> =
-//                libraryMatcher to { node -> TopLevelResult.Lib((node.children[1] as LeafNode).token.text) }
-
-        private val importMatcherToMapper: Pair<AstNodeMatcher, (AstNode) -> TopLevelResult> =
-                importMatcher to { node -> TopLevelResult.Lib((node.children[1] as LeafNode).token.text) }
-
-        private val functionMatcherToMapper: Pair<AstNodeMatcher, (AstNode) -> TopLevelResult> =
-                defnMatcher to { node -> TopLevelResult.Lib((node.children[1] as LeafNode).token.text) }
-
-
-        private val firstNodeMatchChain = MatchChain(listOf(
-//                libraryMatcherToMapper,
-                importMatcherToMapper,
-                functionMatcherToMapper
-        ))
-        private val importOrFunctionMatchChain = MatchChain(listOf(
-                importMatcherToMapper,
-                functionMatcherToMapper
-        ))
-
-
-
-
-
-
-        val KEYWORDS = hashSetOf(IF_KW, IMPORT_KW, WHILE_KW, DEFN_KW)
-
-    }
-}
-
-
-private sealed class TopLevelResult {
-    class Func(val func: HirFunctionDefinition) : TopLevelResult()
-    class Import(val import: HirImport) : TopLevelResult()
-    class Lib(val libraryName: String) : TopLevelResult()
-    object NoMatch : TopLevelResult()
-}
-
-private enum class State {
-    LibraryOrImportOrFunction,
-    ImportOrFunction,
-    Functions
 }

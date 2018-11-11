@@ -52,18 +52,13 @@ class LispFrontend(
             asts.add(Ast(root, source))
         }
         val dependencyGraphBuilder = DependencyGraphBuilder(asts)
-        val dependencyGraphResult = dependencyGraphBuilder.build()
-        lints.addAll(dependencyGraphResult.lints)
-        if (dependencyGraphResult !is ResultWithLints.Ok) return ResultWithLints.Error(lints)
-        val dependencyGraph = dependencyGraphResult.value
+        val dependencyGraph= dependencyGraphBuilder.build().drainTo(lints) ?: return ResultWithLints.Error(lints)
         dependencyVerifier.verifyDependencies(dependencyGraph, lintSink)
         if (lints.any { it.severity == Severity.Error }) {
             return ResultWithLints.Error(lints)
         }
         val target = dependencyGraph[targetIndex]
-        val macroExpansionResult = macroExpander.expand(asts, targetIndex, target)
-
-
+        val finalAsts = macroExpander.expand(asts, target).drainTo(lints) ?: return ResultWithLints.Error(lints)
 
 
 

@@ -5,9 +5,35 @@ import util.Source
 // High level intermediate representation. Looks like AST for strongly typed languages
 // Constructed after macro expansion
 
+/**
+ * Marker interface for node, that represents declaration in code
+ */
+interface HirDeclaration {
+    val name: String
+}
+
 
 abstract class HirNode {
     abstract val children: List<HirNode>
+
+    abstract fun prettySelf(): String
+}
+
+fun HirNode.pretty(): String {
+    val sb = StringBuilder()
+    pretty(sb, 0)
+    return sb.toString()
+}
+
+private fun HirNode.pretty(sb: StringBuilder, level: Int) {
+    for (i in (0 until level)) {
+        sb.append("  ")
+    }
+    sb.append(prettySelf())
+    sb.append("\n")
+    for (child in children) {
+        child.pretty(sb, level + 1)
+    }
 }
 
 abstract class HirLeafNode : HirNode() {
@@ -18,33 +44,66 @@ abstract class HirLeafNode : HirNode() {
 class HirFile(
         val source: Source,
         val imports: List<HirImport>,
-        val topLevelFunctions: List<HirFunctionDefinition>,
-        val libraryName: String?
+        val functions: List<HirFunctionDeclaration>,
+        val moduleName: String?
 ) : HirNode() {
-    override val children: List<HirNode> = childrenFrom(imports, topLevelFunctions)
+    override val children: List<HirNode> = childrenFrom(imports, functions)
+
+    override fun prettySelf(): String {
+        return if (moduleName == null) "File" else "File: $moduleName"
+    }
 }
 
 
-class HirImport(val libraryName: String, val isExplicit: Boolean) : HirLeafNode()
+class HirImport(val moduleName: String, val isExplicit: Boolean) : HirLeafNode() {
+    override fun prettySelf(): String {
+        return "Import: $moduleName"
+    }
+}
+
+interface HirVarDeclaration : HirDeclaration {
+}
 
 // TODO type?
 class HirParameter(
-        val name: String
-)  : HirLeafNode()
+        override val name: String
+) : HirLeafNode(), HirVarDeclaration {
+    override fun prettySelf(): String {
+        return "Parameter: $name"
+    }
+}
 
-class HirFunctionDefinition(
-        val name: String,
+class HirFunctionDeclaration(
+        override val name: String,
         val params: List<HirParameter>,
-        val body: HirBlock
-)
+        val body: HirBlockExpr, // TODO make optional to make it possible to make forward declarations
+        val isMain: Boolean = false
+) : HirNode(), HirDeclaration {
+    override val children: List<HirNode>
+        get() = childrenFrom(params, body)
 
-class HirBlock(
+    override fun prettySelf(): String {
+        return buildString {
+            append("Function declaration: ")
+            if (isMain) {
+                append("(main) ")
+            }
+            append(name)
+        }
+    }
+
+}
+
+class HirBlockExpr(
         val stmts: List<HirStmt>,
         val expr: HirExpr
-) : HirNode() {
+) : HirExpr() {
     override val children: List<HirNode>
         get() = childrenFrom(stmts, expr)
 
+    override fun prettySelf(): String {
+        return "Block expr"
+    }
 }
 
 // Statements
@@ -55,33 +114,44 @@ class HirExprStmt(val expr: HirExpr) : HirStmt() {
 
     override val children: List<HirNode>
         get() = listOf(expr)
+
+    override fun prettySelf(): String {
+        return "Expr stmt"
+    }
 }
 
 // adds to scope name
-class HirVarDeclStmt(val name: String, val initializer: HirExpr) : HirStmt() {
+class HirVarDeclStmt(override val name: String, val initializer: HirExpr) : HirStmt(), HirVarDeclaration {
     override val children: List<HirNode>
         get() = listOf(initializer)
+
+    override fun prettySelf(): String {
+        return "Var decl: $name"
+    }
 }
 
 
-class HirWhileStmt(val condition: HirExpr, val body: HirBlock) : HirStmt() {
+class HirWhileExpr(val condition: HirExpr, val body: HirBlockExpr) : HirExpr() {
     override val children: List<HirNode>
         get() = childrenFrom(condition, body)
+
+    override fun prettySelf(): String {
+        return "While expr"
+    }
 }
 
 class HirAssignStmt(val name: String, val initializer: HirExpr, val decl: HirVarDeclStmt) : HirStmt() {
     override val children: List<HirNode>
         get() = listOf(initializer)
+
+    override fun prettySelf(): String {
+        return "Assign stmt: $name"
+    }
 }
 
 // Expressions
 
 sealed class HirExpr : HirNode()
-
-class HirBlockExpr(val block: HirBlock) : HirExpr() {
-    override val children: List<HirNode>
-        get() = listOf(block)
-}
 
 
 sealed class HirCallExpr(val name: String, val args: List<HirExpr>) : HirExpr() {
@@ -92,44 +162,100 @@ sealed class HirCallExpr(val name: String, val args: List<HirExpr>) : HirExpr() 
 class HirGlobalCallExpr(
         name: String,
         args: List<HirExpr>
-) : HirCallExpr(name, args)
+) : HirCallExpr(name, args) {
+    override fun prettySelf(): String {
+        return "Global call: $name"
+    }
+}
 
 class HirLocalCallExpr(
         name: String,
         args: List<HirExpr>,
-        val definition: HirFunctionDefinition
-) : HirCallExpr(name, args)
+        val declaration: HirFunctionDeclaration
+) : HirCallExpr(name, args) {
+    override fun prettySelf(): String {
+        return "Local call: $name"
+    }
+}
 
 class HirIfExpr(
         val condition: HirExpr,
         val thenBranch: HirExpr,
-        val elseBranch: HirExpr?
+        val elseBranch: HirExpr
 ) : HirExpr() {
     override val children: List<HirNode>
         get() = childrenFrom(condition, thenBranch, elseBranch)
+
+    override fun prettySelf(): String {
+        return "If expr"
+    }
 }
 
-sealed class HirLiteralExpr : HirNode()
+sealed class HirLiteralExpr : HirExpr()
 
 class HirBoolLiteral(val value: Boolean) : HirLiteralExpr() {
     override val children: List<HirNode>
         get() = emptyList()
+
+    override fun prettySelf(): String {
+        return "Bool literal: $value"
+    }
 }
+
 class HirIntLiteral(val value: Int) : HirLiteralExpr() {
     override val children: List<HirNode>
         get() = emptyList()
+
+    override fun prettySelf(): String {
+        return "Int literal: $value"
+    }
+
 }
+
 class HirStringLiteral(val value: String) : HirLiteralExpr() {
     override val children: List<HirNode>
         get() = emptyList()
+
+    override fun prettySelf(): String {
+        return "String literal: $value"
+    }
+
 }
 
 class HirListLiteral(val literals: List<HirLiteralExpr>) : HirLiteralExpr() {
     override val children: List<HirNode>
         get() = literals
+
+    override fun prettySelf(): String {
+        return "List literal"
+    }
+
 }
 
 class HirIdentifierLiteral(val name: String) : HirLiteralExpr() {
+    override val children: List<HirNode>
+        get() = emptyList()
+
+    override fun prettySelf(): String {
+        return "Identifier literal: $name"
+    }
+
+}
+
+class HirFunctionReference(val name: String, val declaration: HirFunctionDeclaration) : HirLiteralExpr() {
+    override fun prettySelf(): String {
+        return "Function reference: $name"
+    }
+
+    override val children: List<HirNode>
+        get() = emptyList()
+}
+
+class HirVarReference(val name: String, val declaration: HirVarDeclaration) : HirLiteralExpr() {
+    override fun prettySelf(): String {
+        return "Var reference: $name"
+    }
+
     override val children: List<HirNode>
         get() = emptyList()
 }

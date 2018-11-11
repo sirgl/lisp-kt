@@ -77,13 +77,12 @@ class DependencyGraphBuilder(val asts: List<Ast>) {
                         continue
                     }
                 }
-                val importInfo = Matchers.IMPORT.extractOrNull(child, source) ?: break
+                val importInfo = Matchers.IMPORT.extractOrNull(child, source) ?: continue
                 val depList = dependencyMap[index] ?: mutableListOf()
                 depList.add(importInfo.name)
                 dependencyMap[index] = depList
             }
         }
-        // TODO take care of possible imports that was not taken into account in loop
         // Building graph out of facts about every module
         val dependencyList = asts.mapIndexed { astIndex, ast -> RealDependencyEntry(ast, mutableListOf(), astIndex) }
         for ((index, dependencies) in dependencyMap) {

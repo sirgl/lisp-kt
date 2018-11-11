@@ -1,5 +1,6 @@
 package util
 
+import analysis.LintSink
 import linting.Lint
 
 sealed class ResultWithLints<T>(val lints: List<Lint>) {
@@ -30,5 +31,21 @@ sealed class ResultWithLints<T>(val lints: List<Lint>) {
             return true
         }
         return false
+    }
+
+    fun drainTo(lintSink: LintSink) : T? {
+        for (lint in lints) {
+            lintSink.addLint(lint)
+        }
+        return if (this is Ok) value else null
+    }
+
+    fun drainTo(lintSink: MutableCollection<Lint>) : T? {
+        lintSink.addAll(lints)
+        return if (this is Ok) value else null
+    }
+
+    fun unwrap() : T {
+        return if (this is Ok) value else throw IllegalStateException()
     }
 }

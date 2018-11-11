@@ -1,7 +1,6 @@
 package analysis
 
 import parser.AstNode
-import parser.ListNode
 
 /**
  * Class representing all the info about particular ast node (not recursive, no info about children, that has complex structure)
@@ -32,4 +31,25 @@ class ModuleNodeInfo(
 
 class ImportNodeInfo(
         val name: String
+) : NodeInfo()
+
+class LetDecl(
+        val name: String,
+        val initializer: AstNode
+)
+
+class LetNodeInfo(
+        val declarations: List<LetDecl>,
+        val body: List<AstNode>
+) : NodeInfo()
+
+class IfNodeInfo(
+        val condition: AstNode,
+        val thenBranch: AstNode,
+        val elseBranch: AstNode?
+) : NodeInfo()
+
+class WhileNodeInfo(
+        val condition: AstNode,
+        val body: List<AstNode>
 ) : NodeInfo()

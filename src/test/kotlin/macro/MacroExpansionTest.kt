@@ -35,13 +35,33 @@ main:
         ))
     }
 
+    @Test
+    fun `test let not expanded`() {
+        testExpansion("""
+main:
+[0, 23)@File
+  [0, 23)@List
+    [1, 4)@Identifier let
+    [5, 20)@List
+      [6, 12)@List
+        [7, 8)@Identifier x
+        [9, 11)@IntLiteral 12
+      [13, 19)@List
+        [14, 15)@Identifier y
+        [16, 18)@IntLiteral 22
+    [21, 22)@Identifier x
+        """, listOf(
+                "main" withText "(let ((x 12) (y 22)) x)"
+        ))
+    }
+
     private fun testExpansion(expectedExpansion: String, files: List<InMemoryFileInfo>, targetIndex: Int = 0) {
         val asts = buildAsts(files)
         val expander = MacroExpander()
         val dependencyGraphBuilder = DependencyGraphBuilder(asts)
         val graph = (dependencyGraphBuilder.build() as ResultWithLints.Ok).value
 
-        val resultWithLints = expander.expand(asts, targetIndex, graph[targetIndex])
+        val resultWithLints = expander.expand(asts, graph[targetIndex])
         val actual = buildString {
             append(resultWithLints.lints.joinToString("\n") { it.toString() })
             append("\n")

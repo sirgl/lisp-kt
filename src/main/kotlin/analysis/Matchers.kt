@@ -68,6 +68,65 @@ object Matchers {
         ImportNodeInfo((node.children[1] as LeafNode).token.text)
     }
 
+
+    val LET = ListMatcher(Keywords.LET_KW, object: Validator {
+        override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
+            verifyCountAtLeast(node, "Let", 3, source, lintSink)
+            val children = node.children
+            val declarationsNode = children[1]
+            if (declarationsNode !is ListNode) {
+                lintSink.addError("Declarations node in let must be a list node", declarationsNode, source)
+                return
+            }
+            for (declaration in declarationsNode.children) {
+                if (declaration !is ListNode) {
+                    lintSink.addError("Single declaration in let must be a list node", declarationsNode, source)
+                    return
+                }
+                verifyCountExact(declaration, "Let declaration", 2, source, lintSink)
+                val declarationChildren = declaration.children
+                val declarationName = declarationChildren[0]
+                verifyName(declarationName, "Let declaration name", source, lintSink)
+            }
+        }
+    }) { node ->
+        val children = node.children
+        val body = children.drop(2)
+        val declarations = children[1] as ListNode
+        val decls = declarations.children.map { LetDecl((it.children[0] as LeafNode).token.text, it.children.last()) }
+        LetNodeInfo(decls, body)
+    }
+
+    val IF = ListMatcher(Keywords.IF_KW, object: Validator {
+        override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
+            val children = node.children
+            val childrenCount = children.size
+            if (childrenCount != 3 && childrenCount != 4) {
+                lintSink.addError("If must have 3 or 4 children", node, source)
+            }
+        }
+    }) { node ->
+        val children = node.children
+        val condition = children[1]
+        val thenBranch = children[2]
+//        val elseBranch = children[3]
+        when(children.size) {
+            3 -> IfNodeInfo(condition, thenBranch, null)
+            4 -> IfNodeInfo(condition, thenBranch, children[3])
+            else -> throw IllegalStateException()
+        }
+    }
+
+    val WHILE = ListMatcher(Keywords.WHILE_KW, object: Validator {
+        override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
+            verifyCountAtLeast(node, "While", 3, source, lintSink)
+        }
+    }) { node ->
+        val children = node.children
+        val condition = children[1]
+        WhileNodeInfo(condition, children.drop(2))
+    }
+
     private fun LintSink.addError(text: String, node: AstNode, source: Source) {
         addLint(Lint(text, node.textRange, Severity.Error, Subsystem.Verification, source))
     }
