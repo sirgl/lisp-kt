@@ -10,12 +10,10 @@ import parser.ListNode
 import util.Source
 
 object Matchers {
-    val DEFN = ListMatcher(Keywords.DEFN_KW, object: Validator {
+    class FunctionLikeValidator(private val nodeType: String) : Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
             val children = node.children
-            if (children.size < 4) {
-                lintSink.addError("Define node must have at least 4 children", node, source)
-            }
+            verifyCountAtLeast(node, nodeType, 4, source, lintSink)
             verifyName(children[1], "Name", source, lintSink)
             val parametersNode = children[2]
             if (parametersNode is ListNode) {
@@ -33,11 +31,23 @@ object Matchers {
                 ))
             }
         }
-    }) { node ->
+    }
+
+    val functionValidator = FunctionLikeValidator("Define")
+    val macroValidator = FunctionLikeValidator("Macro")
+
+    val DEFN = ListMatcher(Keywords.DEFN_KW, functionValidator) { node ->
         val children = node.children
         val name = (children[1] as LeafNode).token.text
         val parameters = (children[2] as ListNode).children.map { (it as LeafNode).token.text }
         DefnNodeInfo(name, parameters, children.drop(3))
+    }
+
+    val MACRO = ListMatcher(Keywords.MACRO_KW, macroValidator) { node ->
+        val children = node.children
+        val name = (children[1] as LeafNode).token.text
+        val parameters = (children[2] as ListNode).children.map { (it as LeafNode).token.text }
+        MacroNodeInfo(name, parameters, children.drop(3))
     }
 
     val MODULE = ListMatcher(Keywords.MODULE_KW, object: Validator {
@@ -89,6 +99,12 @@ object Matchers {
     private fun verifyCountExact(node: AstNode, nodeName: String, count: Int, source: Source, lintSink: LintSink) {
         if (node.children.size != count) {
             lintSink.addError("$nodeName must have $count children", node, source)
+        }
+    }
+
+    private fun verifyCountAtLeast(node: AstNode, nodeName: String, count: Int, source: Source, lintSink: LintSink) {
+        if (node.children.size < count) {
+            lintSink.addError("$nodeName must have at least $count children", node, source)
         }
     }
 }

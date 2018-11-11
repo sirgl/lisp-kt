@@ -34,7 +34,7 @@ class ParserTest {
 """)
     }
 
-    // Handled in token validator
+    // Handled in token functionValidator
     @Test
     fun `atom parse int too long`() {
         testParse("12381289371287389127", """

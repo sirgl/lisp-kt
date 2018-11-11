@@ -31,7 +31,7 @@ class ListMatcher<T : NodeInfo>(val name: String, val validator: Validator, val 
     /**
      * Expects, that name exactly matches
      */
-    fun extract(node: ListNode, source: Source) : ResultWithLints<T> {
+    fun extract(node: AstNode, source: Source) : ResultWithLints<T> {
         val sink = CollectingSink()
         validator.validate(node, sink, source)
         val lints = sink.lints

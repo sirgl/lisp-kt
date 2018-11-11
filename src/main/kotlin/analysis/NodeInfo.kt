@@ -8,11 +8,23 @@ import parser.ListNode
  */
 sealed class NodeInfo
 
+sealed class FuncLikeInfo : NodeInfo() {
+    abstract val name: String
+    abstract val parameters: List<String>
+    abstract val body: List<AstNode>
+}
+
 class DefnNodeInfo(
-        val name: String,
-        val parameters: List<String>,
-        val body: List<AstNode>
-) : NodeInfo()
+        override val name: String,
+        override val parameters: List<String>,
+        override val body: List<AstNode>
+) : FuncLikeInfo()
+
+class MacroNodeInfo(
+        override val name: String,
+        override val parameters: List<String>,
+        override val body: List<AstNode>
+) : FuncLikeInfo()
 
 class ModuleNodeInfo(
         val name: String

@@ -23,4 +23,12 @@ sealed class ResultWithLints<T>(val lints: List<Lint>) {
     fun isError(): Boolean {
         return this is Error
     }
+
+    fun ifPresent(action: (T) -> Unit) : Boolean {
+        if (this is Ok) {
+            action(value)
+            return true
+        }
+        return false
+    }
 }

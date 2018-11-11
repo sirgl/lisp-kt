@@ -11,17 +11,17 @@ import java.util.*
 sealed class EnvironmentEntry
 
 sealed class FunctionLike : EnvironmentEntry() {
-    abstract fun call(args: List<AstNode>): AstNode
+    abstract fun call(args: List<AstNode>, interpreter: Interpreter): AstNode
 }
 
-class Macro(val name: String, val parameters: List<String>, val body: List<AstNode>, val interpreter: Interpreter) : FunctionLike() {
+class Macro(val name: String, val parameters: List<String>, val body: List<AstNode>) : FunctionLike() {
     // It is recursive macro expansion
-    override fun call(args: List<AstNode>): AstNode {
+    override fun call(args: List<AstNode>, interpreter: Interpreter): AstNode {
         val scope = parameters.zip(args).associateBy({ it.first }) { it.second }
         var body = body
         var transforms = 0
         while (true) {
-            val expansionResult = singleExpansion(body, scope)
+            val expansionResult = singleExpansion(body, scope, interpreter)
             if (expansionResult.wasTransformation) return expansionResult.node
             body = expansionResult.newBody
             transforms++
@@ -35,7 +35,7 @@ class Macro(val name: String, val parameters: List<String>, val body: List<AstNo
             val wasTransformation: Boolean
     )
 
-    private fun singleExpansion(body: List<AstNode>, scope: Map<String, AstNode>) : ExpansionResult {
+    private fun singleExpansion(body: List<AstNode>, scope: Map<String, AstNode>, interpreter: Interpreter) : ExpansionResult {
         var wasTransformation = false
         val replacedBody = body.map { bodyNode ->
             transform(bodyNode) { leafNode ->
@@ -65,8 +65,8 @@ class Macro(val name: String, val parameters: List<String>, val body: List<AstNo
 
 sealed class Function : FunctionLike()
 
-class AstFunction(val name: String, val node: AstNode, val parameters: List<String>, val body: List<AstNode>, val interpreter: Interpreter) : Function() {
-    override fun call(args: List<AstNode>): AstNode {
+class AstFunction(val name: String, val parameters: List<String>, val body: List<AstNode>) : Function() {
+    override fun call(args: List<AstNode>, interpreter: Interpreter): AstNode {
         val scope: MutableMap<String, EnvironmentEntry> = parameters.zip(args)
                 .associateBy({ it.first }) { Variable(it.second) }.toMutableMap()
         interpreter.env.enterScope(scope)
@@ -79,14 +79,14 @@ class AstFunction(val name: String, val node: AstNode, val parameters: List<Stri
     }
 }
 
-class EnvFunction(val function: (List<AstNode>) -> AstNode) : Function() {
-    override fun call(args: List<AstNode>): AstNode = function(args)
+class EnvFunction(val function: (List<AstNode>, Interpreter) -> AstNode) : Function() {
+    override fun call(args: List<AstNode>, interpreter: Interpreter): AstNode = function(args, interpreter)
 }
 
 class Variable(var value: AstNode) : EnvironmentEntry()
 
-private fun <T> intTFunction(interpreter: Interpreter, f: (List<Int>) -> T?, tokenTypeMapper: (T) -> TokenType, syntaxKind: SyntaxKind): EnvFunction {
-    return EnvFunction { argNodes ->
+private fun <T> intTFunction(f: (List<Int>) -> T?, tokenTypeMapper: (T) -> TokenType, syntaxKind: SyntaxKind): EnvFunction {
+    return EnvFunction { argNodes, interpreter ->
         val values = argNodes.map { (interpreter.eval(it) as LeafNode).token.text.toInt() }
         val tResult = f(values) ?: return@EnvFunction emptyListNode()
         val token = Token(-1, tResult.toString(), tokenTypeMapper(tResult))
@@ -94,12 +94,12 @@ private fun <T> intTFunction(interpreter: Interpreter, f: (List<Int>) -> T?, tok
     }
 }
 
-private fun intFunction(interpreter: Interpreter, f: (List<Int>) -> Int?): EnvFunction {
-    return intTFunction(interpreter, f, { TokenType.Int }, SyntaxKind.IntLiteral)
+private fun intFunction(f: (List<Int>) -> Int?): EnvFunction {
+    return intTFunction(f, { TokenType.Int }, SyntaxKind.IntLiteral)
 }
 
-private fun intBoolFunction(interpreter: Interpreter, f: (List<Int>) -> Boolean): EnvFunction {
-    return intTFunction(interpreter, f, { if (it) TokenType.TrueLiteral else TokenType.FalseLiteral }, SyntaxKind.BoolLiteral)
+private fun intBoolFunction(f: (List<Int>) -> Boolean): EnvFunction {
+    return intTFunction(f, { if (it) TokenType.TrueLiteral else TokenType.FalseLiteral }, SyntaxKind.BoolLiteral)
 }
 
 
@@ -109,7 +109,7 @@ class InterpreterException(reason: String, val range: TextRange) : Exception(rea
     }
 }
 
-class Env(globalScope: MutableMap<String, EnvironmentEntry>) {
+class InterpreterEnv(globalScope: MutableMap<String, EnvironmentEntry>) {
     val envStack = ArrayDeque<MutableMap<String, EnvironmentEntry>>()
 
     init {
@@ -141,21 +141,19 @@ class Env(globalScope: MutableMap<String, EnvironmentEntry>) {
     }
 }
 
+val standardEnvFunctions: MutableMap<String, EnvironmentEntry> = mutableMapOf(
+        "+" to intFunction { it.sum() },
+        "*" to intFunction { it.reduce { acc, i -> acc * i } },
+        "-" to intFunction { it[0] - it.drop(1).sum() },
+        "/" to intFunction { it[0] / it.drop(1).reduce { acc, i -> acc * i } },
+        ">" to intBoolFunction { list -> list.drop(1).all { it < list[0] } },
+        "<" to intBoolFunction { list -> list.drop(1).all { it > list[0] } },
+        "=" to intBoolFunction { list -> list.drop(1).all { it == list[0] } },
+        "print" to intBoolFunction { println(it);true }
+)
 
-class Interpreter(internal val env: Env = Env(hashMapOf())) {
-    init {
-        val envFunctions: MutableMap<String, EnvironmentEntry> = mutableMapOf(
-                "+" to intFunction(this) { it.sum() },
-                "*" to intFunction(this) { it.reduce { acc, i -> acc * i } },
-                "-" to intFunction(this) { it[0] - it.drop(1).sum() },
-                "/" to intFunction(this) { it[0] / it.drop(1).reduce { acc, i -> acc * i } },
-                ">" to intBoolFunction(this) { list -> list.drop(1).all { it < list[0] } },
-                "<" to intBoolFunction(this) { list -> list.drop(1).all { it > list[0] } },
-                "=" to intBoolFunction(this) { list -> list.drop(1).all { it == list[0] } },
-                "print" to intBoolFunction(this) { println(it);true }
-        )
-        env.enterScope(envFunctions)
-    }
+
+class Interpreter(internal val env: InterpreterEnv = InterpreterEnv(standardEnvFunctions)) {
 
     // assumes no macro inside
     @Throws(InterpreterException::class)
@@ -211,12 +209,12 @@ class Interpreter(internal val env: Env = Env(hashMapOf())) {
                 when (entry) {
                     is FunctionLike -> {
                         //                                if (entry.parameters.size != childrenCount - 1) err("Wrong count of args for call, ${entry.parameters.size} expected", node)
-                        entry.call(children.drop(1))
+                        entry.call(children.drop(1), this)
                     }
                     is Variable -> {
                         val fn = asFunction(entry.value) ?: err("Variable $firstNodeText refers not to function", node)
                         //                                if (fn.parameters.size != childrenCount - 1) err("Wrong count of args for call, ${fn.parameters.size} expected", node)
-                        fn.call(children.drop(1))
+                        fn.call(children.drop(1), this)
                     }
                 }
             }
@@ -319,14 +317,14 @@ class Interpreter(internal val env: Env = Env(hashMapOf())) {
     private fun extractFunction(childrenCount: Int, node: AstNode, children: List<AstNode>): AstFunction {
         return extractFunctionLike(childrenCount, node, children) {
             name, _, parameters, body, interpreter ->
-            AstFunction(name, node, parameters, body, interpreter)
+            AstFunction(name, parameters, body)
         }
     }
 
     private fun extractMacro(childrenCount: Int, node: AstNode, children: List<AstNode>): Macro {
         return extractFunctionLike(childrenCount, node, children) {
             name, _, parameters, body, interpreter ->
-            Macro(name, parameters, body, interpreter)
+            Macro(name, parameters, body)
         }
     }
 

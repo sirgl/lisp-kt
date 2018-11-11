@@ -1,15 +1,13 @@
 package deps
 
-import lexer.LexerImpl
-import parser.*
-import util.InMemorySource
 import util.ResultWithLints
+import withText
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import InMemoryFileInfo
+import MultifileAstBasedTest
 
-class DependencyTest {
-    private val lexer = LexerImpl()
-    private val parser = Parser()
+class DependencyTest : MultifileAstBasedTest() {
 
     @Test
     fun `test single dep`() {
@@ -66,13 +64,7 @@ main
     }
 
     private fun testDependencies(expectedDeps: String, files: List<InMemoryFileInfo>) {
-        val asts = files.map {
-            Ast(when (
-                val res = parser.parse(lexer.tokenize(it.text))) {
-                is ParseResult.Ok -> res.node
-                else -> throw IllegalStateException()
-            }, InMemorySource(it.text, it.name))
-        }
+        val asts = buildAsts(files)
         val dependencyGraphBuilder = DependencyGraphBuilder(asts)
         val graph = dependencyGraphBuilder.build()
         val lintsText = graph.lints.joinToString { it.toString() }
@@ -95,9 +87,5 @@ main
         }.trim()
         assertEquals(expectedDeps, actual)
     }
-
-    private class InMemoryFileInfo(val text: String, val name: String)
-
-    private infix fun String.withText(text: String): InMemoryFileInfo = InMemoryFileInfo(text, this)
 }
 

@@ -12,7 +12,8 @@ sealed class DependencyEntry {
 
 class RealDependencyEntry(
         val ast: Ast,
-        override val dependencies: List<DependencyEntry>
+        override val dependencies: List<DependencyEntry>,
+        val index: Int // Index in all asts list
 ) : DependencyEntry() {
     override fun toString(): String {
         return ast.source.path
@@ -36,6 +37,21 @@ fun DependencyEntry.bfs(f: (DependencyEntry) -> Unit) {
             if (dependency in passed) continue
             queue.add(dependency)
         }
+    }
+}
+
+fun DependencyEntry.dfs(f: (DependencyEntry) -> Unit) {
+    val stack = ArrayDeque<DependencyEntry>()
+    val passed = hashSetOf<DependencyEntry>()
+    stack.push(this)
+    while (stack.isNotEmpty()) {
+        val entry = stack.pop()
+        passed.add(entry)
+        for (dependency in entry.dependencies) {
+            if (dependency in passed) continue
+            stack.add(dependency)
+        }
+        f(entry)
     }
 }
 
@@ -67,8 +83,9 @@ class DependencyGraphBuilder(val asts: List<Ast>) {
                 dependencyMap[index] = depList
             }
         }
+        // TODO take care of possible imports that was not taken into account in loop
         // Building graph out of facts about every module
-        val dependencyList = asts.map { RealDependencyEntry(it, mutableListOf()) }
+        val dependencyList = asts.mapIndexed { astIndex, ast -> RealDependencyEntry(ast, mutableListOf(), astIndex) }
         for ((index, dependencies) in dependencyMap) {
             val entry = dependencyList[index]
             val entryDependencies = entry.dependencies as MutableList<DependencyEntry>
