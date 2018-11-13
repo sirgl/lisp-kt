@@ -272,8 +272,10 @@ private class UnitHirLowering(
                     else -> throw IllegalStateException()
                 }
             }
-            is DataNode -> HirListLiteral(node.children.map { lowerLiteral(it) })
-            is ListNode, is FileNode -> throw IllegalStateException()
+            is DataNode -> HirListLiteral(node.node.children.map { lowerLiteral(it) })
+            // ListNode is possible as literal only inside DataNode
+            is ListNode -> HirListLiteral(node.children.map { lowerLiteral(it) })
+            is FileNode -> throw IllegalStateException()
         }
     }
 

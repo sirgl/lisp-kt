@@ -101,6 +101,23 @@ File
     }
 
     @Test
+    fun `test top level data`() {
+        testHirLowering("""
+main:
+File
+  Function declaration: (main) main__init
+    Block expr
+      List literal
+        Identifier literal: while
+        Bool literal: true
+        Int literal: 1
+        Int literal: 2
+        """, listOf(
+                "main" withText "`(while #t 1 2)"
+        ))
+    }
+
+    @Test
     fun `test top level call`() {
         testHirLowering("""
 main:
@@ -201,7 +218,6 @@ File
         val graph: List<DependencyEntry> = dependencyGraphBuilder.build().unwrap()
         val finalAsts = expander.expand(asts, graph[targetIndex]).unwrap()
         val newGraph = graph[targetIndex].remapToNewAst(finalAsts)
-        // TODO remap graph to new ast
         val lowering = HirLowering(emptyList())
         val actual = buildString {
             val loweringResult = lowering.lower(newGraph[targetIndex])
