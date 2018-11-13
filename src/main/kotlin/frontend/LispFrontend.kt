@@ -3,6 +3,8 @@ package frontend
 import analysis.AppendingSink
 import deps.DependencyGraphBuilder
 import deps.DependencyVerifier
+import deps.remapToNewAst
+import hir.HirImport
 import hir.HirLowering
 import lexer.Lexer
 import lexer.TokenValidator
@@ -59,6 +61,8 @@ class LispFrontend(
         }
         val target = dependencyGraph[targetIndex]
         val finalAsts = macroExpander.expand(asts, target).drainTo(lints) ?: return ResultWithLints.Error(lints)
+        val finalGraph = target.remapToNewAst(finalAsts)
+        val hirFiles = hirLowering.lower(finalGraph[targetIndex]).drainTo(lints) ?: return ResultWithLints.Error(lints)
 
 
 

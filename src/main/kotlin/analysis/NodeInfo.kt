@@ -53,3 +53,8 @@ class WhileNodeInfo(
         val condition: AstNode,
         val body: List<AstNode>
 ) : NodeInfo()
+
+class SetNodeInfo(
+        val name: String,
+        val newValue: AstNode
+) : NodeInfo()

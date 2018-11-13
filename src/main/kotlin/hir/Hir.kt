@@ -140,12 +140,12 @@ class HirWhileExpr(val condition: HirExpr, val body: HirBlockExpr) : HirExpr() {
     }
 }
 
-class HirAssignStmt(val name: String, val initializer: HirExpr, val decl: HirVarDeclStmt) : HirStmt() {
+class HirAssignExpr(val name: String, val initializer: HirExpr, val decl: HirVarDeclaration) : HirExpr() {
     override val children: List<HirNode>
         get() = listOf(initializer)
 
     override fun prettySelf(): String {
-        return "Assign stmt: $name"
+        return "Assign expr: $name"
     }
 }
 

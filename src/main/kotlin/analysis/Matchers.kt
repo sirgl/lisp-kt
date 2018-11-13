@@ -127,6 +127,17 @@ object Matchers {
         WhileNodeInfo(condition, children.drop(2))
     }
 
+    val SET = ListMatcher(Keywords.SET_KW, object: Validator {
+        override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
+            verifyCountExact(node, "Set", 3, source, lintSink)
+            verifyName(node.children[1], "Name", source, lintSink)
+        }
+    }) { node ->
+        val children = node.children
+        val name = (children[1] as LeafNode).token.text
+        SetNodeInfo(name, children[2])
+    }
+
     private fun LintSink.addError(text: String, node: AstNode, source: Source) {
         addLint(Lint(text, node.textRange, Severity.Error, Subsystem.Verification, source))
     }

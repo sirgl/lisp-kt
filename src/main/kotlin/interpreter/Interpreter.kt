@@ -15,14 +15,15 @@ sealed class FunctionLike : EnvironmentEntry() {
 }
 
 class Macro(val name: String, val parameters: List<String>, val body: List<AstNode>) : FunctionLike() {
-    // It is recursive macro expansion
+    // TODO actually, it is not recursive expansion
+    // Actual recursive work should be done in macro expander
     override fun call(args: List<AstNode>, interpreter: Interpreter): AstNode {
         val scope = parameters.zip(args).associateBy({ it.first }) { it.second }
         var body = body
         var transforms = 0
         while (true) {
             val expansionResult = singleExpansion(body, scope, interpreter)
-            if (expansionResult.wasTransformation) return expansionResult.node
+            if (!expansionResult.wasTransformation) return expansionResult.node
             body = expansionResult.newBody
             transforms++
             if (transforms > 1000) throw InterpreterException("Macros is too deep", body.first().textRange)
@@ -35,15 +36,19 @@ class Macro(val name: String, val parameters: List<String>, val body: List<AstNo
             val wasTransformation: Boolean
     )
 
+
     private fun singleExpansion(body: List<AstNode>, scope: Map<String, AstNode>, interpreter: Interpreter) : ExpansionResult {
         var wasTransformation = false
         val replacedBody = body.map { bodyNode ->
             transform(bodyNode) { leafNode ->
                 if (leafNode.token.type != TokenType.Identifier) {
-                    wasTransformation = true
                     leafNode
                 } else {
-                    scope[leafNode.token.text] ?: leafNode
+                    val astNode = scope[leafNode.token.text]
+                    if (astNode != null) {
+                        wasTransformation = true
+                        astNode
+                    } else leafNode
                 }
             }
         }

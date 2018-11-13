@@ -44,20 +44,20 @@ private class MacroExpansionContext(asts: List<Ast>, val target: DependencyEntry
             val realDependencyEntry = it as RealDependencyEntry
             val ast = realDependencyEntry.ast
             val source = ast.source
-            newAsts[realDependencyEntry.index] = Ast(expandFile(ast.root, macroEnv, source), source)
+            newAsts[realDependencyEntry.index] = Ast(expandFileRecursive(ast.root, macroEnv, source), source)
         }
     }
 
-    private fun expandWithContext(node: AstNode, macroEnv: MutableMap<String, EnvironmentEntry>) : AstNode {
+    private fun expandWithContext(node: AstNode, macroEnv: MutableMap<String, EnvironmentEntry>) : ExpansionResult<AstNode> {
         return when (node) {
-            is LeafNode -> node
+            is LeafNode -> ExpansionResult(node, false)
             is ListNode -> expandList(node, macroEnv)
-            is DataNode -> node
+            is DataNode -> ExpansionResult(node, false)
             is FileNode -> throw IllegalStateException()
         }
     }
 
-    private fun expandList(node: ListNode, macroEnv: MutableMap<String, EnvironmentEntry>) : AstNode {
+    private fun expandList(node: ListNode, macroEnv: MutableMap<String, EnvironmentEntry>) : ExpansionResult<AstNode> {
         val children = node.children
         if (children.isNotEmpty()) {
             val nameNode = children.first() as? LeafNode
@@ -65,17 +65,37 @@ private class MacroExpansionContext(asts: List<Ast>, val target: DependencyEntry
                 val name = nameNode.token.text
                 return if (macroEnv[name] is Macro) {
                     val env = InterpreterEnv(macroEnv)
-                    Interpreter(env).eval(node)
+                    val newBody = Interpreter(env).eval(node)
+                    ExpansionResult(newBody, true)
                 } else {
-                    node
+                    buildListExpansion(children, macroEnv, node)
                 }
-
             }
         }
-        return ListNode(children.map { expandWithContext(it, macroEnv) }, node.textRange)
+        return buildListExpansion(children, macroEnv, node)
     }
 
-    private fun expandFile(root: FileNode, macroEnv: MutableMap<String, EnvironmentEntry>, source: Source): FileNode {
+    private fun buildListExpansion(children: List<AstNode>, macroEnv: MutableMap<String, EnvironmentEntry>, node: ListNode): ExpansionResult<AstNode> {
+        val childExpansions = children.map { expandWithContext(it, macroEnv) }
+        val wasExpansion = childExpansions.any { it.wasExpansion }
+        return ExpansionResult(ListNode(childExpansions.map { it.ast }, node.textRange), wasExpansion)
+    }
+
+    // TODO it can be done on more granular level rather than file
+    private fun expandFileRecursive(root: FileNode, macroEnv: MutableMap<String, EnvironmentEntry>, source: Source) : FileNode {
+        var currentFile = root
+        var expansionCount = 0
+        while(true) {
+            val expansionResult = expandFile(currentFile, macroEnv, source)
+            if (!expansionResult.wasExpansion) return currentFile
+            currentFile = expansionResult.ast
+            expansionCount++
+            if (expansionCount == 1000) throw IllegalStateException("Too deep macro")
+        }
+    }
+
+    private fun expandFile(root: FileNode, macroEnv: MutableMap<String, EnvironmentEntry>, source: Source): ExpansionResult<FileNode> {
+        var wasExpansion = false
         val expandedChildren = root.children.mapNotNull {child ->
             when {
                 Matchers.MACRO.matches(child, source) -> {
@@ -97,17 +117,20 @@ private class MacroExpansionContext(asts: List<Ast>, val target: DependencyEntry
                     child
                 }
                 else -> {
-                    expandWithContext(child, macroEnv)
+                    val expansionResult = expandWithContext(child, macroEnv)
+                    if (!wasExpansion) {
+                        wasExpansion = expansionResult.wasExpansion
+                    }
+                    expansionResult.ast
                 }
             }
         }
-        return FileNode(expandedChildren, root.textRange)
+        return ExpansionResult(FileNode(expandedChildren, root.textRange), wasExpansion)
     }
 
-}
 
-private class FileGraphVisitor(val asts: List<Ast>, val moduleMap: MutableMap<String, Int>) {
-    fun visit(ast: Ast) {
-
-    }
+    private class ExpansionResult<T: AstNode>(
+            val ast: T,
+            val wasExpansion: Boolean
+    )
 }

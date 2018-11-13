@@ -1,6 +1,8 @@
 package hir
 
 import analysis.Matchers
+import deps.RealDependencyEntry
+import deps.dfs
 import lexer.TokenType
 import linting.Lint
 import linting.Severity
@@ -12,17 +14,30 @@ import java.util.*
 import kotlin.collections.HashMap
 
 class HirLowering(val implicitImports: List<HirImport>) {
+    fun lower(target: RealDependencyEntry): ResultWithLints<List<HirFile>> {
+        val context = LoweringContext()
+        val lints = mutableListOf<Lint>()
+        val files = mutableListOf<HirFile>()
+        target.dfs {
+            it as RealDependencyEntry
+            val ast = it.ast
+            val file = lower(ast.root, ast.source, context).drainTo(lints) ?: return ResultWithLints.Error(lints)
+            files.add(file)
+        }
+        return ResultWithLints.Ok(files)
+    }
+
     /**
      * It is important to lower in dfs order to make sure all dependencies get into context before lowering unit
      */
-    fun lower(root: FileNode, source: Source, context: LoweringContext): ResultWithLints<HirFile> {
-        return UnitHirLowering(root, this, source, context).lower()
+    private fun lower(root: FileNode, source: Source, context: LoweringContext): ResultWithLints<HirFile> {
+        return UnitHirLowering(root, source, context, implicitImports).lower()
     }
 
 }
 
 
-class LoweringContext {
+private class LoweringContext {
     val resolveStack: Deque<MutableMap<String, HirDeclaration>> = ArrayDeque()
     init {
         enterScope()
@@ -63,8 +78,13 @@ class LoweringContext {
     }
 }
 
-private class UnitHirLowering(val root: AstNode, val lowering: HirLowering, val source: Source, val context: LoweringContext) {
-    val imports = mutableListOf<HirImport>()
+private class UnitHirLowering(
+        val root: AstNode,
+        val source: Source,
+        val context: LoweringContext,
+        implicitImports: List<HirImport>
+) {
+    val imports = implicitImports.toMutableList()
     val lints = mutableListOf<Lint>()
     val functions = mutableListOf<HirFunctionDeclaration>()
     var moduleName: String? = null
@@ -130,7 +150,9 @@ private class UnitHirLowering(val root: AstNode, val lowering: HirLowering, val 
             is DataNode -> lowerLiteral(node)
             is FileNode -> throw IllegalStateException()
             is ListNode -> {
-                when {
+                if (node.children.isEmpty()) {
+                    emptyListLiteral()
+                } else when {
                     Matchers.MODULE.matches(node, source) -> {
                         if (!isTopLevel) {
                             errorLint("Module declaration are allowed only on top level", node.textRange)
@@ -184,7 +206,7 @@ private class UnitHirLowering(val root: AstNode, val lowering: HirLowering, val 
                         val thenBranch = lowerExpr(ifInfo.thenBranch) ?: return null
                         val elseNode = ifInfo.elseBranch
                         val elseBranch = if (elseNode == null) {
-                            HirListLiteral(emptyList())
+                            emptyListLiteral()
                         } else {
                             lowerExpr(elseNode)
                         } ?: return null
@@ -195,6 +217,17 @@ private class UnitHirLowering(val root: AstNode, val lowering: HirLowering, val 
                         val condition = lowerExpr(whileInfo.condition) ?: return null
                         val block = lowerBlock(whileInfo.body) ?: return null
                         HirWhileExpr(condition, block)
+                    }
+                    Matchers.SET.matches(node, source) -> {
+                        val setInfo = Matchers.SET.extract(node, source).drainTo(lints) ?: return null
+                        val newValue = lowerExpr(setInfo.newValue) ?: return null
+                        val name = setInfo.name
+                        val varDeclaration = context.resolve(name) as? HirVarDeclaration
+                        if (varDeclaration == null) {
+                            errorLint("Unresolved variable reference: $name", node.textRange)
+                            return null
+                        }
+                        HirAssignExpr(name, newValue, varDeclaration)
                     }
                     else -> {
                         val children = node.children
@@ -215,6 +248,7 @@ private class UnitHirLowering(val root: AstNode, val lowering: HirLowering, val 
                             errorLint("Unresolved function reference: $name", first.textRange)
                             return null
                         }
+                        // TODO check parameter count
                         HirLocalCallExpr(name, args, declaration)
                     }
                 }
@@ -243,7 +277,9 @@ private class UnitHirLowering(val root: AstNode, val lowering: HirLowering, val 
         }
     }
 
-    private fun emptyBlock() = HirBlockExpr(emptyList(), HirListLiteral(emptyList()))
+    private fun emptyBlock() = HirBlockExpr(emptyList(), emptyListLiteral())
+
+    private fun emptyListLiteral() = HirListLiteral(emptyList())
 
 
     private fun errorLint(text: String, textRange: TextRange) {

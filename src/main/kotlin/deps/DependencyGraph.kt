@@ -10,6 +10,28 @@ sealed class DependencyEntry {
     abstract val dependencies: List<DependencyEntry>
 }
 
+/**
+ * Expected, that no Unsatisfied dependencies present in graph
+ * All indices must be aligned with initial ast list
+ */
+fun DependencyEntry.remapToNewAst(newAst: List<Ast>): List<RealDependencyEntry> {
+    val nodeDependencies = hashMapOf<Int, List<Int>>()
+    dfs { entry ->
+        entry as RealDependencyEntry
+        nodeDependencies[entry.index] = entry.dependencies.map { entryDeps -> (entryDeps as RealDependencyEntry).index }
+    }
+    val newDependencies = newAst
+            .mapIndexed {index, ast -> RealDependencyEntry(ast, mutableListOf(), index)  }
+    for (index in 0 until newAst.size) {
+        val deps = nodeDependencies[index]!!
+        val depList = newDependencies[index].dependencies as MutableList<DependencyEntry>
+        for (depIndex in deps) {
+            depList.add(newDependencies[depIndex])
+        }
+    }
+    return newDependencies
+}
+
 class RealDependencyEntry(
         val ast: Ast,
         override val dependencies: List<DependencyEntry>,
@@ -40,7 +62,7 @@ fun DependencyEntry.bfs(f: (DependencyEntry) -> Unit) {
     }
 }
 
-fun DependencyEntry.dfs(f: (DependencyEntry) -> Unit) {
+inline fun DependencyEntry.dfs(f: (DependencyEntry) -> Unit) {
     val stack = ArrayDeque<DependencyEntry>()
     val passed = hashSetOf<DependencyEntry>()
     stack.push(this)
