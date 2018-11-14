@@ -7,7 +7,7 @@ class MirBuilderContext(
         private var nextFunctionId: Int = 0
 
 ) {
-    private val functionToId: MutableMap<HirFunctionDeclaration, Int> = mutableMapOf()
+    private val functionToId: MutableMap<HirFunctionDeclaration, Int> = hashMapOf()
 
     fun addFunction(function: HirFunctionDeclaration, id: Int) {
         functionToId[function] = id
@@ -27,7 +27,7 @@ class MirFunctionBuilder(val name: String, val isMain: Boolean = false, val cont
     private var currentBasicBlock = mutableListOf<MirInstr>()
     private val blocks = mutableListOf<MirBasicBlock>()
     private var nextBlockIndex: Short = 0
-    private val varTable: MutableMap<HirVarDeclaration, Short> = mutableMapOf()
+    private val varTable: MutableMap<HirVarDeclaration, Short> = hashMapOf()
     private var nextVarIndex: Short = 0
     private var nextIfMergeIndex = 0
 
