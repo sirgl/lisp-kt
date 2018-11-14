@@ -5,6 +5,7 @@ import hir.*
 class MirLowering {
     fun lower(files: List<HirFile>) : List<MirFile> {
         val context = MirBuilderContext()
+        // TODO lower it in correct order, otherwise some cross file declaration uses may fail to lower
         return files.map { lower(it, context) }
     }
 
@@ -62,7 +63,8 @@ private class MirFunctionLowering(
             }
             is HirIdentifierLiteral -> builder.emit(MirLoadValueInstr(MirValue.MirSymbol(expr.name)))
             is HirFunctionReference -> {
-                TODO()
+                val functionId = builder.getFunctionId(expr.decl)
+                builder.emit(MirGetFunctionReference(functionId))
             }
             is HirVarReference -> builder.emit(MirLoadInstr(builder.getVarId(expr.decl)))
         }

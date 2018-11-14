@@ -242,7 +242,7 @@ class HirIdentifierLiteral(val name: String) : HirLiteralExpr() {
 
 }
 
-class HirFunctionReference(val name: String, val declaration: HirFunctionDeclaration) : HirLiteralExpr() {
+class HirFunctionReference(val name: String, val decl: HirFunctionDeclaration) : HirLiteralExpr() {
     override fun prettySelf(): String {
         return "Function reference: $name"
     }
