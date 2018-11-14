@@ -29,9 +29,11 @@ private class MirFunctionLowering(
         if (function.isMain) {
             // TODO add imports
         }
-        // TODO add parameter instructions
+        for (parameter in function.params) {
+            builder.addVariable(parameter)
+        }
         lowerExpr(function.body)
-        return builder.finishFunction()
+        return builder.finishFunction(function)
     }
 
     fun lowerExpr(expr: HirExpr) : MirInstrId {
@@ -42,11 +44,11 @@ private class MirFunctionLowering(
                 }
                 lowerExpr(expr.expr)
             }
-            is HirWhileExpr -> TODO()
-            is HirAssignExpr -> TODO()
+            is HirWhileExpr -> lowerWhile(expr)
+            is HirAssignExpr -> builder.emit(MirStoreInstr(builder.getVarId(expr.decl), lowerExpr(expr.rValue)))
             is HirGlobalCallExpr -> TODO() // probably, I should remove it
-            is HirLocalCallExpr -> TODO()
-            is HirIfExpr -> TODO()
+            is HirLocalCallExpr -> lowerCall(expr)
+            is HirIfExpr -> lowerIf(expr)
             is HirBoolLiteral -> builder.emit(MirLoadValueInstr(MirValue.MirBool(expr.value, true)))
             is HirIntLiteral -> builder.emit(MirLoadValueInstr(MirValue.MirInt(expr.value, true)))
             // TODO native strings for c interop
@@ -54,7 +56,7 @@ private class MirFunctionLowering(
             is HirListLiteral -> {
                 var listId = builder.emit(MirLoadValueInstr(MirValue.MirEmptyList))
                 for (literal in expr.literals) {
-                    listId = builder.emit(MirAddElementInstr(lowerExpr(literal), listId))
+                    listId = builder.emit(MirWithElementInstr(lowerExpr(literal), listId))
                 }
                 listId
             }
@@ -62,14 +64,87 @@ private class MirFunctionLowering(
             is HirFunctionReference -> {
                 TODO()
             }
-            is HirVarReference -> TODO()
+            is HirVarReference -> builder.emit(MirLoadInstr(builder.getVarId(expr.decl)))
         }
+    }
+
+    private fun lowerCall(expr: HirLocalCallExpr): MirInstrId {
+        val args = expr.args
+        val exprIds = Array(args.size) { index -> lowerExpr(args[index]) }
+        val functionId = builder.getFunctionId(expr.decl)
+        return builder.emit(MirCallInstr(functionId, exprIds))
+    }
+
+    private fun lowerWhile(expr: HirWhileExpr): MirInstrId {
+        // condition
+        val conditionId = lowerExpr(expr.condition)
+        val conditionJumpInstr = MirCondJumpInstruction(conditionId)
+        builder.emit(conditionJumpInstr)
+        val conditionBlock = builder.finishBlock()
+
+        // body
+        lowerExpr(expr.body)
+        val jumpBackToCondition = MirGotoInstruction()
+        jumpBackToCondition.basicBlockIndex = conditionBlock
+        builder.emit(jumpBackToCondition)
+        val bodyBlockId = builder.finishBlock()
+
+        // setup jump targets
+        val afterWhileBlockId = builder.currentBlockId()
+        conditionJumpInstr.thenBlockIndex = bodyBlockId
+        conditionJumpInstr.elseBlockIndex = afterWhileBlockId
+
+        //result of while loop is empty list
+        return builder.emit(MirLoadValueInstr(MirValue.MirEmptyList))
+    }
+
+    private fun lowerIf(expr: HirIfExpr): MirInstrId {
+        // condition
+        val conditionId = lowerExpr(expr.condition)
+        val conditionJumpInstr = MirCondJumpInstruction(conditionId)
+        builder.emit(conditionJumpInstr)
+        builder.finishBlock()
+        // if is expression, so we need to return result
+        // In both branches we compute expressions and assign it to newly created merge variable
+        val mergeVarName = builder.nextIfMergeVarName()
+        val mergeVar = object : HirVarDeclaration {
+            override val name: String = mergeVarName
+        }
+        val mergeVarIndex = builder.addVariable(mergeVar)
+
+        // then branch
+        val thenBranchResultId = lowerExpr(expr.thenBranch)
+        val thenGotoEnd = MirGotoInstruction()
+        builder.emit(MirStoreInstr(mergeVarIndex, thenBranchResultId))
+        builder.emit(thenGotoEnd)
+        val thenBlockId = builder.finishBlock()
+
+        // else branch
+        val elseBranchResultId = lowerExpr(expr.elseBranch)
+        val elseGotoEnd = MirGotoInstruction()
+        builder.emit(MirStoreInstr(mergeVarIndex, elseBranchResultId))
+        builder.emit(elseGotoEnd)
+        val elseBlockId = builder.finishBlock()
+
+        // setup jump targets
+        val afterIfBlockId = builder.currentBlockId()
+        thenGotoEnd.basicBlockIndex = afterIfBlockId
+        elseGotoEnd.basicBlockIndex = afterIfBlockId
+        conditionJumpInstr.thenBlockIndex = thenBlockId
+        conditionJumpInstr.elseBlockIndex = elseBlockId
+
+        //merged paths variable
+        return builder.emit(MirLoadInstr(mergeVarIndex))
     }
 
     fun lowerStmt(stmt: HirStmt) {
         when (stmt) {
             is HirExprStmt -> lowerExpr(stmt.expr)
-            is HirVarDeclStmt -> TODO()
+            is HirVarDeclStmt -> {
+                builder.addVariable(stmt)
+                val initializerId = lowerExpr(stmt.initializer)
+                builder.emit(MirStoreInstr(builder.getVarId(stmt), initializerId))
+            }
         }
     }
 }

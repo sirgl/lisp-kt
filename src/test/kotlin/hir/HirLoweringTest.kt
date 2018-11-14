@@ -211,6 +211,21 @@ File
         ))
     }
 
+
+
+    @Test
+    fun `test call by variable`() {
+        testHirLowering("""
+main:
+File
+TODO !!!!
+        """, listOf(
+                "main" withText """
+        (let ((f (defn foo () ()))) (f))
+                """.trimIndent()
+        ))
+    }
+
     private fun testHirLowering(expectedHirPrint: String, files: List<InMemoryFileInfo>, targetIndex: Int = 0) {
         val asts = buildAsts(files)
         val expander = MacroExpander()

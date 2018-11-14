@@ -1,6 +1,9 @@
 package analysis
 
 import lexer.TokenType
+import linting.CollectingSink
+import linting.HasErrorsSink
+import linting.LintSink
 import linting.Severity
 import parser.AstNode
 import parser.LeafNode

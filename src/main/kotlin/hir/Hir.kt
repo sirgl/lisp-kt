@@ -140,9 +140,9 @@ class HirWhileExpr(val condition: HirExpr, val body: HirBlockExpr) : HirExpr() {
     }
 }
 
-class HirAssignExpr(val name: String, val initializer: HirExpr, val decl: HirVarDeclaration) : HirExpr() {
+class HirAssignExpr(val name: String, val rValue: HirExpr, val decl: HirVarDeclaration) : HirExpr() {
     override val children: List<HirNode>
-        get() = listOf(initializer)
+        get() = listOf(rValue)
 
     override fun prettySelf(): String {
         return "Assign expr: $name"
@@ -171,7 +171,7 @@ class HirGlobalCallExpr(
 class HirLocalCallExpr(
         name: String,
         args: List<HirExpr>,
-        val declaration: HirFunctionDeclaration
+        val decl: HirFunctionDeclaration
 ) : HirCallExpr(name, args) {
     override fun prettySelf(): String {
         return "Local call: $name"
@@ -251,7 +251,7 @@ class HirFunctionReference(val name: String, val declaration: HirFunctionDeclara
         get() = emptyList()
 }
 
-class HirVarReference(val name: String, val declaration: HirVarDeclaration) : HirLiteralExpr() {
+class HirVarReference(val name: String, val decl: HirVarDeclaration) : HirLiteralExpr() {
     override fun prettySelf(): String {
         return "Var reference: $name"
     }

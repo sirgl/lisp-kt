@@ -1,6 +1,6 @@
 package lexer
 
-import analysis.LintSink
+import linting.LintSink
 import linting.Lint
 import linting.Severity
 import linting.Subsystem

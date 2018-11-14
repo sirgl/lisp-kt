@@ -8,20 +8,20 @@ sealed class MirInstr {
 
     lateinit var id: MirInstrId
 
-    protected open fun computeReturnType(resolver: MirResolver) : MirInstrResultType = MirInstrResultType.NoType
+    protected open fun computeReturnType(resolver: MirTypeResolver): MirInstrResultType = MirInstrResultType.NoType
 
     /**
      *  Indices of values, which result type is dependant on
      */
-    open fun computeDependantIndices() : Array<MirInstrId> = arrayOf()
+    open fun computeDependantIndices(): Array<MirInstrId> = arrayOf()
 
-    fun getReturnType(resolver: MirResolver): MirInstrResultType {
+    fun getReturnType(resolver: MirTypeResolver): MirInstrResultType {
         if (memo == null) {
 
             val resultType = computeReturnType(resolver)
             val dependantIndices = computeDependantIndices()
-            val dependantTypes = Array(dependantIndices.size) {
-                index -> resolver.resolveResultType(dependantIndices[index])
+            val dependantTypes = Array(dependantIndices.size) { index ->
+                resolver.resolveResultType(dependantIndices[index])
             }
             memo = Memo(resultType, dependantTypes)
         }
@@ -49,6 +49,10 @@ sealed class MirInstr {
         }
         return -1
     }
+
+    abstract fun pretty(strategy: PrettyPrintStrategy): String
+
+    override fun toString(): String = pretty(defaultPrintStrategy)
 }
 
 /**
@@ -56,44 +60,41 @@ sealed class MirInstr {
  */
 sealed class MirValueInstr : MirInstr()
 
-sealed class MirTagAddInstr : MirInstr()
+sealed class MirTagAddInstr : MirInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return "tag"
+    }
+}
 
-object MirAddIntTagInstr : MirTagAddInstr()
-object MirAddBoolTagInstr : MirTagAddInstr()
+object MirAddIntTagInstr : MirTagAddInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return super.pretty(strategy) + " int"
+    }
+}
+
+object MirAddBoolTagInstr : MirTagAddInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return super.pretty(strategy) + " bool"
+    }
+}
 
 // TODO is it required?
-object MirAddObjTagInstr : MirTagAddInstr()
+object MirAddObjTagInstr : MirTagAddInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return super.pretty(strategy) + " obj"
+    }
+}
 
 // TODO untag?
 
 
-sealed class MirBinaryIntInstr(val opType: MirBinaryOpType) : MirInstr()
-
-class MirBinaryImmediateRightInstr(
-        opType: MirBinaryOpType,
-        val leftId: MirInstrId
-) : MirBinaryIntInstr(opType) {
-    override fun computeDependantIndices(): Array<MirInstrId> {
-        return arrayOf(leftId)
-    }
-}
-
-class MirBinaryImmediateLeftInstr(
-        opType: MirBinaryOpType,
-        val rightId: MirInstrId
-) : MirBinaryIntInstr(opType) {
-    override fun computeDependantIndices(): Array<MirInstrId> {
-        return arrayOf(rightId)
-    }
-}
-
-class MirBinaryImmediateFullInstr(
-        opType: MirBinaryOpType,
+sealed class MirBinaryIntInstr(
+        val opType: MirBinaryOpType,
         val leftId: MirInstrId,
         val rightId: MirInstrId
-) : MirBinaryIntInstr(opType) {
-    override fun computeDependantIndices(): Array<MirInstrId> {
-        return arrayOf(leftId, rightId)
+) : MirInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return "binary $opType ${strategy.instrIdRenderer.render(leftId)}, ${strategy.instrIdRenderer.render(rightId)}"
     }
 }
 
@@ -114,29 +115,120 @@ enum class MirBinaryOpType {
     And
 }
 
-class MirLoadValueInstr(value: MirValue) : MirValueInstr()
-
-sealed class MirValue {
-    class MirInt(val value: Int, val tagged: Boolean) : MirValue()
-    class MirBool(val value: Boolean, val tagged: Boolean) : MirValue()
-    class MirString(val value: String, val isNative: Boolean) : MirValue()
-    class MirSymbol(val value: String) : MirValue()
-    object MirEmptyList : MirValue()
+class MirLoadValueInstr(val value: MirValue) : MirValueInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return "load $value"
+    }
 }
 
-class MirAddElementInstr(val value: MirInstrId, val listId: MirInstrId) : MirValueInstr()
+sealed class MirValue {
 
-class MirGetFunctionReference(val functionId: Int): MirValueInstr()
+    class MirInt(val value: Int, val tagged: Boolean) : MirValue() {
+        override fun toString(): String {
+            return printValue(value.toString(), "i32", tagged)
+        }
+    }
+
+    class MirBool(val value: Boolean, val tagged: Boolean) : MirValue() {
+        override fun toString(): String {
+            return printValue(value.toString(), "bool", tagged)
+        }
+    }
+    class MirString(val value: String, val isNative: Boolean) : MirValue() {
+        override fun toString(): String {
+            return printValue(value, "string", !isNative)
+        }
+    }
+    class MirSymbol(val value: String) : MirValue() {
+        override fun toString(): String {
+            return printValue(value, "symbol", false)
+        }
+    }
+    object MirEmptyList : MirValue() {
+        override fun toString(): String {
+            return "()"
+        }
+    }
+
+    protected fun printValue(value: String, type: String, tagged: Boolean) : String {
+        return buildString {
+            append("$value: $type")
+            if (tagged) {
+                append(" (tagged)")
+            }
+        }
+    }
+}
+
+class MirWithElementInstr(val valueId: MirInstrId, val listId: MirInstrId) : MirValueInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return "with_element list: ${strategy.instrIdRenderer.render(valueId)}, value: ${strategy.instrIdRenderer.render(valueId)}"
+    }
+
+    override fun computeDependantIndices(): Array<MirInstrId> {
+        return arrayOf(valueId, listId)
+    }
+}
+
+class MirGetFunctionReference(val functionId: Int) : MirValueInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return "get_function_reference ${strategy.functionIdRenderer.render(functionId)}"
+    }
+}
+
+class MirStoreInstr(val varId: Short, var valueId: MirInstrId) : MirValueInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return "store var: ${strategy.varIdRenderer.render(varId)} value: ${strategy.instrIdRenderer.render(valueId)}"
+    }
+
+    override fun computeDependantIndices(): Array<MirInstrId> {
+        return arrayOf(valueId)
+    }
+}
+
+class MirLoadInstr(val varId: Short) : MirValueInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return "load var: ${strategy.varIdRenderer.render(varId)}"
+    }
+
+}
+
+class MirCallInstr(val functionId: Int, val args: Array<MirInstrId>) : MirValueInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        val instrIdRenderer = strategy.instrIdRenderer
+        val args = args.joinToString(" ") { instrIdRenderer.render(it) }
+        return "call function: ${strategy.functionIdRenderer.render(functionId)} args: $args"
+    }
+
+    override fun computeDependantIndices(): Array<MirInstrId> {
+        return args
+    }
+}
 
 // TODO all other instructions
 
 
 sealed class MirTailInstruction : MirInstr()
 
-class MirGotoInstruction(val basicBlockIndex: Int) : MirTailInstruction()
+class MirGotoInstruction : MirTailInstruction() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return "goto ${strategy.blockIndexRenderer.render(basicBlockIndex)}"
+    }
+
+    var basicBlockIndex: Short = -1
+}
 
 class MirCondJumpInstruction(
-        val conditionId: MirInstrId,
-        val thenBlockIndex: Short,
-        val elseBlockIndex: Short
-) : MirTailInstruction()
+        val conditionId: MirInstrId
+) : MirTailInstruction() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        val condition = strategy.instrIdRenderer.render(conditionId)
+        val blockIndexRenderer = strategy.blockIndexRenderer
+        val thenBlock = blockIndexRenderer.render(thenBlockIndex)
+        val elseBlock = blockIndexRenderer.render(elseBlockIndex)
+        return "cond_jump cond: $condition then: $thenBlock else: $elseBlock"
+    }
+
+    var thenBlockIndex: Short = -1
+    var elseBlockIndex: Short = -1
+}

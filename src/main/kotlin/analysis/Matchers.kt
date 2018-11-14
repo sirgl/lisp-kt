@@ -2,6 +2,7 @@ package analysis
 
 import lexer.TokenType
 import linting.Lint
+import linting.LintSink
 import linting.Severity
 import linting.Subsystem
 import parser.AstNode

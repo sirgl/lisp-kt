@@ -1,7 +1,4 @@
-package analysis
-
-import linting.Lint
-import linting.Severity
+package linting
 
 interface LintSink {
     fun addLint(lint: Lint)

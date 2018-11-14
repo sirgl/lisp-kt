@@ -1,10 +1,9 @@
 package frontend
 
-import analysis.AppendingSink
+import linting.AppendingSink
 import deps.DependencyGraphBuilder
 import deps.DependencyVerifier
 import deps.remapToNewAst
-import hir.HirImport
 import hir.HirLowering
 import lexer.Lexer
 import lexer.TokenValidator

@@ -1,6 +1,6 @@
 package util
 
-import analysis.LintSink
+import linting.LintSink
 import linting.Lint
 
 sealed class ResultWithLints<T>(val lints: List<Lint>) {

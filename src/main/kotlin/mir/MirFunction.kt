@@ -4,13 +4,13 @@ class MirFunction(
         val name: String,
         val blocks: List<MirBasicBlock>,
         private val entryBlockIndex: Short,
+        val varCount: Short,
         val isMain: Boolean = false
-) : MirResolver {
+) : MirTypeResolver {
     val entryBlock: MirBasicBlock
     get() = blocks[entryBlockIndex.toInt()]
 
     var functionId: Int = -1
-
 
     override fun resolveResultType(instructionId: MirInstrId): MirInstrResultType {
         val basicBlockIndex = instructionId.basicBlockIndex.toInt()
@@ -18,6 +18,7 @@ class MirFunction(
         val instructionArrIndex = instructionId.instructionIndex.toInt()
         return basicBlock.instructions[instructionArrIndex].getReturnType(this)
     }
+
 
     fun usages(id: MirInstrId) : List<MirInstrId> {
         val usages = mutableListOf<MirInstrId>()
@@ -33,6 +34,6 @@ class MirFunction(
     }
 }
 
-interface MirResolver {
+interface MirTypeResolver {
     fun resolveResultType(instructionId: MirInstrId) : MirInstrResultType
 }
