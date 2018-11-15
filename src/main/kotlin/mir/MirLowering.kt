@@ -34,6 +34,7 @@ private class MirFunctionLowering(
             builder.addVariable(parameter)
         }
         lowerExpr(function.body)
+        builder.finishBlock()
         return builder.finishFunction(function)
     }
 

@@ -2,7 +2,7 @@ package frontend
 
 import linting.AppendingSink
 import deps.DependencyGraphBuilder
-import deps.DependencyVerifier
+import deps.DependencyValidator
 import deps.remapToNewAst
 import hir.HirLowering
 import lexer.Lexer
@@ -26,7 +26,7 @@ class LispFrontend(
         val hirLowering: HirLowering,
         val lirLowering: LispLirLowering,
         val targetIndex: Int,
-        val dependencyVerifier: DependencyVerifier,
+        val dependencyValidator: DependencyValidator,
         val macroExpander: MacroExpander
 ) : Frontend {
     override fun run(): ResultWithLints<World> {
@@ -54,7 +54,7 @@ class LispFrontend(
         }
         val dependencyGraphBuilder = DependencyGraphBuilder(asts)
         val dependencyGraph= dependencyGraphBuilder.build().drainTo(lints) ?: return ResultWithLints.Error(lints)
-        dependencyVerifier.verifyDependencies(dependencyGraph, lintSink)
+        dependencyValidator.validateDependencies(dependencyGraph, lintSink)
         if (lints.any { it.severity == Severity.Error }) {
             return ResultWithLints.Error(lints)
         }

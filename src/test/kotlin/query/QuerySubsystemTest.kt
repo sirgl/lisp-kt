@@ -7,7 +7,8 @@ class QuerySubsystemTest {
     @Test
     fun `test plain`() {
         val database : Database = DatabaseImpl(listOf(
-                SimpleValue(aDescriptor, A(12))
+                SimpleValue(aDescriptor, A(12)),
+                SimpleValue(dDescriptor, D(5))
         ))
         database.registerQuery(BQuery())
         database.registerQuery(CQuery())
@@ -16,29 +17,34 @@ class QuerySubsystemTest {
     }
 }
 
-class A(value: Int)
+private class A(value: Int)
+private class D(value: Int)
 
-class B(val a: A)
+private class B(val a: A)
 
-class C(val b: B)
+private class C(val b: B)
 
-val aDescriptor = SingleValueDescriptor<A>("A")
-val bDescriptor = SingleValueDescriptor<B>("B")
-val cDescriptor = SingleValueDescriptor<C>("C")
+private val aDescriptor = SingleValueDescriptor<A>("A")
+private val dDescriptor = SingleValueDescriptor<D>("D")
+private val bDescriptor = SingleValueDescriptor<B>("B")
+private val cDescriptor = SingleValueDescriptor<C>("C")
 
-class BQuery : Query<A, B> {
-    override fun doQuery(input: A): B {
-        return B(input)
+private class AD(val a: A, val d: D)
+
+private class BQuery : Query<AD, B> {
+    override fun doQuery(input: AD): B {
+        return B(input.a)
     }
 
-    override val inputDescriptor: ValueDescriptor<A>
-        get() = aDescriptor
+    private val adDescriptor = MultiValueDescriptor(listOf("A", "D")) { AD(it[0] as A, it[1] as D) }
+    override val inputDescriptor: ValueDescriptor<AD>
+        get() = adDescriptor
     override val outputDescriptor: SingleValueDescriptor<B>
         get() = bDescriptor
 }
 
 
-class CQuery : Query<B, C> {
+private class CQuery : Query<B, C> {
     override fun doQuery(input: B): C {
         return C(input)
     }

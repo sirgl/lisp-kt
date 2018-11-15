@@ -6,8 +6,8 @@ import linting.Severity
 import linting.Subsystem
 
 
-class DependencyVerifier {
-    fun verifyDependencies(dependencies: List<DependencyEntry>, lintSink: LintSink) {
+class DependencyValidator {
+    fun validateDependencies(dependencies: List<DependencyEntry>, lintSink: LintSink) {
         for (dependency in dependencies) {
             for (childDep in dependency.dependencies) {
                 if (childDep is UnsatisfiedDependencyEntry) {
