@@ -21,7 +21,6 @@ import query.*
 import util.InMemorySource
 import util.ResultWithLints
 import util.Source
-import java.io.File
 
 const val sourcesKey = "sources"
 val inputSourceDescriptor = SingleValueDescriptor<List<Source>>(sourcesKey)
@@ -220,7 +219,6 @@ class HirLoweringQuery(val hirLowering: HirLowering) : Query<HirInput, ResultWit
 }
 
 
-
 class MirLoweringQuery(val mirLowering: MirLowering) : Query<ResultWithLints<List<HirFile>>, ResultWithLints<List<MirFile>>> {
     override fun doQuery(input: ResultWithLints<List<HirFile>>): ResultWithLints<List<MirFile>> {
         if (input is ResultWithLints.Error) return ResultWithLints.Error(input.lints)
@@ -235,7 +233,7 @@ class MirLoweringQuery(val mirLowering: MirLowering) : Query<ResultWithLints<Lis
 }
 
 
-class QueryDrivenLispFrontendImpl(
+class QueryDrivenLispFrontend(
         val lexer: Lexer,
         val parser: Parser,
         val tokenValidator: TokenValidator,
@@ -246,37 +244,61 @@ class QueryDrivenLispFrontendImpl(
         val mirLowering: MirLowering
 ) {
 
+    fun compilationSession(
+            sources: List<Source>,
+            stdlib: List<Source>,
+            config: CompilerConfig
+    ) : CompilationSession {
+        return CompilationSession(this, sources, stdlib, config)
+    }
+
     fun compile(
             sources: List<Source>,
             stdlib: List<Source>,
             config: CompilerConfig
     ) {
-        val database: Database = DatabaseImpl(listOf(
-                SimpleValue(inputSourceDescriptor, sources),
-                SimpleValue(stdlibSourceDescriptor, stdlib),
-                SimpleValue(configDescriptor, config)
-        ))
-        database.registerQuery(MergedQuery())
-        database.registerQuery(TokensQuery(lexer, tokenValidator))
-        database.registerQuery(AstBuildingQuery(parser))
-        database.registerQuery(InitialDependenciesQuery(dependencyValidator))
-        database.registerQuery(MacroExpansionQuery(macroExpander))
-        database.registerQuery(DependenciesRemappingQuery())
-        database.registerQuery(HirLoweringQuery(hirLowering))
-        database.registerQuery(MirLoweringQuery(mirLowering))
-
-        val macroses = database.queryFor(mirDescriptor)
-        val file = (macroses as ResultWithLints.Ok).value.first()
-        val bbGraph = getBBGraph(file.functions[1])
+//        val macroses = compilationSession().getMir()
+//        val file = (macroses as ResultWithLints.Ok).value.first()
+//        val bbGraph = getBBGraph(file.functions[1])
 //        File("graph.dot").writeText(bbGraph)
-        println(bbGraph)
+//        println(bbGraph)
 //        println(file)
 
     }
 }
 
+class CompilationSession(
+        val frontend: QueryDrivenLispFrontend,
+        val sources: List<Source>,
+        val stdlib: List<Source>,
+        val config: CompilerConfig
+) {
+    private fun getDb(): Database {
+        val database: Database = DatabaseImpl(listOf(
+                SimpleValue(inputSourceDescriptor, sources),
+                SimpleValue(stdlibSourceDescriptor, stdlib),
+                SimpleValue(configDescriptor, config)
+        ))
+        with(frontend) {
+            database.registerQuery(MergedQuery())
+            database.registerQuery(TokensQuery(lexer, tokenValidator))
+            database.registerQuery(AstBuildingQuery(parser))
+            database.registerQuery(InitialDependenciesQuery(dependencyValidator))
+            database.registerQuery(MacroExpansionQuery(macroExpander))
+            database.registerQuery(DependenciesRemappingQuery())
+            database.registerQuery(HirLoweringQuery(hirLowering))
+            database.registerQuery(MirLoweringQuery(mirLowering))
+            return database
+        }
+    }
+
+    fun getMir(): ResultWithLints<List<MirFile>> {
+        return getDb().queryFor(mirDescriptor)
+    }
+}
+
 fun main(args: Array<String>) {
-    val frontend = QueryDrivenLispFrontendImpl(
+    val frontend = QueryDrivenLispFrontend(
             LexerImpl(),
             Parser(),
             TokenValidator(),

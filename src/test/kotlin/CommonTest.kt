@@ -1,7 +1,15 @@
+import deps.DependencyValidator
+import frontend.LispLirLowering
+import frontend.QueryDrivenLispFrontend
+import hir.HirImport
+import hir.HirLowering
 import parser.Ast
 import parser.ParseResult
 import util.InMemorySource
 import lexer.LexerImpl
+import lexer.TokenValidator
+import macro.MacroExpander
+import mir.MirLowering
 import parser.Parser
 
 class InMemoryFileInfo(val text: String, val name: String)
@@ -22,4 +30,17 @@ open class MultifileAstBasedTest {
             }, InMemorySource(it.text, it.name))
         }
     }
+}
+
+abstract class FrontendTest(val implicitImports: List<HirImport>) {
+    val frontend = QueryDrivenLispFrontend(
+            LexerImpl(),
+            Parser(),
+            TokenValidator(),
+            HirLowering(implicitImports),
+            LispLirLowering(),
+            DependencyValidator(),
+            MacroExpander(),
+            MirLowering()
+    )
 }
