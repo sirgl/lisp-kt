@@ -117,7 +117,7 @@ enum class MirBinaryOpType {
 
 class MirLoadValueInstr(val value: MirValue) : MirValueInstr() {
     override fun pretty(strategy: PrettyPrintStrategy): String {
-        return "load $value"
+        return "load_const $value"
     }
 }
 
@@ -178,7 +178,7 @@ class MirGetFunctionReference(val functionId: Int) : MirValueInstr() {
 
 class MirStoreInstr(val varId: Short, var valueId: MirInstrId) : MirValueInstr() {
     override fun pretty(strategy: PrettyPrintStrategy): String {
-        return "store var: ${strategy.varIdRenderer.render(varId)} value: ${strategy.instrIdRenderer.render(valueId)}"
+        return "store_var: ${strategy.varIdRenderer.render(varId)} value: ${strategy.instrIdRenderer.render(valueId)}"
     }
 
     override fun computeDependantIndices(): Array<MirInstrId> {
@@ -188,7 +188,7 @@ class MirStoreInstr(val varId: Short, var valueId: MirInstrId) : MirValueInstr()
 
 class MirLoadInstr(val varId: Short) : MirValueInstr() {
     override fun pretty(strategy: PrettyPrintStrategy): String {
-        return "load var: ${strategy.varIdRenderer.render(varId)}"
+        return "load_var: ${strategy.varIdRenderer.render(varId)}"
     }
 
 }

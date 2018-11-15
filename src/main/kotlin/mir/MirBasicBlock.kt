@@ -11,6 +11,13 @@ class MirBasicBlock(
             instruction.recomputeType()
         }
     }
+
+    override fun toString(): String {
+        return buildString {
+            append("b$index:\n")
+            append(instructions.joinToString(separator = "\n") { "  $it"})
+        }
+    }
 }
 
 class MirInstrId(

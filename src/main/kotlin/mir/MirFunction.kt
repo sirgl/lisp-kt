@@ -4,6 +4,7 @@ class MirFunction(
         val name: String,
         val blocks: List<MirBasicBlock>,
         private val entryBlockIndex: Short,
+        val parametersCount: Int,
         val varCount: Short,
         val isMain: Boolean = false
 ) : MirTypeResolver {
@@ -31,6 +32,13 @@ class MirFunction(
             }
         }
         return usages
+    }
+
+    override fun toString(): String {
+        return buildString {
+            append("fun $name params: $parametersCount, totalVars: $varCount\n")
+            append(blocks.joinToString("\n") { it.toString() })
+        }
     }
 }
 

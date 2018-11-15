@@ -44,11 +44,11 @@ private object DefaultInstrIdRenderer : MirInstrIdRenderer {
 }
 
 private object DefaultFunctionIdRenderer : MirFunctionIdRenderer {
-    override fun render(functionId: Int): String = functionId.toString()
+    override fun render(functionId: Int): String = "b" + functionId.toString()
 }
 
 private object DefaultVarIdRenderer : MirVarIdRenderer {
-    override fun render(varId: Short): String = varId.toString()
+    override fun render(varId: Short): String = "v" + varId.toString()
 }
 
 private object DefaultAdditionalInfoRenderer : MirAdditionalInfoRenderer {

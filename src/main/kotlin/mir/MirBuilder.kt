@@ -59,7 +59,7 @@ class MirFunctionBuilder(val name: String, val isMain: Boolean = false, val cont
     }
 
     fun finishFunction(hirFunction: HirFunctionDeclaration): MirFunction {
-        val function = MirFunction(name, blocks, 0, varTable.size.toShort(), isMain)
+        val function = MirFunction(name, blocks, 0, hirFunction.params.size, varTable.size.toShort(), isMain)
         function.functionId = context.nextFunctionId()
         context.addFunction(hirFunction, function.functionId)
         return function
