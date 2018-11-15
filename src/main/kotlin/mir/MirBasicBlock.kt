@@ -24,5 +24,5 @@ class MirInstrId(
         val basicBlockIndex: Short,
         val instructionIndex: Short
 ) {
-    override fun toString(): String = "b$basicBlockIndex:$instructionIndex"
+    override fun toString(): String = "b$basicBlockIndex:i$instructionIndex"
 }

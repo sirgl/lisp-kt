@@ -152,10 +152,11 @@ sealed class MirValue {
 
     protected fun printValue(value: String, type: String, tagged: Boolean) : String {
         return buildString {
-            append("$value: $type")
+            append("$value ($type")
             if (tagged) {
-                append(" (tagged)")
+                append(", tagged")
             }
+            append(")")
         }
     }
 }
