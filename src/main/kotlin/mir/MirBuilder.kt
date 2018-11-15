@@ -23,7 +23,6 @@ class MirBuilderContext(
 }
 
 class MirFunctionBuilder(val name: String, val isMain: Boolean = false, val context: MirBuilderContext) {
-    // TODO merge var indices and instruction indices
     private var currentBasicBlock = mutableListOf<MirInstr>()
     private val blocks = mutableListOf<MirBasicBlock>()
     private var nextBlockIndex: Short = 0
@@ -44,7 +43,7 @@ class MirFunctionBuilder(val name: String, val isMain: Boolean = false, val cont
 
     fun emit(instr: MirInstr): MirInstrId {
         currentBasicBlock.add(instr)
-        return MirInstrId(blocks.size.toShort(), currentBlockId())
+        return MirInstrId(currentBlockId(), (currentBasicBlock.size - 1).toShort())
     }
 
     /**
@@ -70,7 +69,7 @@ class MirFunctionBuilder(val name: String, val isMain: Boolean = false, val cont
     }
 
     fun currentBlockId(): Short {
-        return (currentBasicBlock.size - 1).toShort()
+        return (nextBlockIndex).toShort()
     }
 
     fun nextIfMergeVarName(): String {

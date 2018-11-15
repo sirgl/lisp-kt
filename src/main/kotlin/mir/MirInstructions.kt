@@ -197,7 +197,7 @@ class MirLoadInstr(val varId: Short) : MirValueInstr() {
 class MirCallInstr(val functionId: Int, val args: Array<MirInstrId>) : MirValueInstr() {
     override fun pretty(strategy: PrettyPrintStrategy): String {
         val instrIdRenderer = strategy.instrIdRenderer
-        val args = args.joinToString(" ") { instrIdRenderer.render(it) }
+        val args = args.joinToString(separator = ", ", prefix = "(", postfix = ")") { instrIdRenderer.render(it) }
         return "call function: ${strategy.functionIdRenderer.render(functionId)} args: $args"
     }
 
@@ -210,6 +210,12 @@ class MirCallInstr(val functionId: Int, val args: Array<MirInstrId>) : MirValueI
 
 
 sealed class MirTailInstruction : MirInstr()
+
+class MirReturnInstruction(val instrValueToReturn: MirInstrId) : MirTailInstruction() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return "return ${strategy.instrIdRenderer.render(instrValueToReturn)}"
+    }
+}
 
 class MirGotoInstruction : MirTailInstruction() {
     override fun pretty(strategy: PrettyPrintStrategy): String {

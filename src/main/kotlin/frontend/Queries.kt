@@ -13,6 +13,7 @@ import linting.*
 import macro.MacroExpander
 import mir.MirFile
 import mir.MirLowering
+import mir.dot.getBBGraph
 import parser.Ast
 import parser.ParseResult
 import parser.Parser
@@ -20,6 +21,7 @@ import query.*
 import util.InMemorySource
 import util.ResultWithLints
 import util.Source
+import java.io.File
 
 const val sourcesKey = "sources"
 val inputSourceDescriptor = SingleValueDescriptor<List<Source>>(sourcesKey)
@@ -265,7 +267,10 @@ class QueryDrivenLispFrontendImpl(
 
         val macroses = database.queryFor(mirDescriptor)
         val file = (macroses as ResultWithLints.Ok).value.first()
-        println(file)
+        val bbGraph = getBBGraph(file.functions[1])
+//        File("graph.dot").writeText(bbGraph)
+        println(bbGraph)
+//        println(file)
 
     }
 }
@@ -282,5 +287,5 @@ fun main(args: Array<String>) {
             MirLowering()
     )
 
-    frontend.compile(listOf(InMemorySource("(defn foo (x) (if x 12 (if #t 6 77)))", "main")), listOf(), CompilerConfig(0))
+    frontend.compile(listOf(InMemorySource("(defn + (x y) ())(defn foo (x) (if x (while #t ())  (if #t 2 3)))", "main")), listOf(), CompilerConfig(0))
 }

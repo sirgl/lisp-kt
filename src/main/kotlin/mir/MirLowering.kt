@@ -33,7 +33,8 @@ private class MirFunctionLowering(
         for (parameter in function.params) {
             builder.addVariable(parameter)
         }
-        lowerExpr(function.body)
+        val result = lowerExpr(function.body)
+        builder.emit(MirReturnInstruction(result))
         builder.finishBlock()
         return builder.finishFunction(function)
     }
@@ -116,18 +117,20 @@ private class MirFunctionLowering(
         val mergeVarIndex = builder.addVariable(mergeVar)
 
         // then branch
+        val thenBlockId = builder.currentBlockId()
         val thenBranchResultId = lowerExpr(expr.thenBranch)
         val thenGotoEnd = MirGotoInstruction()
         builder.emit(MirStoreInstr(mergeVarIndex, thenBranchResultId))
         builder.emit(thenGotoEnd)
-        val thenBlockId = builder.finishBlock()
+        builder.finishBlock()
 
         // else branch
+        val elseBlockId = builder.currentBlockId()
         val elseBranchResultId = lowerExpr(expr.elseBranch)
         val elseGotoEnd = MirGotoInstruction()
         builder.emit(MirStoreInstr(mergeVarIndex, elseBranchResultId))
         builder.emit(elseGotoEnd)
-        val elseBlockId = builder.finishBlock()
+        builder.finishBlock()
 
         // setup jump targets
         val afterIfBlockId = builder.currentBlockId()
