@@ -20,3 +20,13 @@ class InMemorySource(val text: String, override val path: String = "<memory>") :
         return text.byteInputStream()
     }
 }
+
+object FakeSource : Source {
+    override fun getInputStream(): InputStream {
+        throw UnsupportedOperationException()
+    }
+
+    override val path: String
+        get() = "<FAKE>"
+
+}

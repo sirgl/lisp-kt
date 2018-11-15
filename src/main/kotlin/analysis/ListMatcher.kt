@@ -8,6 +8,7 @@ import linting.Severity
 import parser.AstNode
 import parser.LeafNode
 import parser.ListNode
+import util.FakeSource
 import util.ResultWithLints
 import util.Source
 
@@ -18,7 +19,7 @@ interface Validator {
 }
 
 class ListMatcher<T : NodeInfo>(val name: String, val validator: Validator, val extractor: (AstNode) -> T) {
-    fun matches(node: AstNode, source: Source): Boolean {
+    fun matches(node: AstNode, source: Source = FakeSource): Boolean {
         if (node !is ListNode) return false
         if (node.children.isEmpty()) return false
         val children = node.children
@@ -35,7 +36,7 @@ class ListMatcher<T : NodeInfo>(val name: String, val validator: Validator, val 
     /**
      * Expects, that name exactly matches
      */
-    fun extract(node: AstNode, source: Source) : ResultWithLints<T> {
+    fun extract(node: AstNode, source: Source = FakeSource) : ResultWithLints<T> {
         val sink = CollectingSink()
         if (node.children.isEmpty()) return ResultWithLints.Error(emptyList())
         validator.validate(node, sink, source)
@@ -44,6 +45,10 @@ class ListMatcher<T : NodeInfo>(val name: String, val validator: Validator, val 
             lints.any { it.severity == Severity.Error } -> ResultWithLints.Error(lints)
             else -> ResultWithLints.Ok(extractor(node), lints)
         }
+    }
+
+    fun forceExtract(node: AstNode) : T {
+        return extract(node).unwrap()
     }
 }
 

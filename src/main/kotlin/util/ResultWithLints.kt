@@ -46,6 +46,8 @@ sealed class ResultWithLints<T>(val lints: List<Lint>) {
     }
 
     fun unwrap() : T {
-        return if (this is Ok) value else throw IllegalStateException()
+        return if (this is Ok) value else throw NoResultException(lints)
     }
 }
+
+class NoResultException(val lints: List<Lint>) : Exception()

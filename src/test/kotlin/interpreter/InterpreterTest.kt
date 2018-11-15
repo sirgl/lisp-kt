@@ -118,7 +118,7 @@ class InterpreterTest {
     fun `test set of non existing var`() {
         testResult("""
             (set i 5)
-        """.trimIndent(), "Interpreter [5, 6): Variable i not found")
+        """.trimIndent(), "Interpreter [0, 9): Variable i not found")
     }
 
 
