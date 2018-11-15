@@ -44,7 +44,7 @@ private object DefaultInstrIdRenderer : MirInstrIdRenderer {
 }
 
 private object DefaultFunctionIdRenderer : MirFunctionIdRenderer {
-    override fun render(functionId: Int): String = "b" + functionId.toString()
+    override fun render(functionId: Int): String = functionId.toString()
 }
 
 private object DefaultVarIdRenderer : MirVarIdRenderer {
@@ -56,7 +56,13 @@ private object DefaultAdditionalInfoRenderer : MirAdditionalInfoRenderer {
 }
 
 private object DefaultBlockIndexRenderer : MirBlockIndexRenderer {
-    override fun render(index: Short): String = index.toString()
+    override fun render(index: Short): String {
+        return if (index.toInt() == -1) {
+            "<NOT SET>"
+        } else {
+            "b" + index.toString()
+        }
+    }
 }
 
 val defaultPrintStrategy = PrettyPrintStrategy(
