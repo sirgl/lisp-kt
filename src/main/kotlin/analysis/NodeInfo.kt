@@ -58,3 +58,9 @@ class SetNodeInfo(
         val name: String,
         val newValue: AstNode
 ) : NodeInfo()
+
+class NativeFunctionDeclarationInfo(
+        val nameInProgram: String,
+        val nameInRuntime: String,
+        val parameters: List<String>
+) : NodeInfo()

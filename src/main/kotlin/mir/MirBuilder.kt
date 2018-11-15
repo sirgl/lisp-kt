@@ -1,6 +1,7 @@
 package mir
 
 import hir.HirFunctionDeclaration
+import hir.HirFunctionDefinition
 import hir.HirVarDeclaration
 
 class MirBuilderContext(
@@ -57,8 +58,8 @@ class MirFunctionBuilder(val name: String, val isMain: Boolean = false, val cont
         return index
     }
 
-    fun finishFunction(hirFunction: HirFunctionDeclaration): MirFunction {
-        val function = MirFunction(name, blocks, 0, hirFunction.params.size, varTable.size.toShort(), isMain)
+    fun finishFunction(hirFunction: HirFunctionDefinition): MirFunction {
+        val function = MirFunctionDefinition(name, blocks, 0, hirFunction.parameters.size, varTable.size.toShort(), isMain)
         function.functionId = context.nextFunctionId()
         context.addFunction(hirFunction, function.functionId)
         return function
@@ -69,7 +70,7 @@ class MirFunctionBuilder(val name: String, val isMain: Boolean = false, val cont
     }
 
     fun currentBlockId(): Short {
-        return (nextBlockIndex).toShort()
+        return (nextBlockIndex)
     }
 
     fun nextIfMergeVarName(): String {

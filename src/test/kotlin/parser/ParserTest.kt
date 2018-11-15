@@ -115,6 +115,14 @@ class ParserTest {
 """)
     }
 
+
+    @Test
+    fun `test errors`() {
+        testParse("`(if #t 22 %(#f 33))", """
+ParseError [11, 12) : Atom node expected
+""")
+    }
+
     private fun testParse(text: String, expected: String) {
         val tokens = lexer.tokenize(text)
         val result = parser.parse(tokens)

@@ -98,7 +98,7 @@ private class UnitHirLowering(
         val block = lowerBlock(root.children, true) ?: return ResultWithLints.Error(lints)
         // Convention for top level code in file (all code in HIR must be in function, so synthetic one is created)
         val name = source.path.replace('/', '_') + "__init"
-        functions.add(HirFunctionDeclaration(name, emptyList(), block, true))
+        functions.add(HirFunctionDefinition(name, emptyList(), block, true))
         return ResultWithLints.Ok(HirFile(source, imports, functions, moduleName))
     }
 
@@ -137,7 +137,7 @@ private class UnitHirLowering(
                     val decl = context.resolve(name) ?: return null
                     when (decl) {
                         is HirVarDeclaration -> HirVarReference(name, decl)
-                        is HirFunctionDeclaration -> HirFunctionReference(name, decl)
+                        is HirFunctionDefinition -> HirFunctionReference(name, decl)
                         else -> {
                             errorLint("Unresolved reference", node.textRange)
                             return null
@@ -181,7 +181,7 @@ private class UnitHirLowering(
                         val bodyBlock = context.withDeclarations(params) {
                             lowerBlock(defnInfo.body) ?: return null
                         }
-                        val declaration = HirFunctionDeclaration(defnInfo.name, params, bodyBlock)
+                        val declaration = HirFunctionDefinition(defnInfo.name, params, bodyBlock)
                         functions.add(declaration)
                         context.addToScope(declaration)
                         HirFunctionReference(defnInfo.name, declaration)
@@ -228,6 +228,18 @@ private class UnitHirLowering(
                             return null
                         }
                         HirAssignExpr(name, newValue, varDeclaration)
+                    }
+                    Matchers.NATIVE_FUNCTION.matches(node, source) -> {
+                        val nativeFun = Matchers.NATIVE_FUNCTION.extract(node, source).drainTo(lints)
+                                ?: return null
+                        val declaration = HirNativeFunctionDeclaration(
+                                nativeFun.nameInProgram,
+                                nativeFun.nameInRuntime,
+                                nativeFun.parameters.map { HirParameter(it) }
+                        )
+                        context.addToScope(declaration)
+                        functions.add(declaration)
+                        HirFunctionReference(nativeFun.nameInProgram, declaration)
                     }
                     else -> {
                         val children = node.children

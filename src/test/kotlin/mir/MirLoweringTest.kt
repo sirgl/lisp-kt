@@ -13,7 +13,7 @@ class MirLoweringTest : FrontendTest(emptyList()) {
     fun `test top level list`() {
         testMir("""
 main:
-fun main__init params: 0, totalVars: 0
+fun main__init params: 0, totalVars: 0 (main)
 b0:
   load_const ()
   return b0:i0
@@ -31,7 +31,7 @@ b0:
   load_const 42 (i32, tagged)
   return b0:i0
 
-fun main__init params: 0, totalVars: 0
+fun main__init params: 0, totalVars: 0 (main)
 b0:
   get_function_reference 0
   return b0:i0
@@ -44,7 +44,7 @@ b0:
     fun `test if`() {
         testMir("""
 main:
-fun main__init params: 0, totalVars: 1
+fun main__init params: 0, totalVars: 1 (main)
 b0:
   load_const true (bool, tagged)
   cond_jump cond: b0:i0 then: b1 else: b2
@@ -68,7 +68,7 @@ b3:
     fun `test if nested`() {
         testMir("""
 main:
-fun main__init params: 0, totalVars: 2
+fun main__init params: 0, totalVars: 2 (main)
 b0:
   load_const true (bool, tagged)
   cond_jump cond: b0:i0 then: b1 else: b2
@@ -108,7 +108,7 @@ b0:
   load_const ()
   return b0:i0
 
-fun main__init params: 0, totalVars: 0
+fun main__init params: 0, totalVars: 0 (main)
 b0:
   get_function_reference 0
   load_const true (bool, tagged)
@@ -135,7 +135,7 @@ b0:
   store_var: v0 value: b0:i0
   return b0:i1
 
-fun main__init params: 0, totalVars: 0
+fun main__init params: 0, totalVars: 0 (main)
 b0:
   get_function_reference 0
   return b0:i0
@@ -148,7 +148,7 @@ b0:
     fun `test let`() {
         testMir("""
 main:
-fun main__init params: 0, totalVars: 1
+fun main__init params: 0, totalVars: 1 (main)
 b0:
   load_const 12 (i32, tagged)
   store_var: v0 value: b0:i0

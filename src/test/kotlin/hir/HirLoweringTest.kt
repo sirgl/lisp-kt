@@ -138,6 +138,24 @@ File
     }
 
     @Test
+    fun `test native function`() {
+        testHirLowering("""
+main:
+File
+  Native function declaration: + (runtime name: __add)
+  Function declaration: (main) main__init
+    Block expr
+      Expr stmt
+        Function reference: +
+      Local call: +
+        Int literal: 1
+        Int literal: 2
+        """, listOf(
+                "main" withText "(defnat + __add (x y))(+ 1 2)"
+        ))
+    }
+
+    @Test
     fun `test top level macro`() {
         testHirLowering("""
 main:

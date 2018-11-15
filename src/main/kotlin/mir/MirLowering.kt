@@ -1,6 +1,7 @@
 package mir
 
 import hir.*
+import java.lang.UnsupportedOperationException
 
 class MirLowering {
     fun lower(files: List<HirFile>) : List<MirFile> {
@@ -15,12 +16,22 @@ class MirLowering {
     }
 
     private fun lower(function: HirFunctionDeclaration, file: HirFile, context: MirBuilderContext): MirFunction {
-        return MirFunctionLowering(function, file, context).lower()
+        return when (function) {
+            is HirFunctionDefinition -> MirFunctionLowering(function, file, context).lower()
+            is HirNativeFunctionDeclaration -> {
+                val id = context.nextFunctionId()
+                context.addFunction(function, id)
+                val foreignFunction = MirForeignFunction(function.runtimeName, function.parameters.size)
+                foreignFunction.functionId = id
+                foreignFunction
+            }
+            else -> throw UnsupportedOperationException()
+        }
     }
 }
 
 private class MirFunctionLowering(
-        val function: HirFunctionDeclaration,
+        val function: HirFunctionDefinition,
         val file: HirFile,
         builderContext: MirBuilderContext
 ) {
@@ -30,7 +41,7 @@ private class MirFunctionLowering(
         if (function.isMain) {
             // TODO add imports
         }
-        for (parameter in function.params) {
+        for (parameter in function.parameters) {
             builder.addVariable(parameter)
         }
         val result = lowerExpr(function.body)

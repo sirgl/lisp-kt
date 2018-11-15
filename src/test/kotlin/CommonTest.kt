@@ -23,10 +23,11 @@ open class MultifileAstBasedTest {
 
     fun buildAsts(files: List<InMemoryFileInfo>): List<Ast> {
         return files.map {
+            val tokens = lexer.tokenize(it.text)
             Ast(when (
-                val res = parser.parse(lexer.tokenize(it.text))) {
+                val res = parser.parse(tokens)) {
                 is ParseResult.Ok -> res.node
-                else -> throw IllegalStateException()
+                is ParseResult.Error -> throw IllegalStateException(res.text)
             }, InMemorySource(it.text, it.name))
         }
     }

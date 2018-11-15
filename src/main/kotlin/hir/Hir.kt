@@ -64,7 +64,6 @@ class HirImport(val moduleName: String, val isExplicit: Boolean) : HirLeafNode()
 interface HirVarDeclaration : HirDeclaration {
 }
 
-// TODO type?
 class HirParameter(
         override val name: String
 ) : HirLeafNode(), HirVarDeclaration {
@@ -73,14 +72,31 @@ class HirParameter(
     }
 }
 
-class HirFunctionDeclaration(
+interface HirFunctionDeclaration : HirDeclaration {
+    val parameters: List<HirParameter>
+}
+
+class HirNativeFunctionDeclaration(
         override val name: String,
-        val params: List<HirParameter>,
+        val runtimeName: String,
+        override val parameters: List<HirParameter>
+) : HirNode(), HirFunctionDeclaration {
+    override val children: List<HirNode>
+        get() = emptyList()
+
+    override fun prettySelf(): String {
+        return "Native function declaration: $name (runtime name: $runtimeName)"
+    }
+}
+
+class HirFunctionDefinition(
+        override val name: String,
+        override val parameters: List<HirParameter>,
         val body: HirBlockExpr, // TODO make optional to make it possible to make forward declarations
         val isMain: Boolean = false
-) : HirNode(), HirDeclaration {
+) : HirNode(), HirFunctionDeclaration {
     override val children: List<HirNode>
-        get() = childrenFrom(params, body)
+        get() = childrenFrom(parameters, body)
 
     override fun prettySelf(): String {
         return buildString {

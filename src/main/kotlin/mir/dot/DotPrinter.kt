@@ -2,7 +2,7 @@ package mir.dot
 
 import mir.*
 
-fun getBBGraph(function: MirFunction) : String {
+fun getBBGraph(function: MirFunctionDefinition) : String {
     return buildString {
         append("digraph ${function.name} {\n")
         append("entry -> b0\n")

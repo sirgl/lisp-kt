@@ -9,4 +9,5 @@ object Keywords {
     val WHILE_KW = "while"
     val DEFN_KW = "defn"
     val MACRO_KW = "macro"
+    val NATIVE_FUN_KW = "defnat"
 }

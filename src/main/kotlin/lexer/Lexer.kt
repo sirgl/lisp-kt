@@ -97,11 +97,11 @@ private class LexerSession(
     }
 
     private fun isIdentifierStart(it: Char): Boolean {
-        return it in 'a'..'z' || it in 'A'..'Z' || it == '+' || it == '-' || it == '*' || it == '/' || it == '<' || it == '>'
+        return it in 'a'..'z' || it in 'A'..'Z' || it == '+' || it == '-' || it == '*' || it == '/' || it == '<' || it == '>' || it == '_'
     }
 
     private fun isIdentifierTail(it: Char): Boolean {
-        return it in 'a'..'z' || it in 'A'..'Z' || it == '+' || it == '-' || it == '*' || it == '/' || it == '<' || it == '>' || it.isDigit()
+        return isIdentifierStart(it) || it.isDigit()
     }
 
     private inline fun parseByAllCharsRule(type: TokenType, isGoodChar: (Char) -> Boolean): Token? {

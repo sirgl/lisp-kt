@@ -17,20 +17,24 @@ object Matchers {
             verifyCountAtLeast(node, nodeType, 4, source, lintSink)
             verifyName(children[1], "Name", source, lintSink)
             val parametersNode = children[2]
-            if (parametersNode is ListNode) {
-                val parameters = parametersNode.children
-                for (parameter in parameters) {
-                    verifyName(parameter, "Parameter", source, lintSink)
-                }
-            } else {
-                lintSink.addLint(Lint(
-                        "Parameters node must be a list node",
-                        parametersNode.textRange,
-                        Severity.Error,
-                        Subsystem.Verification,
-                        source
-                ))
+            verifyParametersNode(parametersNode, source, lintSink)
+        }
+    }
+
+    private fun verifyParametersNode(parametersNode: AstNode, source: Source, lintSink: LintSink) {
+        if (parametersNode is ListNode) {
+            val parameters = parametersNode.children
+            for (parameter in parameters) {
+                verifyName(parameter, "Parameter", source, lintSink)
             }
+        } else {
+            lintSink.addLint(Lint(
+                    "Parameters node must be a list node",
+                    parametersNode.textRange,
+                    Severity.Error,
+                    Subsystem.Verification,
+                    source
+            ))
         }
     }
 
@@ -40,16 +44,19 @@ object Matchers {
     val DEFN = ListMatcher(Keywords.DEFN_KW, functionValidator) { node ->
         val children = node.children
         val name = (children[1] as LeafNode).token.text
-        val parameters = (children[2] as ListNode).children.map { (it as LeafNode).token.text }
+        val parameters = parseParameterList(children[2])
         DefnNodeInfo(name, parameters, children.drop(3))
     }
 
     val MACRO = ListMatcher(Keywords.MACRO_KW, macroValidator) { node ->
         val children = node.children
         val name = (children[1] as LeafNode).token.text
-        val parameters = (children[2] as ListNode).children.map { (it as LeafNode).token.text }
+        val parameters = parseParameterList(children[2])
         MacroNodeInfo(name, parameters, children.drop(3))
     }
+
+    private fun parseParameterList(node: AstNode) =
+            (node as ListNode).children.map { (it as LeafNode).token.text }
 
     val MODULE = ListMatcher(Keywords.MODULE_KW, object: Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
@@ -60,7 +67,7 @@ object Matchers {
         ModuleNodeInfo((node.children[1] as LeafNode).token.text)
     }
 
-    val IMPORT = ListMatcher(Keywords.MODULE_KW, object: Validator {
+    val IMPORT = ListMatcher(Keywords.IMPORT_KW, object: Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
             verifyCountExact(node, "Import", 2, source, lintSink)
             verifyName(node.children[1], "Import", source, lintSink)
@@ -138,6 +145,21 @@ object Matchers {
         val name = (children[1] as LeafNode).token.text
         SetNodeInfo(name, children[2])
     }
+
+    val NATIVE_FUNCTION = ListMatcher(Keywords.NATIVE_FUN_KW, object: Validator {
+        override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
+            verifyCountExact(node, "Native function declaration", 4, source, lintSink)
+            verifyName(node.children[1], "Runtime name", source, lintSink)
+            verifyName(node.children[2], "Name in program", source, lintSink)
+            verifyParametersNode(node.children[3], source, lintSink)
+        }
+    }) { node ->
+        val children = node.children
+        val runtimeName = (children[1] as LeafNode).token.text
+        val programName = (children[2] as LeafNode).token.text
+        NativeFunctionDeclarationInfo(runtimeName, programName, parseParameterList(children[3]))
+    }
+
 
     private fun LintSink.addError(text: String, node: AstNode, source: Source) {
         addLint(Lint(text, node.textRange, Severity.Error, Subsystem.Verification, source))

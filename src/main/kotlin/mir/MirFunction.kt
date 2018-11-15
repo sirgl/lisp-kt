@@ -1,17 +1,28 @@
 package mir
 
-class MirFunction(
+sealed class MirFunction(
         val name: String,
+        val parametersCount: Int
+) {
+    var functionId : Int = -1
+}
+
+class MirForeignFunction(name: String, parametersCount: Int) : MirFunction(name, parametersCount) {
+    override fun toString(): String {
+        return "foreign fun $name params: $parametersCount"
+    }
+}
+
+class MirFunctionDefinition(
+        name: String,
         val blocks: List<MirBasicBlock>,
         private val entryBlockIndex: Short,
-        val parametersCount: Int,
+        parametersCount: Int,
         val varCount: Short,
         val isMain: Boolean = false
-) : MirTypeResolver {
+) : MirTypeResolver, MirFunction(name, parametersCount) {
     val entryBlock: MirBasicBlock
     get() = blocks[entryBlockIndex.toInt()]
-
-    var functionId: Int = -1
 
     override fun resolveResultType(instructionId: MirInstrId): MirInstrResultType {
         val basicBlockIndex = instructionId.basicBlockIndex.toInt()
@@ -36,7 +47,11 @@ class MirFunction(
 
     override fun toString(): String {
         return buildString {
-            append("fun $name params: $parametersCount, totalVars: $varCount\n")
+            append("fun $name params: $parametersCount, totalVars: $varCount")
+            if (isMain) {
+                append(" (main)")
+            }
+            append("\n")
             append(blocks.joinToString("\n") { it.toString() })
         }
     }
