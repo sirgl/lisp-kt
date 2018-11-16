@@ -143,6 +143,8 @@ File
 main:
 File
   Native function declaration: + (runtime name: __add)
+    Parameter: x
+    Parameter: y
   Function declaration: (main) main__init
     Block expr
       Expr stmt
@@ -161,6 +163,8 @@ File
 main:
 File
   Native function declaration: * (runtime name: r__mul)
+    Parameter: x
+    Parameter: y
   Function declaration: (main) main__init
     Block expr
       Expr stmt
@@ -178,9 +182,16 @@ File
 main:
 File
   Native function declaration: + (runtime name: r__add)
+    Parameter: a
+    Parameter: b
   Native function declaration: * (runtime name: r__mul)
+    Parameter: a
+    Parameter: b
   Native function declaration: < (runtime name: r__lt)
+    Parameter: a
+    Parameter: b
   Native function declaration: print (runtime name: r__print)
+    Parameter: x
   Function declaration: (main) main__init
     Block expr
       Expr stmt
@@ -294,6 +305,23 @@ File
                 "main" withText """
         (defn foo (a @params) 12)
         (foo 12 33 44)
+                """.trimIndent()
+        ))
+    }
+
+    @Test
+    fun `test vararg of native function`() {
+        testHirLowering("""
+main:
+File
+  Native function declaration: pName (runtime name: runtimeName)
+    Parameter: params (vararg)
+  Function declaration: (main) main__init
+    Block expr
+      Function reference: pName
+        """, listOf(
+                "main" withText """
+        (defnat pName runtimeName (@params))
                 """.trimIndent()
         ))
     }

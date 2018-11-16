@@ -79,9 +79,6 @@ main:
 
 
 
-    // TODO check recursive macro
-    // TODO
-
     private fun testExpansion(expectedExpansion: String, files: List<InMemoryFileInfo>, targetIndex: Int = 0) {
         val asts = buildAsts(files)
         val expander = MacroExpander()

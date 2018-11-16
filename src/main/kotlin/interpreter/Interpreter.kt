@@ -211,10 +211,7 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
                 if (leafNode.token.type != TokenType.Identifier) {
                     leafNode
                 } else {
-                    val astNode = replacementMap[leafNode.token.text]
-                    if (astNode != null) {
-                        astNode
-                    } else leafNode
+                    replacementMap[leafNode.token.text] ?: leafNode
                 }
             }
         }

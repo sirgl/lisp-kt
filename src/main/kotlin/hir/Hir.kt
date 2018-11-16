@@ -92,7 +92,7 @@ class HirNativeFunctionDeclaration(
         override val parameters: List<HirParameter>
 ) : HirNode(), HirFunctionDeclaration {
     override val children: List<HirNode>
-        get() = emptyList()
+        get() = parameters
 
     override fun prettySelf(): String {
         return "Native function declaration: $name (runtime name: $runtimeName)"
