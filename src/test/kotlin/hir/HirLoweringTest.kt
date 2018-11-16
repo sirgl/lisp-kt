@@ -241,6 +241,87 @@ TODO !!!!
         ))
     }
 
+    @Test
+    fun `test vararg function`() {
+        testHirLowering("""
+main:
+File
+  Function declaration: foo
+    Parameter: params (vararg)
+    Block expr
+      Int literal: 12
+  Function declaration: (main) main__init
+    Block expr
+      Function reference: foo
+        """, listOf(
+                "main" withText """
+        (defn foo (@params) 12)
+                """.trimIndent()
+        ))
+    }
+
+
+    @Test
+    fun `test vararg function not last`() {
+        testHirLowering("""
+main : Error in Validation [10, 21) : Vararg parameter is allowed only on the last position
+        """, listOf(
+                "main" withText """
+        (defn foo (@params a) 12)
+                """.trimIndent()
+        ))
+    }
+
+    @Test
+    fun `test vararg parameter count`() {
+        testHirLowering("""
+main:
+File
+  Function declaration: foo
+    Parameter: a
+    Parameter: params (vararg)
+    Block expr
+      Int literal: 12
+  Function declaration: (main) main__init
+    Block expr
+      Expr stmt
+        Function reference: foo
+      Local call: foo
+        Int literal: 12
+        Int literal: 33
+        Int literal: 44
+        """, listOf(
+                "main" withText """
+        (defn foo (a @params) 12)
+        (foo 12 33 44)
+                """.trimIndent()
+        ))
+    }
+
+    @Test
+    fun `test vararg parameter count lower`() {
+        testHirLowering("""
+main : Error in LoweringToHir [27, 30) : Parameter count and args count must match: foo
+        """, listOf(
+                "main" withText """
+        (defn foo (a @params) 12)
+        (foo)
+                """.trimIndent()
+        ))
+    }
+
+    @Test
+    fun `test simple function parameter count`() {
+        testHirLowering("""
+main : Error in LoweringToHir [21, 24) : Parameter count and args count must match: foo
+        """, listOf(
+                "main" withText """
+        (defn foo (a b) 12)
+        (foo 3)
+                """.trimIndent()
+        ))
+    }
+
     private fun testHirLowering(expectedHirPrint: String, files: List<InMemoryFileInfo>, targetIndex: Int = 0) {
         val asts = buildAsts(files)
         val expander = MacroExpander()

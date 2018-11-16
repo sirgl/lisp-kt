@@ -65,15 +65,25 @@ interface HirVarDeclaration : HirDeclaration {
 }
 
 class HirParameter(
-        override val name: String
+        override val name: String,
+        val isVararg: Boolean = false
 ) : HirLeafNode(), HirVarDeclaration {
     override fun prettySelf(): String {
-        return "Parameter: $name"
+        return buildString {
+            append("Parameter: $name")
+            if (isVararg) {
+                append(" (vararg)")
+            }
+        }
     }
 }
 
 interface HirFunctionDeclaration : HirDeclaration {
     val parameters: List<HirParameter>
+
+    fun hasVarargs(): Boolean {
+        return parameters.lastOrNull()?.isVararg ?: false
+    }
 }
 
 class HirNativeFunctionDeclaration(

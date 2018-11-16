@@ -72,7 +72,7 @@ internal class ParseSession(private val tokens: List<Token>, private var index: 
     private fun parseAtom() : AstNode {
         val token = advance()
         return when (token.type) {
-            TokenType.Identifier -> LeafNode(token, SyntaxKind.Identifier)
+            TokenType.Identifier, TokenType.VarargIndentifier -> LeafNode(token, SyntaxKind.Identifier)
             TokenType.TrueLiteral, TokenType.FalseLiteral -> LeafNode(token, SyntaxKind.BoolLiteral)
             TokenType.Int -> LeafNode(token, SyntaxKind.IntLiteral)
             TokenType.String -> LeafNode(token, SyntaxKind.StringLiteral)

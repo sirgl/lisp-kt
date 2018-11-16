@@ -1,12 +1,12 @@
 package hir
 
+import analysis.Handlers
+import analysis.Keywords
 import analysis.Matchers
 import deps.RealDependencyEntry
 import deps.dfs
 import lexer.TokenType
-import linting.Lint
-import linting.Severity
-import linting.Subsystem
+import linting.*
 import parser.*
 import util.ResultWithLints
 import util.Source
@@ -88,6 +88,7 @@ private class UnitHirLowering(
     val lints = mutableListOf<Lint>()
     val functions = mutableListOf<HirFunctionDeclaration>()
     var moduleName: String? = null
+    val sink = AppendingSink(lints)
 
     fun wasError(): Boolean {
         return lints.any { it.severity == Severity.Error }
@@ -153,7 +154,7 @@ private class UnitHirLowering(
                 if (node.children.isEmpty()) {
                     emptyListLiteral()
                 } else when {
-                    Matchers.MODULE.matches(node, source) -> {
+                    Matchers.MODULE.matches(node, source, sink) -> {
                         if (!isTopLevel) {
                             errorLint("Module declaration are allowed only on top level", node.textRange)
                             null
@@ -166,7 +167,7 @@ private class UnitHirLowering(
                             null
                         }
                     }
-                    Matchers.IMPORT.matches(node, source) -> {
+                    Matchers.IMPORT.matches(node, source, sink) -> {
                         if (!isTopLevel) {
                             errorLint("Imports are allowed only on top level", node.textRange)
                             return null
@@ -175,9 +176,9 @@ private class UnitHirLowering(
                         imports.add(HirImport(importInfo.name, true))
                         null
                     }
-                    Matchers.DEFN.matches(node, source) -> {
+                    Matchers.DEFN.matches(node, source, sink) -> {
                         val defnInfo = Matchers.DEFN.extract(node, source).drainTo(lints) ?: return null
-                        val params = defnInfo.parameters.map { HirParameter(it) }
+                        val params = defnInfo.parameters.map { HirParameter(it.name, it.isVararg) }
                         val bodyBlock = context.withDeclarations(params) {
                             lowerBlock(defnInfo.body) ?: return null
                         }
@@ -186,7 +187,7 @@ private class UnitHirLowering(
                         context.addToScope(declaration)
                         HirFunctionReference(defnInfo.name, declaration)
                     }
-                    Matchers.LET.matches(node, source) -> {
+                    Matchers.LET.matches(node, source, sink) -> {
                         val letInfo = Matchers.LET.extract(node, source).drainTo(lints) ?: return null
                         val vars = mutableListOf<HirVarDeclStmt>()
                         for (declaration in letInfo.declarations) {
@@ -200,7 +201,7 @@ private class UnitHirLowering(
                         val blockWithDeclarations = HirBlockExpr(vars, letBlock)
                         blockWithDeclarations
                     }
-                    Matchers.IF.matches(node, source) -> {
+                    Matchers.IF.matches(node, source, sink) -> {
                         val ifInfo = Matchers.IF.extract(node, source).drainTo(lints) ?: return null
                         val condition = lowerExpr(ifInfo.condition) ?: return null
                         val thenBranch = lowerExpr(ifInfo.thenBranch) ?: return null
@@ -212,13 +213,13 @@ private class UnitHirLowering(
                         } ?: return null
                         HirIfExpr(condition, thenBranch, elseBranch)
                     }
-                    Matchers.WHILE.matches(node, source) -> {
+                    Matchers.WHILE.matches(node, source, sink) -> {
                         val whileInfo = Matchers.WHILE.extract(node, source).drainTo(lints) ?: return null
                         val condition = lowerExpr(whileInfo.condition) ?: return null
                         val block = lowerBlock(whileInfo.body) ?: return null
                         HirWhileExpr(condition, block)
                     }
-                    Matchers.SET.matches(node, source) -> {
+                    Matchers.SET.matches(node, source, sink) -> {
                         val setInfo = Matchers.SET.extract(node, source).drainTo(lints) ?: return null
                         val newValue = lowerExpr(setInfo.newValue) ?: return null
                         val name = setInfo.name
@@ -229,13 +230,13 @@ private class UnitHirLowering(
                         }
                         HirAssignExpr(name, newValue, varDeclaration)
                     }
-                    Matchers.NATIVE_FUNCTION.matches(node, source) -> {
-                        val nativeFun = Matchers.NATIVE_FUNCTION.extract(node, source).drainTo(lints)
+                    Matchers.DEFNAT.matches(node, source, sink) -> {
+                        val nativeFun = Matchers.DEFNAT.extract(node, source).drainTo(lints)
                                 ?: return null
                         val declaration = HirNativeFunctionDeclaration(
                                 nativeFun.nameInProgram,
                                 nativeFun.nameInRuntime,
-                                nativeFun.parameters.map { HirParameter(it) }
+                                nativeFun.parameters.map { HirParameter(it.name, it.isVararg) }
                         )
                         context.addToScope(declaration)
                         functions.add(declaration)
@@ -260,7 +261,12 @@ private class UnitHirLowering(
                             errorLint("Unresolved function reference: $name", first.textRange)
                             return null
                         }
-                        // TODO check parameter count
+                        if (args.size != declaration.parameters.size) {
+                            if (args.size <= declaration.parameters.size || !declaration.hasVarargs()) {
+                                errorLint("Parameter count and args count must match: $name", first.textRange)
+                                return null
+                            }
+                        }
                         HirLocalCallExpr(name, args, declaration)
                     }
                 }

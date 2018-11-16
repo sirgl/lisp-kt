@@ -14,6 +14,13 @@ class HasErrorsSink : LintSink {
     }
 }
 
+class InterceptingSink(val sink: LintSink, val action: (Lint) -> Unit) : LintSink {
+    override fun addLint(lint: Lint) {
+        sink.addLint(lint)
+        action(lint)
+    }
+}
+
 class CollectingSink : LintSink {
     val lints = mutableListOf<Lint>()
     override fun addLint(lint: Lint) {

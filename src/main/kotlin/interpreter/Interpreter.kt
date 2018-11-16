@@ -134,8 +134,8 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
         }
         val firstNodeText = first.token.text
         return when {
-            Matchers.NATIVE_FUNCTION.matches(node) -> {
-                val nativeFunction = Matchers.NATIVE_FUNCTION.forceExtract(node)
+            Matchers.DEFNAT.matches(node) -> {
+                val nativeFunction = Matchers.DEFNAT.forceExtract(node)
                 env.addToScope(nativeFunction.nameInProgram, node)
                 node
             }
@@ -192,7 +192,7 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
                 val args = children.drop(1)
                 return when {
                     Matchers.DEFN.matches(entry) -> callDefn(entry, args)
-                    Matchers.NATIVE_FUNCTION.matches(entry) -> callNative(entry, args)
+                    Matchers.DEFNAT.matches(entry) -> callNative(entry, args)
                     Matchers.MACRO.matches(entry) -> callMacro(entry, args)
                     else -> throw UnsupportedOperationException()
                 }
@@ -202,7 +202,8 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
 
     private fun callMacro(entry: AstNode, args: List<AstNode>): AstNode {
         val macroInfo = Matchers.MACRO.forceExtract(entry)
-        val replacementMap = macroInfo.parameters.zip(args)
+        // TODO support varargs
+        val replacementMap = macroInfo.parameters.map { it.name }.zip(args)
             .associateBy({ it.first }) { it.second }
         //        var wasTransformation = false
         val replacedBody = macroInfo.body.map { bodyNode ->
@@ -235,7 +236,7 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
         entry: AstNode,
         args: List<AstNode>
     ): AstNode {
-        val nativeFun = Matchers.NATIVE_FUNCTION.forceExtract(entry)
+        val nativeFun = Matchers.DEFNAT.forceExtract(entry)
         val nameInProgram = nativeFun.nameInProgram
         if (args.size != nativeFun.parameters.size) {
             err("Parameter count and args count must match ($nameInProgram)", entry)
@@ -255,7 +256,8 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
             err("Parameter count and args count must match (${defnNode.name})", entry)
         }
         env.enterScope()
-        for ((index, parameter) in defnNode.parameters.withIndex()) {
+        for ((index, parameter) in defnNode.parameters.map { it.name }.withIndex()) {
+            // TODO support varargs
             env.addToScope(parameter, args[index])
         }
         var last: AstNode? = null

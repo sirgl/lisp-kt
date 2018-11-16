@@ -10,13 +10,12 @@ import util.ResultWithLints
 import util.Source
 
 
-
 interface Validator {
     fun validate(node: AstNode, lintSink: LintSink, source: Source)
 }
 
 class ListMatcher<T : NodeInfo>(val name: String, private val validator: Validator, val extractor: (AstNode) -> T) {
-    fun matches(node: AstNode, source: Source = FakeSource): Boolean {
+    fun matches(node: AstNode, source: Source = FakeSource, sink: LintSink? = null) : Boolean {
         if (node !is ListNode) return false
         if (node.children.isEmpty()) return false
         val children = node.children
@@ -24,9 +23,22 @@ class ListMatcher<T : NodeInfo>(val name: String, private val validator: Validat
         if (first.token.type != TokenType.Identifier) return false
         val firstText = first.token.text
         if (firstText != name) return false
-        val errorSink = HasErrorsSink()
-        validator.validate(node, errorSink, source)
-        if (errorSink.hasErrors) return false
+        if (sink != null) {
+            var hasErrors = false
+            val errorSink = InterceptingSink(sink) {
+                if (it.severity == Severity.Error) {
+                    hasErrors = true
+                }
+            }
+            validator.validate(node, errorSink, source)
+            if (hasErrors) {
+                return false
+            }
+        } else {
+            val errorSink = HasErrorsSink()
+            validator.validate(node, errorSink, source)
+            if (errorSink.hasErrors) return false
+        }
         return true
     }
 

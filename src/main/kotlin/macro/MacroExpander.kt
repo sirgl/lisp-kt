@@ -116,8 +116,8 @@ private class MacroExpansionContext(asts: List<Ast>, val target: DependencyEntry
                     }
                     child
                 }
-                Matchers.NATIVE_FUNCTION.matches(child, source) -> {
-                    Matchers.NATIVE_FUNCTION.extract(child, source).ifPresent {
+                Matchers.DEFNAT.matches(child, source) -> {
+                    Matchers.DEFNAT.extract(child, source).ifPresent {
                         macroEnv[it.nameInProgram] = child
                     }
                     child

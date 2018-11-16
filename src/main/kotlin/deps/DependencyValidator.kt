@@ -12,7 +12,7 @@ class DependencyValidator {
             for (childDep in dependency.dependencies) {
                 if (childDep is UnsatisfiedDependencyEntry) {
                     val ast = (dependency as RealDependencyEntry).ast
-                    lintSink.addLint(Lint("Unsatisfied dependency: ${childDep.name}", ast.root.textRange, Severity.Error, Subsystem.Verification, ast.source))
+                    lintSink.addLint(Lint("Unsatisfied dependency: ${childDep.name}", ast.root.textRange, Severity.Error, Subsystem.Validation, ast.source))
                 }
             }
         }

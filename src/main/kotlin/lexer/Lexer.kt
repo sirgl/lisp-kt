@@ -106,6 +106,7 @@ private class LexerSession(
         while (!endReached(endOffset) && isIdentifierTail(at(endOffset))) {
             endOffset++
         }
+        if (startOffset + 1 == endOffset) return null
         return createTokenIfPresent(startOffset, endOffset, TokenType.VarargIndentifier)
     }
 

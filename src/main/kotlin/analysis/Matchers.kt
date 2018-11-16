@@ -24,8 +24,14 @@ object Matchers {
     private fun verifyParametersNode(parametersNode: AstNode, source: Source, lintSink: LintSink) {
         if (parametersNode is ListNode) {
             val parameters = parametersNode.children
-            for (parameter in parameters) {
-                verifyName(parameter, "Parameter", source, lintSink)
+            for ((index, parameter) in parameters.withIndex()) {
+                if ((parameter as? LeafNode)?.token?.type == TokenType.Identifier) {
+                    verifyName(parameter, "Parameter", source, lintSink)
+                } else {
+                    if (index != parameters.lastIndex) {
+                        lintSink.addError("Vararg parameter is allowed only on the last position", parametersNode, source)
+                    }
+                }
             }
         } else {
             lintSink.addLint(
@@ -33,7 +39,7 @@ object Matchers {
                     "Parameters node must be a list node",
                     parametersNode.textRange,
                     Severity.Error,
-                    Subsystem.Verification,
+                    Subsystem.Validation,
                     source
                 )
             )
@@ -57,8 +63,23 @@ object Matchers {
         MacroNodeInfo(name, parameters, children.drop(3))
     }
 
-    private fun parseParameterList(node: AstNode) =
-        (node as ListNode).children.map { (it as LeafNode).token.text }
+    private fun parseParameterList(node: AstNode) : List<ParameterInfo> {
+        node as ListNode
+        val children = node.children
+        val size = children.size
+        val parameters = mutableListOf<ParameterInfo>()
+        for (i in (0 until size)) {
+            val current = children[i] as LeafNode
+            if (i == size - 1) { // last may be vararg
+                if (current.token.type == TokenType.VarargIndentifier) {
+                    parameters.add(ParameterInfo(current.token.text.substring(1), true))
+                    break
+                }
+            }
+            parameters.add(ParameterInfo(current.token.text, false))
+        }
+        return parameters
+    }
 
     val MODULE = ListMatcher(Keywords.MODULE_KW, object : Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
@@ -148,7 +169,7 @@ object Matchers {
         SetNodeInfo(name, children[2])
     }
 
-    val NATIVE_FUNCTION = ListMatcher(Keywords.NATIVE_FUN_KW, object : Validator {
+    val DEFNAT = ListMatcher(Keywords.DEFNAT_KW, object : Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
             if (!verifyCountExact(node, "Native function declaration", 4, source, lintSink)) return
             verifyName(node.children[1], "Runtime name", source, lintSink)
@@ -164,7 +185,7 @@ object Matchers {
 
 
     private fun LintSink.addError(text: String, node: AstNode, source: Source) {
-        addLint(Lint(text, node.textRange, Severity.Error, Subsystem.Verification, source))
+        addLint(Lint(text, node.textRange, Severity.Error, Subsystem.Validation, source))
     }
 
     /**
@@ -175,10 +196,10 @@ object Matchers {
             is LeafNode -> if (node.token.type != TokenType.Identifier) {
                 lintSink.addLint(
                     Lint(
-                        "$nodeName node must be leaf node",
+                        "$nodeName node must be identifier",
                         node.textRange,
                         Severity.Error,
-                        Subsystem.Verification,
+                        Subsystem.Validation,
                         source
                     )
                 )
@@ -188,7 +209,7 @@ object Matchers {
                     "$nodeName node must be leaf node",
                     node.textRange,
                     Severity.Error,
-                    Subsystem.Verification,
+                    Subsystem.Validation,
                     source
                 )
             )

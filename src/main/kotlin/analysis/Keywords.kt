@@ -9,5 +9,5 @@ object Keywords {
     const val WHILE_KW = "while"
     const val DEFN_KW = "defn"
     const val MACRO_KW = "macro"
-    const val NATIVE_FUN_KW = "defnat"
+    const val DEFNAT_KW = "defnat"
 }

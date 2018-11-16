@@ -27,5 +27,5 @@ enum class Subsystem {
     LoweringToHir,
     LoweringToLir,
     Codegen,
-    Verification
+    Validation
 }
