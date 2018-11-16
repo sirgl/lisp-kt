@@ -78,6 +78,7 @@ private class LexerSession(
                 ?: parseStringLiteral()
                 ?: parseIdentifier()
                 ?: parseBacktick()
+                ?: parseVararg()
     }
 
     private fun parseBacktick(): Token? {
@@ -94,6 +95,18 @@ private class LexerSession(
             endOffset++
         }
         return createTokenIfPresent(startOffset, endOffset, TokenType.Identifier)
+    }
+
+    private fun parseVararg(): Token? {
+        val startOffset = offset
+        if (current() != '@') {
+            return null
+        }
+        var endOffset = startOffset + 1
+        while (!endReached(endOffset) && isIdentifierTail(at(endOffset))) {
+            endOffset++
+        }
+        return createTokenIfPresent(startOffset, endOffset, TokenType.VarargIndentifier)
     }
 
     private fun isIdentifierStart(it: Char): Boolean {

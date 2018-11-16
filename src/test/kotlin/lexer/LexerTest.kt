@@ -90,6 +90,16 @@ class LexerTest {
         """)
     }
 
+    @Test
+    fun `test vararg`() {
+        testLexer("12 @foo123 fa", """
+            0@Int@"12"
+            3@VarargIndentifier@"@foo123"
+            11@Identifier@"fa"
+            13@End@""
+        """)
+    }
+
     private fun testLexer(text: String, expected: String) {
         val tokens = lexer.tokenize(text)
         // indents to make writing test more simple

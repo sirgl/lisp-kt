@@ -21,4 +21,5 @@ enum class TokenType {
     Backtick,
     Whitespace,
     Comment,
+    VarargIndentifier,
 }
