@@ -350,6 +350,18 @@ main : Error in LoweringToHir [21, 24) : Parameter count and args count must mat
         ))
     }
 
+    @Test
+    fun `test native function parameter count`() {
+        testHirLowering("""
+main : Error in LoweringToHir [24, 27) : Parameter count and args count must match: foo
+        """, listOf(
+                "main" withText """
+        (defnat foo foo (a b))
+        (foo 3)
+                """.trimIndent()
+        ))
+    }
+
     private fun testHirLowering(expectedHirPrint: String, files: List<InMemoryFileInfo>, targetIndex: Int = 0) {
         val asts = buildAsts(files)
         val expander = MacroExpander()

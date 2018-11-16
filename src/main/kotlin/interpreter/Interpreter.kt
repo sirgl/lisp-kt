@@ -1,5 +1,6 @@
 package interpreter
 
+import analysis.FuncLikeInfo
 import analysis.Matchers
 import lexer.Token
 import lexer.TokenType
@@ -28,14 +29,14 @@ private fun intBoolFunction(f: (List<Int>) -> Boolean): NativeFunction {
 }
 
 
-class InterpreterException(reason: String, val range: TextRange) : Exception(reason) {
+class InterpreterException(reason: String, private val range: TextRange) : Exception(reason) {
     override fun toString(): String {
         return "Interpreter $range: $message"
     }
 }
 
 class InterpreterEnv(
-        val globalScope: MutableMap<String, AstNode> = mutableMapOf(),
+        globalScope: MutableMap<String, AstNode> = mutableMapOf(),
         private val nativeFunctions: Map<String, NativeFunction> = standardEnvFunctions
 ) {
     private val envStack = ArrayDeque<MutableMap<String, AstNode>>()
@@ -200,12 +201,37 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
         }
     }
 
+    private fun checkParameterCount(argsCount: Int, info: FuncLikeInfo, node: AstNode) {
+        if (argsCount != info.parameters.size) {
+            if (info.parameters.lastOrNull()?.isVararg != true || argsCount <= info.parameters.size) {
+                err("Parameter count and args count must match (${info.name})", node)
+            }
+        }
+    }
+
+    /**
+     * @return list of args with folded vararg arguments into list (exactly matches with parameter count)
+     */
+    private fun prepareArgs(info: FuncLikeInfo, args: List<AstNode>): List<AstNode> {
+        val parameters = info.parameters
+        val paramLastIndex = parameters.lastIndex
+        val preparedArgs = mutableListOf<AstNode>()
+        for (i in (0 until parameters.size)) {
+            val parameter = parameters[i]
+            if (i == paramLastIndex && parameter.isVararg) {
+                val vararg = args.subList(parameters.lastIndex, args.size)
+                preparedArgs.add(ListNode(vararg, TextRange(0, 0)))
+            } else {
+                preparedArgs.add(args[i])
+            }
+        }
+        return preparedArgs
+    }
+
     private fun callMacro(entry: AstNode, args: List<AstNode>): AstNode {
         val macroInfo = Matchers.MACRO.forceExtract(entry)
-        // TODO support varargs
-        val replacementMap = macroInfo.parameters.map { it.name }.zip(args)
+        val replacementMap = macroInfo.parameters.map { it.name }.zip(prepareArgs(macroInfo, args))
             .associateBy({ it.first }) { it.second }
-        //        var wasTransformation = false
         val replacedBody = macroInfo.body.map { bodyNode ->
             transform(bodyNode) { leafNode ->
                 if (leafNode.token.type != TokenType.Identifier) {
@@ -235,13 +261,11 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
     ): AstNode {
         val nativeFun = Matchers.DEFNAT.forceExtract(entry)
         val nameInProgram = nativeFun.nameInProgram
-        if (args.size != nativeFun.parameters.size) {
-            err("Parameter count and args count must match ($nameInProgram)", entry)
-        }
+        checkParameterCount(args.size, nativeFun, entry)
         val nameInRuntime = nativeFun.nameInRuntime
         val nativeFunction = env.findNativeFun(nameInRuntime)
             ?: err("No $nameInProgram runtime function registered ($nameInRuntime runtime name expected)", entry)
-        return nativeFunction.call(args, this)
+        return nativeFunction.call(prepareArgs(nativeFun, args), this)
     }
 
     private fun callDefn(
@@ -249,13 +273,11 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
         args: List<AstNode>
     ): AstNode {
         val defnNode = Matchers.DEFN.forceExtract(entry)
-        if (args.size != defnNode.parameters.size) {
-            err("Parameter count and args count must match (${defnNode.name})", entry)
-        }
+        checkParameterCount(args.size, defnNode, entry)
         env.enterScope()
+        val preparedArgs = prepareArgs(defnNode, args)
         for ((index, parameter) in defnNode.parameters.map { it.name }.withIndex()) {
-            // TODO support varargs
-            env.addToScope(parameter, args[index])
+            env.addToScope(parameter, preparedArgs[index])
         }
         var last: AstNode? = null
         for (bodyNode in defnNode.body) {

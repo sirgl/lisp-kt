@@ -10,7 +10,11 @@ sealed class NodeInfo
 sealed class FuncLikeInfo : NodeInfo() {
     abstract val name: String
     abstract val parameters: List<ParameterInfo>
-    abstract val body: List<AstNode>
+}
+
+sealed class FuncLikeDefinitionInfo : FuncLikeInfo() {
+        abstract val body: List<AstNode>
+
 }
 
 class ParameterInfo(val name: String, val isVararg: Boolean)
@@ -19,13 +23,13 @@ class DefnNodeInfo(
         override val name: String,
         override val parameters: List<ParameterInfo>,
         override val body: List<AstNode>
-) : FuncLikeInfo()
+) : FuncLikeDefinitionInfo()
 
 class MacroNodeInfo(
         override val name: String,
         override val parameters: List<ParameterInfo>,
         override val body: List<AstNode>
-) : FuncLikeInfo()
+) : FuncLikeDefinitionInfo()
 
 class ModuleNodeInfo(
         val name: String
@@ -64,5 +68,8 @@ class SetNodeInfo(
 class NativeFunctionDeclarationInfo(
         val nameInProgram: String,
         val nameInRuntime: String,
-        val parameters: List<ParameterInfo>
-) : NodeInfo()
+        override val parameters: List<ParameterInfo>
+) : FuncLikeInfo() {
+        override val name: String
+                get() = nameInProgram
+}

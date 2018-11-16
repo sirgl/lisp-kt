@@ -185,15 +185,6 @@ sealed class HirCallExpr(val name: String, val args: List<HirExpr>) : HirExpr() 
         get() = args
 }
 
-class HirGlobalCallExpr(
-        name: String,
-        args: List<HirExpr>
-) : HirCallExpr(name, args) {
-    override fun prettySelf(): String {
-        return "Global call: $name"
-    }
-}
-
 class HirLocalCallExpr(
         name: String,
         args: List<HirExpr>,

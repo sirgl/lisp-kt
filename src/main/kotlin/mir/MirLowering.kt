@@ -60,7 +60,6 @@ private class MirFunctionLowering(
             }
             is HirWhileExpr -> lowerWhile(expr)
             is HirAssignExpr -> builder.emit(MirStoreInstr(builder.getVarId(expr.decl), lowerExpr(expr.rValue)))
-            is HirGlobalCallExpr -> TODO() // probably, I should remove it
             is HirLocalCallExpr -> lowerCall(expr)
             is HirIfExpr -> lowerIf(expr)
             is HirBoolLiteral -> builder.emit(MirLoadValueInstr(MirValue.MirBool(expr.value, true)))
