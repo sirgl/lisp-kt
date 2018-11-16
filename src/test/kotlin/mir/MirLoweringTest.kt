@@ -159,6 +159,31 @@ b0:
         ))
     }
 
+    @Test
+    fun `test data`() {
+        testMir("""
+main:
+fun main__init params: 0, totalVars: 0 (main)
+b0:
+  load_const ()
+  load_const let (symbol)
+  with_element list: b0:i1, value: b0:i1
+  load_const ()
+  load_const foo (string, tagged)
+  with_element list: b0:i4, value: b0:i4
+  load_const 12 (i32, tagged)
+  with_element list: b0:i6, value: b0:i6
+  load_const 2 (i32, tagged)
+  with_element list: b0:i8, value: b0:i8
+  with_element list: b0:i9, value: b0:i9
+  load_const x (symbol)
+  with_element list: b0:i11, value: b0:i11
+  return b0:i12
+        """.trimIndent(), listOf(
+                "main" withText "`(let (\"foo\" 12 2) x)"
+        ))
+    }
+
     fun testMir(expected: String, files: List<InMemoryFileInfo>) {
         val sources = files.map { InMemorySource(it.text, it.name) }
         val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0))

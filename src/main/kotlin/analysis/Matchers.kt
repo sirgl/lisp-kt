@@ -40,8 +40,8 @@ object Matchers {
         }
     }
 
-    val functionValidator = FunctionLikeValidator("Define")
-    val macroValidator = FunctionLikeValidator("Macro")
+    private val functionValidator = FunctionLikeValidator("Define")
+    private val macroValidator = FunctionLikeValidator("Macro")
 
     val DEFN = ListMatcher(Keywords.DEFN_KW, functionValidator) { node ->
         val children = node.children

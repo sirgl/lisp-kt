@@ -15,7 +15,7 @@ interface Validator {
     fun validate(node: AstNode, lintSink: LintSink, source: Source)
 }
 
-class ListMatcher<T : NodeInfo>(val name: String, val validator: Validator, val extractor: (AstNode) -> T) {
+class ListMatcher<T : NodeInfo>(val name: String, private val validator: Validator, val extractor: (AstNode) -> T) {
     fun matches(node: AstNode, source: Source = FakeSource): Boolean {
         if (node !is ListNode) return false
         if (node.children.isEmpty()) return false
