@@ -1,111 +1,29 @@
 package interpreter
 
 import analysis.Matchers
-import lexer.Lexer
-import lexer.LexerImpl
 import lexer.Token
 import lexer.TokenType
 import parser.*
 import java.util.*
 
-sealed class EnvironmentEntry
-
-sealed class FunctionLike : EnvironmentEntry() {
-    abstract fun call(args: List<AstNode>, interpreter: Interpreter): AstNode
+class NativeFunction(val function: (List<AstNode>, Interpreter) -> AstNode) {
+    fun call(args: List<AstNode>, interpreter: Interpreter): AstNode = function(args, interpreter)
 }
 
-class Macro(val name: String, val parameters: List<String>, val body: List<AstNode>) : FunctionLike() {
-    override fun call(args: List<AstNode>, interpreter: Interpreter): AstNode {
-        val scope = parameters.zip(args).associateBy({ it.first }) { it.second }
-        var body = body
-        var transforms = 0
-        while (true) {
-            val expansionResult = singleExpansion(body, scope, interpreter)
-            if (!expansionResult.wasTransformation) return expansionResult.node
-            body = expansionResult.newBody
-            transforms++
-            if (transforms > 1000) throw InterpreterException("Macros is too deep", body.first().textRange)
-        }
-    }
-
-    private class ExpansionResult(
-            val node: AstNode,
-            val newBody: List<AstNode>,
-            val wasTransformation: Boolean
-    )
-
-
-    private fun singleExpansion(body: List<AstNode>, scope: Map<String, AstNode>, interpreter: Interpreter) : ExpansionResult {
-        var wasTransformation = false
-        val replacedBody = body.map { bodyNode ->
-            transform(bodyNode) { leafNode ->
-                if (leafNode.token.type != TokenType.Identifier) {
-                    leafNode
-                } else {
-                    val astNode = scope[leafNode.token.text]
-                    if (astNode != null) {
-                        wasTransformation = true
-                        astNode
-                    } else leafNode
-                }
-            }
-        }
-        var result: AstNode? = null
-        for (node in replacedBody) {
-            result = interpreter.eval(node)
-        }
-        val resultNode = if (result is DataNode) {
-            result.node
-        } else {
-            when (result) {
-                null -> emptyListNode()
-                else -> interpreter.eval(result)
-            }
-        }
-        return ExpansionResult(resultNode, replacedBody, wasTransformation)
-    }
-}
-
-sealed class Function : FunctionLike()
-
-class AstFunction(val name: String, val parameters: List<String>, val body: List<AstNode>) : Function() {
-    override fun call(args: List<AstNode>, interpreter: Interpreter): AstNode {
-        val env = interpreter.env
-        env.enterScope()
-        for ((index, parameter) in parameters.withIndex()) {
-            val arg = args[index]
-            env.addToScope(parameter, Variable(arg))
-        }
-
-        val results = mutableListOf<AstNode>()
-        for (statement in body) {
-            results.add(interpreter.eval(statement))
-        }
-        env.leaveScope(1)
-        return results.last()
-    }
-}
-
-class EnvFunction(val function: (List<AstNode>, Interpreter) -> AstNode) : Function() {
-    override fun call(args: List<AstNode>, interpreter: Interpreter): AstNode = function(args, interpreter)
-}
-
-class Variable(var value: AstNode) : EnvironmentEntry()
-
-private fun <T> intTFunction(f: (List<Int>) -> T?, tokenTypeMapper: (T) -> TokenType, syntaxKind: SyntaxKind): EnvFunction {
-    return EnvFunction { argNodes, interpreter ->
+private fun <T> intTFunction(f: (List<Int>) -> T?, tokenTypeMapper: (T) -> TokenType, syntaxKind: SyntaxKind): NativeFunction {
+    return NativeFunction { argNodes, interpreter ->
         val values = argNodes.map { (interpreter.eval(it) as LeafNode).token.text.toInt() }
-        val tResult = f(values) ?: return@EnvFunction emptyListNode()
+        val tResult = f(values) ?: return@NativeFunction emptyListNode()
         val token = Token(-1, tResult.toString(), tokenTypeMapper(tResult))
         LeafNode(token, syntaxKind)
     }
 }
 
-private fun intFunction(f: (List<Int>) -> Int?): EnvFunction {
+private fun intFunction(f: (List<Int>) -> Int?): NativeFunction {
     return intTFunction(f, { TokenType.Int }, SyntaxKind.IntLiteral)
 }
 
-private fun intBoolFunction(f: (List<Int>) -> Boolean): EnvFunction {
+private fun intBoolFunction(f: (List<Int>) -> Boolean): NativeFunction {
     return intTFunction(f, { if (it) TokenType.TrueLiteral else TokenType.FalseLiteral }, SyntaxKind.BoolLiteral)
 }
 
@@ -116,8 +34,11 @@ class InterpreterException(reason: String, val range: TextRange) : Exception(rea
     }
 }
 
-class InterpreterEnv(globalScope: MutableMap<String, EnvironmentEntry>) {
-    val envStack = ArrayDeque<MutableMap<String, EnvironmentEntry>>()
+class InterpreterEnv(
+        val globalScope: MutableMap<String, AstNode> = mutableMapOf(),
+        private val nativeFunctions: Map<String, NativeFunction> = standardEnvFunctions
+) {
+    private val envStack = ArrayDeque<MutableMap<String, AstNode>>()
 
     init {
         envStack.push(globalScope)
@@ -133,31 +54,48 @@ class InterpreterEnv(globalScope: MutableMap<String, EnvironmentEntry>) {
         }
     }
 
-    fun resolve(name: String): EnvironmentEntry? {
+    fun findNativeFun(runtimeName: String): NativeFunction? {
+        return nativeFunctions[runtimeName]
+    }
+
+    fun resolve(name: String): AstNode? {
         return envStack.asSequence()
                 .map { it[name] }
                 .filterNotNull()
                 .firstOrNull()
     }
 
-    fun addToScope(name: String, value: EnvironmentEntry) {
+    /**
+     * @return true, if successfully found variable
+     */
+    fun assign(name: String, value: AstNode) : Boolean {
+        for (space in envStack) {
+            if (name in space) {
+                space[name] = value
+                return true
+            }
+        }
+        return false
+    }
+
+    fun addToScope(name: String, value: AstNode) {
         envStack.peekFirst()[name] = value
     }
 }
 
-val standardEnvFunctions: MutableMap<String, EnvironmentEntry> = mutableMapOf(
-        "+" to intFunction { it.sum() },
-        "*" to intFunction { it.reduce { acc, i -> acc * i } },
-        "-" to intFunction { it[0] - it.drop(1).sum() },
-        "/" to intFunction { it[0] / it.drop(1).reduce { acc, i -> acc * i } },
-        ">" to intBoolFunction { list -> list.drop(1).all { it < list[0] } },
-        "<" to intBoolFunction { list -> list.drop(1).all { it > list[0] } },
-        "=" to intBoolFunction { list -> list.drop(1).all { it == list[0] } },
-        "print" to intBoolFunction { println(it);true }
+val standardEnvFunctions: MutableMap<String, NativeFunction> = mutableMapOf(
+        "r__add" to intFunction { it.sum() },
+        "r__mul" to intFunction { it.reduce { acc, i -> acc * i } },
+        "r__sub" to intFunction { it[0] - it.drop(1).sum() },
+        "r__div" to intFunction { it[0] / it.drop(1).reduce { acc, i -> acc * i } },
+        "r__gt" to intBoolFunction { list -> list.drop(1).all { it < list[0] } },
+        "r__lt" to intBoolFunction { list -> list.drop(1).all { it > list[0] } },
+        "r__eq" to intBoolFunction { list -> list.drop(1).all { it == list[0] } },
+        "__print" to intBoolFunction { println(it);true }
 )
 
 
-class Interpreter(internal val env: InterpreterEnv = InterpreterEnv(standardEnvFunctions)) {
+class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(), standardEnvFunctions)) {
 
     // assumes no macro inside
     @Throws(InterpreterException::class)
@@ -167,11 +105,7 @@ class Interpreter(internal val env: InterpreterEnv = InterpreterEnv(standardEnvF
             is LeafNode -> {
                 if (node.token.type == TokenType.Identifier) {
                     val ident = node.token.text
-                    val entry = env.resolve(ident) ?: err("No $ident found in env", node)
-                    when (entry) {
-                        is Variable -> eval(entry.value)
-                        else -> error("Expected variable")
-                    }
+                    env.resolve(ident) ?: err("No $ident found in env", node)
                 } else {
                     node
                 }
@@ -201,8 +135,9 @@ class Interpreter(internal val env: InterpreterEnv = InterpreterEnv(standardEnvF
         val firstNodeText = first.token.text
         return when {
             Matchers.NATIVE_FUNCTION.matches(node) -> {
-                // TODO place here just reference to real native function
-                emptyListNode()
+                val nativeFunction = Matchers.NATIVE_FUNCTION.forceExtract(node)
+                env.addToScope(nativeFunction.nameInProgram, node)
+                node
             }
             Matchers.IF.matches(node) -> {
                 val ifInfo = Matchers.IF.forceExtract(node)
@@ -223,28 +158,26 @@ class Interpreter(internal val env: InterpreterEnv = InterpreterEnv(standardEnvF
             }
             Matchers.DEFN.matches(node) -> {
                 val defnInfo = Matchers.DEFN.forceExtract(node)
-                val function = AstFunction(defnInfo.name, defnInfo.parameters, defnInfo.body)
-                env.addToScope(defnInfo.name, function)
+                env.addToScope(defnInfo.name, node)
                 node
             }
             Matchers.MACRO.matches(node) -> {
                 val macroInfo = Matchers.MACRO.forceExtract(node)
-                val macro = Macro(macroInfo.name, macroInfo.parameters, macroInfo.body)
-                env.addToScope(macroInfo.name, macro)
+                env.addToScope(macroInfo.name, node)
                 emptyListNode()
             }
             Matchers.SET.matches(node) -> {
                 val setInfo = Matchers.SET.forceExtract(node)
-                val variable = env.resolve(setInfo.name) as? Variable
-                        ?: err("Variable ${setInfo.name} not found", node)
-                variable.value = eval(setInfo.newValue)
+                if (!env.assign(setInfo.name, eval(setInfo.newValue))) {
+                    err("Variable ${setInfo.name} not found", node)
+                }
                 emptyListNode()
             }
             Matchers.LET.matches(node) -> {
                 val letInfo = Matchers.LET.forceExtract(node)
                 for (declaration in letInfo.declarations) {
                     env.enterScope()
-                    env.addToScope(declaration.name, Variable(eval(declaration.initializer)))
+                    env.addToScope(declaration.name, eval(declaration.initializer))
                 }
                 var last: AstNode? = null
                 for (bodyNode in letInfo.body) {
@@ -254,21 +187,83 @@ class Interpreter(internal val env: InterpreterEnv = InterpreterEnv(standardEnvF
                 return last!! // matcher guarantees, that body is not empty
             }
             else -> {
+                // it is either function call or macro call
                 val entry = env.resolve(firstNodeText) ?: err("No definition of $firstNodeText in env", node)
-                when (entry) {
-                    is FunctionLike -> {
-                        // TODO parameter count validation
-                        //                                if (entry.parameters.size != childrenCount - 1) err("Wrong count of args for call, ${entry.parameters.size} expected", node)
-                        entry.call(children.drop(1), this)
-                    }
-                    is Variable -> {
-                        val defnInfo = Matchers.DEFN.forceExtract(entry.value)
-                        val function = AstFunction(defnInfo.name, defnInfo.parameters, defnInfo.body)
-                        function.call(children.drop(1), this)
-                    }
+                val args = children.drop(1)
+                return when {
+                    Matchers.DEFN.matches(entry) -> callDefn(entry, args)
+                    Matchers.NATIVE_FUNCTION.matches(entry) -> callNative(entry, args)
+                    Matchers.MACRO.matches(entry) -> callMacro(entry, args)
+                    else -> throw UnsupportedOperationException()
                 }
             }
         }
+    }
+
+    private fun callMacro(entry: AstNode, args: List<AstNode>): AstNode {
+        val macroInfo = Matchers.MACRO.forceExtract(entry)
+        val replacementMap = macroInfo.parameters.zip(args)
+            .associateBy({ it.first }) { it.second }
+        //        var wasTransformation = false
+        val replacedBody = macroInfo.body.map { bodyNode ->
+            transform(bodyNode) { leafNode ->
+                if (leafNode.token.type != TokenType.Identifier) {
+                    leafNode
+                } else {
+                    val astNode = replacementMap[leafNode.token.text]
+                    if (astNode != null) {
+                        astNode
+                    } else leafNode
+                }
+            }
+        }
+        var result: AstNode? = null
+        for (node in replacedBody) {
+            result = eval(node)
+        }
+        return if (result is DataNode) {
+            result.node
+        } else {
+            when (result) {
+                null -> emptyListNode()
+                else -> eval(result)
+            }
+        }
+    }
+
+    private fun callNative(
+        entry: AstNode,
+        args: List<AstNode>
+    ): AstNode {
+        val nativeFun = Matchers.NATIVE_FUNCTION.forceExtract(entry)
+        val nameInProgram = nativeFun.nameInProgram
+        if (args.size != nativeFun.parameters.size) {
+            err("Parameter count and args count must match ($nameInProgram)", entry)
+        }
+        val nameInRuntime = nativeFun.nameInRuntime
+        val nativeFunction = env.findNativeFun(nameInRuntime)
+            ?: err("No $nameInProgram runtime function registered ($nameInRuntime runtime name expected)", entry)
+        return nativeFunction.call(args, this)
+    }
+
+    private fun callDefn(
+        entry: AstNode,
+        args: List<AstNode>
+    ): AstNode {
+        val defnNode = Matchers.DEFN.forceExtract(entry)
+        if (args.size != defnNode.parameters.size) {
+            err("Parameter count and args count must match (${defnNode.name})", entry)
+        }
+        env.enterScope()
+        for ((index, parameter) in defnNode.parameters.withIndex()) {
+            env.addToScope(parameter, args[index])
+        }
+        var last: AstNode? = null
+        for (bodyNode in defnNode.body) {
+            last = eval(bodyNode)
+        }
+        env.leaveScope(defnNode.parameters.size)
+        return last!!
     }
 
     private fun err(reason: String, node: AstNode): Nothing = throw InterpreterException(reason, node.textRange)
@@ -297,28 +292,4 @@ fun transform(node: AstNode, action: (LeafNode) -> AstNode): AstNode {
         is FileNode -> FileNode(children.map { transform(it, action) }, node.textRange)
         is DataNode -> DataNode(transform(node.node, action), node.textRange)
     }
-}
-
-fun main(args: Array<String>) {
-    val lexerImpl: Lexer = LexerImpl()
-    val parser = Parser()
-//    lexer.tokenize()
-//    val parse = parser.parse(lexerImpl.tokenize("(if #t (if #f 12 22) 44)"))
-//    val parse = parser.parse(lexerImpl.tokenize("(let ((x 44) (y (defn foo (x) (+ x 100)))) (set x 77) (y 12))"))
-    val parse = parser.parse(lexerImpl.tokenize("""
-        (defn sqr (x) (* x x))
-        (macro stat-sqr (x) `(* x x))
-        (let ((i 0))
-            (while (< i 10)
-                (print (sqr i))
-                (set i (+ i 1))
-            )
-            (stat-sqr 12)
-        )
-    """.trimIndent()))
-    if (parse is ParseResult.Error) {
-        println(parse)
-        return
-    }
-    println(Interpreter().eval((parse as ParseResult.Ok).node).lispy())
 }

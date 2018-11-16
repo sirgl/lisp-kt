@@ -26,3 +26,11 @@ class AppendingSink(val collection: MutableCollection<Lint>) : LintSink {
         collection.add(lint)
     }
 }
+
+object ThrowingSink : LintSink {
+    override fun addLint(lint: Lint) {
+        throw LintException(lint)
+    }
+}
+
+class LintException(val lint: Lint) : Exception()

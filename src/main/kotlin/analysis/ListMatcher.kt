@@ -1,10 +1,7 @@
 package analysis
 
 import lexer.TokenType
-import linting.CollectingSink
-import linting.HasErrorsSink
-import linting.LintSink
-import linting.Severity
+import linting.*
 import parser.AstNode
 import parser.LeafNode
 import parser.ListNode
@@ -48,7 +45,7 @@ class ListMatcher<T : NodeInfo>(val name: String, val validator: Validator, val 
     }
 
     fun forceExtract(node: AstNode) : T {
-        return extract(node).unwrap()
+        return extract(node).drainTo(ThrowingSink)!!
     }
 }
 

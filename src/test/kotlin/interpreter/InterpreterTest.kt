@@ -38,7 +38,7 @@ class InterpreterTest {
 
     @Test
     fun `test env function`() {
-        testResult("(+ 1 2 3)", "6")
+        testResult("(defnat + r__add (a b c))(+ 1 2 3)", "6")
     }
 
     @Test
@@ -54,6 +54,8 @@ class InterpreterTest {
     @Test
     fun `test while`() {
         testResult("""
+            (defnat + r__add (a b))
+            (defnat < r__lt (a b))
             (let ((i 0))
                 (while (< i 10)
                     (set i (+ i 1))
@@ -76,6 +78,7 @@ class InterpreterTest {
     @Test
     fun `test let in next definition previous accessible`() {
         testResult("""
+            (defnat + r__add (a b))
             (let ((i 10) (b (+ i 2)))
                 b
             )
@@ -125,6 +128,7 @@ class InterpreterTest {
     @Test
     fun `test defn`() {
         testResult("""
+            (defnat * r__mul (a b))
             (defn sqr (x) (* x x))
             (sqr 12)
         """.trimIndent(), "144")
@@ -141,9 +145,18 @@ class InterpreterTest {
     @Test
     fun `test macro expand same as defn`() {
         testResult("""
+            (defnat * r__mul (x y))
             (macro sqr (x) (* x x))
             (sqr 12)
         """.trimIndent(), "144")
+    }
+
+    @Test
+    fun `test native function`() {
+        testResult("""
+            (defnat + r__add (x y))
+            (let ((s +)) (s 1 2))
+        """.trimIndent(), "3")
     }
 
     private fun testResult(program: String, expectedResult: String) {

@@ -14,7 +14,7 @@ object Matchers {
     class FunctionLikeValidator(private val nodeType: String) : Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
             val children = node.children
-            verifyCountAtLeast(node, nodeType, 4, source, lintSink)
+            if (!verifyCountAtLeast(node, nodeType, 4, source, lintSink)) return
             verifyName(children[1], "Name", source, lintSink)
             val parametersNode = children[2]
             verifyParametersNode(parametersNode, source, lintSink)
@@ -28,13 +28,15 @@ object Matchers {
                 verifyName(parameter, "Parameter", source, lintSink)
             }
         } else {
-            lintSink.addLint(Lint(
+            lintSink.addLint(
+                Lint(
                     "Parameters node must be a list node",
                     parametersNode.textRange,
                     Severity.Error,
                     Subsystem.Verification,
                     source
-            ))
+                )
+            )
         }
     }
 
@@ -56,20 +58,20 @@ object Matchers {
     }
 
     private fun parseParameterList(node: AstNode) =
-            (node as ListNode).children.map { (it as LeafNode).token.text }
+        (node as ListNode).children.map { (it as LeafNode).token.text }
 
-    val MODULE = ListMatcher(Keywords.MODULE_KW, object: Validator {
+    val MODULE = ListMatcher(Keywords.MODULE_KW, object : Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
-            verifyCountExact(node, "Module", 2, source, lintSink)
+            if (!verifyCountExact(node, "Module", 2, source, lintSink)) return
             verifyName(node.children[1], "Module", source, lintSink)
         }
     }) { node ->
         ModuleNodeInfo((node.children[1] as LeafNode).token.text)
     }
 
-    val IMPORT = ListMatcher(Keywords.IMPORT_KW, object: Validator {
+    val IMPORT = ListMatcher(Keywords.IMPORT_KW, object : Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
-            verifyCountExact(node, "Import", 2, source, lintSink)
+            if (!verifyCountExact(node, "Import", 2, source, lintSink)) return
             verifyName(node.children[1], "Import", source, lintSink)
         }
     }) { node ->
@@ -77,9 +79,9 @@ object Matchers {
     }
 
 
-    val LET = ListMatcher(Keywords.LET_KW, object: Validator {
+    val LET = ListMatcher(Keywords.LET_KW, object : Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
-            verifyCountAtLeast(node, "Let", 3, source, lintSink)
+            if (!verifyCountAtLeast(node, "Let", 3, source, lintSink)) return
             val children = node.children
             val declarationsNode = children[1]
             if (declarationsNode !is ListNode) {
@@ -91,7 +93,7 @@ object Matchers {
                     lintSink.addError("Single declaration in let must be a list node", declarationsNode, source)
                     return
                 }
-                verifyCountExact(declaration, "Let declaration", 2, source, lintSink)
+                if (!verifyCountExact(declaration, "Let declaration", 2, source, lintSink)) return
                 val declarationChildren = declaration.children
                 val declarationName = declarationChildren[0]
                 verifyName(declarationName, "Let declaration name", source, lintSink)
@@ -105,7 +107,7 @@ object Matchers {
         LetNodeInfo(decls, body)
     }
 
-    val IF = ListMatcher(Keywords.IF_KW, object: Validator {
+    val IF = ListMatcher(Keywords.IF_KW, object : Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
             val children = node.children
             val childrenCount = children.size
@@ -118,16 +120,16 @@ object Matchers {
         val condition = children[1]
         val thenBranch = children[2]
 //        val elseBranch = children[3]
-        when(children.size) {
+        when (children.size) {
             3 -> IfNodeInfo(condition, thenBranch, null)
             4 -> IfNodeInfo(condition, thenBranch, children[3])
             else -> throw IllegalStateException()
         }
     }
 
-    val WHILE = ListMatcher(Keywords.WHILE_KW, object: Validator {
+    val WHILE = ListMatcher(Keywords.WHILE_KW, object : Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
-            verifyCountAtLeast(node, "While", 3, source, lintSink)
+            if (!verifyCountAtLeast(node, "While", 3, source, lintSink)) return
         }
     }) { node ->
         val children = node.children
@@ -135,9 +137,9 @@ object Matchers {
         WhileNodeInfo(condition, children.drop(2))
     }
 
-    val SET = ListMatcher(Keywords.SET_KW, object: Validator {
+    val SET = ListMatcher(Keywords.SET_KW, object : Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
-            verifyCountExact(node, "Set", 3, source, lintSink)
+            if (!verifyCountExact(node, "Set", 3, source, lintSink)) return
             verifyName(node.children[1], "Name", source, lintSink)
         }
     }) { node ->
@@ -146,9 +148,9 @@ object Matchers {
         SetNodeInfo(name, children[2])
     }
 
-    val NATIVE_FUNCTION = ListMatcher(Keywords.NATIVE_FUN_KW, object: Validator {
+    val NATIVE_FUNCTION = ListMatcher(Keywords.NATIVE_FUN_KW, object : Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
-            verifyCountExact(node, "Native function declaration", 4, source, lintSink)
+            if (!verifyCountExact(node, "Native function declaration", 4, source, lintSink)) return
             verifyName(node.children[1], "Runtime name", source, lintSink)
             verifyName(node.children[2], "Name in program", source, lintSink)
             verifyParametersNode(node.children[3], source, lintSink)
@@ -171,33 +173,47 @@ object Matchers {
     private fun verifyName(node: AstNode, nodeName: String, source: Source, lintSink: LintSink) {
         when (node) {
             is LeafNode -> if (node.token.type != TokenType.Identifier) {
-                lintSink.addLint(Lint(
+                lintSink.addLint(
+                    Lint(
                         "$nodeName node must be leaf node",
                         node.textRange,
                         Severity.Error,
                         Subsystem.Verification,
                         source
-                ))
+                    )
+                )
             }
-            else -> lintSink.addLint(Lint(
+            else -> lintSink.addLint(
+                Lint(
                     "$nodeName node must be leaf node",
                     node.textRange,
                     Severity.Error,
                     Subsystem.Verification,
                     source
-            ))
+                )
+            )
         }
     }
 
-    private fun verifyCountExact(node: AstNode, nodeName: String, count: Int, source: Source, lintSink: LintSink) {
+    private fun verifyCountExact(
+        node: AstNode,
+        nodeName: String,
+        count: Int,
+        source: Source,
+        lintSink: LintSink
+    ): Boolean {
         if (node.children.size != count) {
             lintSink.addError("$nodeName must have $count children", node, source)
+            return false
         }
+        return true
     }
 
-    private fun verifyCountAtLeast(node: AstNode, nodeName: String, count: Int, source: Source, lintSink: LintSink) {
+    private fun verifyCountAtLeast(node: AstNode, nodeName: String, count: Int, source: Source, lintSink: LintSink): Boolean {
         if (node.children.size < count) {
             lintSink.addError("$nodeName must have at least $count children", node, source)
+            return false
         }
+        return true
     }
 }

@@ -160,11 +160,14 @@ File
         testHirLowering("""
 main:
 File
+  Native function declaration: * (runtime name: r__mul)
   Function declaration: (main) main__init
     Block expr
+      Expr stmt
+        Function reference: *
       Int literal: 169
         """, listOf(
-                "main" withText "(macro sqr (x) (* x x))(sqr 13)"
+                "main" withText "(defnat * r__mul (x y))(macro sqr (x) (* x x))(sqr 13)"
         ))
     }
 
@@ -174,28 +177,20 @@ File
         testHirLowering("""
 main:
 File
-  Function declaration: print
-    Parameter: x
-    Block expr
-      List literal
-  Function declaration: +
-    Parameter: x
-    Parameter: y
-    Block expr
-      List literal
-  Function declaration: <
-    Parameter: x
-    Parameter: y
-    Block expr
-      List literal
+  Native function declaration: + (runtime name: r__add)
+  Native function declaration: * (runtime name: r__mul)
+  Native function declaration: < (runtime name: r__lt)
+  Native function declaration: print (runtime name: r__print)
   Function declaration: (main) main__init
     Block expr
       Expr stmt
-        Function reference: print
-      Expr stmt
         Function reference: +
       Expr stmt
+        Function reference: *
+      Expr stmt
         Function reference: <
+      Expr stmt
+        Function reference: print
       Block expr
         Var decl: i
           Int literal: 0
@@ -214,16 +209,18 @@ File
                   Int literal: 1
         """, listOf(
                 "main" withText """
+        (defnat + r__add (a b))
+        (defnat * r__mul (a b))
+        (defnat < r__lt (a b))
+        (defnat print r__print (x))
+
         (macro stat-sqr (x) (* x x))
-        (defn print (x) ())
-        (defn + (x y) ())
-        (defn < (x y) ())
+
         (let ((i 0))
             (while (< i 10)
                 (print (stat-sqr (stat-sqr 4)))
                 (set i (+ i 1))
             )
-
         )
                 """.trimIndent()
         ))

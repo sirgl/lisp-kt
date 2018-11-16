@@ -38,8 +38,7 @@ private class MacroExpansionContext(asts: List<Ast>, val target: DependencyEntry
 
     fun expandRecursive(node: DependencyEntry) {
         node as RealDependencyEntry
-        val macroEnv = hashMapOf<String, EnvironmentEntry>()
-        macroEnv.putAll(standardEnvFunctions)
+        val macroEnv = hashMapOf<String, AstNode>()
         target.dfs {
             val realDependencyEntry = it as RealDependencyEntry
             val ast = realDependencyEntry.ast
@@ -48,7 +47,7 @@ private class MacroExpansionContext(asts: List<Ast>, val target: DependencyEntry
         }
     }
 
-    private fun expandWithContext(node: AstNode, macroEnv: MutableMap<String, EnvironmentEntry>) : ExpansionResult<AstNode> {
+    private fun expandWithContext(node: AstNode, macroEnv: MutableMap<String, AstNode>) : ExpansionResult<AstNode> {
         return when (node) {
             is LeafNode -> ExpansionResult(node, false)
             is ListNode -> expandList(node, macroEnv)
@@ -57,13 +56,15 @@ private class MacroExpansionContext(asts: List<Ast>, val target: DependencyEntry
         }
     }
 
-    private fun expandList(node: ListNode, macroEnv: MutableMap<String, EnvironmentEntry>) : ExpansionResult<AstNode> {
+    private fun expandList(node: ListNode, macroEnv: MutableMap<String, AstNode>) : ExpansionResult<AstNode> {
         val children = node.children
         if (children.isNotEmpty()) {
             val nameNode = children.first() as? LeafNode
             if (nameNode != null) {
                 val name = nameNode.token.text
-                return if (macroEnv[name] is Macro) {
+
+                val maybeMacro = macroEnv[name]
+                return if (maybeMacro != null && Matchers.MACRO.matches(maybeMacro)) {
                     val env = InterpreterEnv(macroEnv)
                     val newBody = Interpreter(env).eval(node)
                     ExpansionResult(newBody, true)
@@ -75,14 +76,14 @@ private class MacroExpansionContext(asts: List<Ast>, val target: DependencyEntry
         return buildListExpansion(children, macroEnv, node)
     }
 
-    private fun buildListExpansion(children: List<AstNode>, macroEnv: MutableMap<String, EnvironmentEntry>, node: ListNode): ExpansionResult<AstNode> {
+    private fun buildListExpansion(children: List<AstNode>, macroEnv: MutableMap<String, AstNode>, node: ListNode): ExpansionResult<AstNode> {
         val childExpansions = children.map { expandWithContext(it, macroEnv) }
         val wasExpansion = childExpansions.any { it.wasExpansion }
         return ExpansionResult(ListNode(childExpansions.map { it.ast }, node.textRange), wasExpansion)
     }
 
     // TODO it can be done on more granular level rather than file
-    private fun expandFileRecursive(root: FileNode, macroEnv: MutableMap<String, EnvironmentEntry>, source: Source) : FileNode {
+    private fun expandFileRecursive(root: FileNode, macroEnv: MutableMap<String, AstNode>, source: Source) : FileNode {
         var currentFile = root
         var expansionCount = 0
         while(true) {
@@ -94,7 +95,7 @@ private class MacroExpansionContext(asts: List<Ast>, val target: DependencyEntry
         }
     }
 
-    private fun expandFile(root: FileNode, macroEnv: MutableMap<String, EnvironmentEntry>, source: Source): ExpansionResult<FileNode> {
+    private fun expandFile(root: FileNode, macroEnv: MutableMap<String, AstNode>, source: Source): ExpansionResult<FileNode> {
         var wasExpansion = false
         val expandedChildren = root.children.mapNotNull {child ->
             when {
@@ -103,16 +104,21 @@ private class MacroExpansionContext(asts: List<Ast>, val target: DependencyEntry
                     when (macroResult) {
                         is ResultWithLints.Ok -> {
                             val macroNode = macroResult.value
-                            macroEnv[macroNode.name] = Macro(macroNode.name, macroNode.parameters, macroNode.body)
+                            macroEnv[macroNode.name] = child
                             null
                         }
                         is ResultWithLints.Error -> child
                     }
                 }
                 Matchers.DEFN.matches(child, source) -> {
-                    val defnResult = Matchers.DEFN.extract(child, source)
-                    defnResult.ifPresent {
-                        macroEnv[it.name] = AstFunction(it.name, it.parameters, it.body)
+                    Matchers.DEFN.extract(child, source).ifPresent {
+                        macroEnv[it.name] = child
+                    }
+                    child
+                }
+                Matchers.NATIVE_FUNCTION.matches(child, source) -> {
+                    Matchers.NATIVE_FUNCTION.extract(child, source).ifPresent {
+                        macroEnv[it.nameInProgram] = child
                     }
                     child
                 }
