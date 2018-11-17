@@ -225,7 +225,7 @@ b0:
   get_function_reference 0
   store_var: v0 value: b0:i0
   load_var: v0
-  call_by_reference refernceInstr: b0:i2 args: ()
+  call_by_reference referneceInstr: b0:i2 args: ()
   return b0:i3
         """.trimIndent(), listOf(
             "main" withText """
