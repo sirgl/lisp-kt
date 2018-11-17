@@ -79,7 +79,14 @@ private class MirFunctionLowering(
                 builder.emit(MirGetFunctionReference(functionId))
             }
             is HirVarReference -> builder.emit(MirLoadInstr(builder.getVarId(expr.decl)))
-            is HirCallByReferenceExpr -> TODO()
+            is HirCallByReferenceExpr -> {
+                val funcRefInstrId = lowerExpr(expr.funcReferenceSource)
+                // TODO not very precise about argument count
+                //  actually, here I should pack all args into list
+                //  and for every function generate function-satellite, that will repack it correctly and call function
+                val args = Array(expr.args.size) { index -> lowerExpr(expr.args[index]) }
+                builder.emit(MirCallByRefInstr(funcRefInstrId, args))
+            }
         }
     }
 
@@ -104,7 +111,7 @@ private class MirFunctionLowering(
         val args = expr.args
         val exprIds = prepareArgs(args, expr.decl)
         val functionId = builder.getFunctionId(expr.decl)
-        return builder.emit(MirCallInstr(functionId, exprIds))
+        return builder.emit(MirLocalCallInstr(functionId, exprIds))
     }
 
     private fun lowerWhile(expr: HirWhileExpr): MirInstrId {

@@ -210,6 +210,30 @@ b0:
         ))
     }
 
+
+    @Test
+    fun `test call by variable`() {
+        testMir("""
+main:
+fun foo params: 0, totalVars: 0
+b0:
+  load_const ()
+  return b0:i0
+
+fun main__init params: 0, totalVars: 1 (main)
+b0:
+  get_function_reference 0
+  store_var: v0 value: b0:i0
+  load_var: v0
+  call_by_reference refernceInstr: b0:i2 args: ()
+  return b0:i3
+        """, listOf(
+            "main" withText """
+        (let ((f (defn foo () ()))) (f))
+                """.trimIndent()
+        ))
+    }
+
     fun testMir(expected: String, files: List<InMemoryFileInfo>) {
         val sources = files.map { InMemorySource(it.text, it.name) }
         val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0))

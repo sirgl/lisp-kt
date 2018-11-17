@@ -194,7 +194,18 @@ class MirLoadInstr(val varId: Short) : MirValueInstr() {
 
 }
 
-class MirCallInstr(val functionId: Int, val args: Array<MirInstrId>) : MirValueInstr() {
+sealed class MirCallInstr(val args: Array<MirInstrId>) : MirValueInstr()
+
+class MirCallByRefInstr(val referenceInstrId: MirInstrId, args: Array<MirInstrId>) : MirCallInstr(args) {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        val instrIdRenderer = strategy.instrIdRenderer
+        val args = args.joinToString(separator = ", ", prefix = "(", postfix = ")") { instrIdRenderer.render(it) }
+        return "call_by_reference refernceInstr: ${strategy.instrIdRenderer.render(referenceInstrId)} args: $args"
+    }
+
+}
+
+class MirLocalCallInstr(val functionId: Int, args: Array<MirInstrId>) : MirCallInstr(args) {
     override fun pretty(strategy: PrettyPrintStrategy): String {
         val instrIdRenderer = strategy.instrIdRenderer
         val args = args.joinToString(separator = ", ", prefix = "(", postfix = ")") { instrIdRenderer.render(it) }
