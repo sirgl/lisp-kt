@@ -79,6 +79,7 @@ private class MirFunctionLowering(
                 builder.emit(MirGetFunctionReference(functionId))
             }
             is HirVarReference -> builder.emit(MirLoadInstr(builder.getVarId(expr.decl)))
+            is HirCallByReferenceExpr -> TODO()
         }
     }
 

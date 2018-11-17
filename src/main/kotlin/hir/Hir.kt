@@ -180,18 +180,30 @@ class HirAssignExpr(val name: String, val rValue: HirExpr, val decl: HirVarDecla
 sealed class HirExpr : HirNode()
 
 
-sealed class HirCallExpr(val name: String, val args: List<HirExpr>) : HirExpr() {
+sealed class HirCallExpr(val args: List<HirExpr>) : HirExpr() {
     override val children: List<HirNode>
         get() = args
 }
 
 class HirLocalCallExpr(
-        name: String,
+        val name: String,
         args: List<HirExpr>,
         val decl: HirFunctionDeclaration
-) : HirCallExpr(name, args) {
+) : HirCallExpr(args) {
     override fun prettySelf(): String {
         return "Local call: $name"
+    }
+}
+
+class HirCallByReferenceExpr(
+        val funcReferenceSource: HirExpr,
+        args: List<HirExpr>
+) : HirCallExpr(args) {
+    override val children: List<HirNode>
+        get() = childrenFrom(funcReferenceSource, args)
+
+    override fun prettySelf(): String {
+        return "Call by reference"
     }
 }
 

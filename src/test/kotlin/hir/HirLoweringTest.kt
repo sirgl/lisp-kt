@@ -244,7 +244,17 @@ File
         testHirLowering("""
 main:
 File
-TODO !!!!
+  Function declaration: foo
+    Block expr
+      List literal
+  Function declaration: (main) main__init
+    Block expr
+      Block expr
+        Var decl: f
+          Function reference: foo
+        Block expr
+          Call by reference
+            Var reference: f
         """, listOf(
                 "main" withText """
         (let ((f (defn foo () ()))) (f))

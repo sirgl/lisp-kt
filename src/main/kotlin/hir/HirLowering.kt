@@ -256,23 +256,30 @@ private class UnitHirLowering(
                         for (argsNode in argsNodes) {
                             args.add(lowerExpr(argsNode, false,  false) ?: return null)
                         }
-                        val declaration = context.resolve(name) as? HirFunctionDeclaration
-                        if (declaration == null) {
-                            errorLint("Unresolved function reference: $name", first.textRange)
-                            return null
-                        }
-                        if (args.size != declaration.parameters.size) {
-                            if (args.size <= declaration.parameters.size || !declaration.hasVarargs()) {
-                                errorLint("Parameter count and args count must match: $name", first.textRange)
+                        val declaration = context.resolve(name)
+                        when (declaration) {
+                            is HirFunctionDeclaration -> lowerFuncDeclarationCall(args, declaration, first)
+                            is HirVarDeclaration -> HirCallByReferenceExpr(HirVarReference(name, declaration), args)
+                            else -> {
+                                errorLint("Unresolved function reference: $name", first.textRange)
                                 return null
                             }
                         }
-                        HirLocalCallExpr(name, args, declaration)
                     }
                 }
             }
         }
 
+    }
+
+    private fun lowerFuncDeclarationCall(args: List<HirExpr>, declaration: HirFunctionDeclaration, first: AstNode): HirLocalCallExpr? {
+        if (args.size != declaration.parameters.size) {
+            if (args.size <= declaration.parameters.size || !declaration.hasVarargs()) {
+                errorLint("Parameter count and args count must match: ${declaration.name}", first.textRange)
+                return null
+            }
+        }
+        return HirLocalCallExpr(declaration.name, args, declaration)
     }
 
 
