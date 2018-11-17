@@ -230,6 +230,7 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
 
     private fun callMacro(entry: AstNode, args: List<AstNode>): AstNode {
         val macroInfo = Matchers.MACRO.forceExtract(entry)
+        checkParameterCount(args.size, macroInfo, entry)
         val replacementMap = macroInfo.parameters.map { it.name }.zip(prepareArgs(macroInfo, args))
             .associateBy({ it.first }) { it.second }
         val replacedBody = macroInfo.body.map { bodyNode ->

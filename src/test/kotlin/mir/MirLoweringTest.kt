@@ -227,7 +227,7 @@ b0:
   load_var: v0
   call_by_reference refernceInstr: b0:i2 args: ()
   return b0:i3
-        """, listOf(
+        """.trimIndent(), listOf(
             "main" withText """
         (let ((f (defn foo () ()))) (f))
                 """.trimIndent()

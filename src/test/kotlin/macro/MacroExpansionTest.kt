@@ -78,6 +78,37 @@ main:
     }
 
 
+    @Test
+    fun `test complex macro`() {
+        testExpansion("""
+main:
+(defnat + r__add (a b))
+(defnat < r__lt (a b))
+(defnat print r__print (x))
+(let ((i 0)) (while (< i 10) (print i) (+ i 1)))
+        """, listOf(
+                "main" withText """
+(defnat + r__add (a b))
+(defnat < r__lt (a b))
+(defnat print r__print (x))
+
+(macro inc (i) `(+ i 1))
+
+(macro for (start end index body)
+    `(let ((index start))
+        (while (< index end)
+            body
+            (inc i)
+        )
+    )
+)
+
+(for 0 10 i (print i))
+                """.trimIndent()
+        ))
+    }
+
+
 
     private fun testExpansion(expectedExpansion: String, files: List<InMemoryFileInfo>, targetIndex: Int = 0) {
         val asts = buildAsts(files)
