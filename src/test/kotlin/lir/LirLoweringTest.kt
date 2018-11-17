@@ -206,6 +206,7 @@ b0:
         val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0))
         val lir = session.getLir().unwrap()
         val actual = lir.joinToString("\n") { it.toString() }
+//        println(lir.first().functions.first().toBBGraph())
         assertEquals(expected, actual)
     }
 }
