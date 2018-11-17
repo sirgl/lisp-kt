@@ -1,7 +1,6 @@
 package tools.codegen
 
-import lir.BBInstruction
-import lir.Operand
+
 
 sealed class InstructionInlineValue {
     /**

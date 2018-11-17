@@ -8,6 +8,7 @@ import parser.ParseResult
 import util.InMemorySource
 import lexer.LexerImpl
 import lexer.TokenValidator
+import lir.LirLowering
 import macro.MacroExpander
 import mir.MirLowering
 import parser.Parser
@@ -39,7 +40,7 @@ abstract class FrontendTest(val implicitImports: List<HirImport>) {
             Parser(),
             TokenValidator(),
             HirLowering(implicitImports),
-            LispLirLowering(),
+            LirLowering(),
             DependencyValidator(),
             MacroExpander(),
             MirLowering()

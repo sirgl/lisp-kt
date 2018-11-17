@@ -20,7 +20,7 @@ class MirBasicBlock(
     }
 }
 
-class MirInstrId(
+data class MirInstrId(
         val basicBlockIndex: Short,
         val instructionIndex: Short
 ) {

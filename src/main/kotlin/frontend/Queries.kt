@@ -10,10 +10,11 @@ import lexer.LexerImpl
 import lexer.Token
 import lexer.TokenValidator
 import linting.*
+import lir.LirFile
+import lir.LirLowering
 import macro.MacroExpander
 import mir.MirFile
 import mir.MirLowering
-import mir.dot.getBBGraph
 import parser.Ast
 import parser.ParseResult
 import parser.Parser
@@ -44,6 +45,8 @@ const val hirKey = "hir"
 val hirDescriptor = SingleValueDescriptor<ResultWithLints<List<HirFile>>>(hirKey)
 const val mirKey = "mir"
 val mirDescriptor = SingleValueDescriptor<ResultWithLints<List<MirFile>>>(mirKey)
+const val lirKey = "lir"
+val lirDescriptor = SingleValueDescriptor<ResultWithLints<List<LirFile>>>(lirKey)
 
 class MergedQueryInput(
         val inputs: List<Source>,
@@ -233,12 +236,26 @@ class MirLoweringQuery(val mirLowering: MirLowering) : Query<ResultWithLints<Lis
 }
 
 
+class LirLoweringQuery(val lirLowering: LirLowering) : Query<ResultWithLints<List<MirFile>>, ResultWithLints<List<LirFile>>> {
+    override fun doQuery(input: ResultWithLints<List<MirFile>>): ResultWithLints<List<LirFile>> {
+        if (input is ResultWithLints.Error) return ResultWithLints.Error(input.lints)
+        input as ResultWithLints.Ok
+        val mirFiles = input.value
+        return ResultWithLints.Ok(lirLowering.lower(mirFiles))
+    }
+
+    override val outputDescriptor = lirDescriptor
+    override val inputDescriptor = mirDescriptor
+
+}
+
+
 class QueryDrivenLispFrontend(
         val lexer: Lexer,
         val parser: Parser,
         val tokenValidator: TokenValidator,
         val hirLowering: HirLowering,
-        val lirLowering: LispLirLowering,
+        val lirLowering: LirLowering,
         val dependencyValidator: DependencyValidator,
         val macroExpander: MacroExpander,
         val mirLowering: MirLowering
@@ -288,12 +305,17 @@ class CompilationSession(
             database.registerQuery(DependenciesRemappingQuery())
             database.registerQuery(HirLoweringQuery(hirLowering))
             database.registerQuery(MirLoweringQuery(mirLowering))
+            database.registerQuery(LirLoweringQuery(lirLowering))
             return database
         }
     }
 
     fun getMir(): ResultWithLints<List<MirFile>> {
         return getDb().queryFor(mirDescriptor)
+    }
+
+    fun getLir(): ResultWithLints<List<LirFile>> {
+        return getDb().queryFor(lirDescriptor)
     }
 }
 
@@ -303,7 +325,7 @@ fun main(args: Array<String>) {
             Parser(),
             TokenValidator(),
             HirLowering(listOf()),
-            LispLirLowering(),
+            LirLowering(),
             DependencyValidator(),
             MacroExpander(),
             MirLowering()
