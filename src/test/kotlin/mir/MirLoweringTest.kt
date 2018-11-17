@@ -184,6 +184,32 @@ b0:
         ))
     }
 
+
+    @Test
+    fun `test vararg`() {
+        testMir("""
+main:
+fun foo params: 2, totalVars: 2
+b0:
+  load_const ()
+  return b0:i0
+
+fun main__init params: 0, totalVars: 0 (main)
+b0:
+  get_function_reference 0
+  load_const 1 (i32, tagged)
+  load_const ()
+  load_const 2 (i32, tagged)
+  with_element list: b0:i3, value: b0:i3
+  load_const 3 (i32, tagged)
+  with_element list: b0:i5, value: b0:i5
+  call function: 0 args: (b0:i1, b0:i6)
+  return b0:i7
+        """.trimIndent(), listOf(
+                "main" withText "(defn foo (a @vp) ())(foo 1 2 3)"
+        ))
+    }
+
     fun testMir(expected: String, files: List<InMemoryFileInfo>) {
         val sources = files.map { InMemorySource(it.text, it.name) }
         val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0))

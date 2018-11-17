@@ -82,9 +82,26 @@ private class MirFunctionLowering(
         }
     }
 
+    // pack varargs into list
+    private fun prepareArgs(args: List<HirExpr>, decl: HirFunctionDeclaration) : Array<MirInstrId> {
+        return Array(decl.parameters.size) { index ->
+            val lastIndex = decl.parameters.lastIndex
+            // all tail arguments packed into list
+            if (index == lastIndex && decl.hasVarargs()) {
+                var listId = builder.emit(MirLoadValueInstr(MirValue.MirEmptyList))
+                for (i in (lastIndex until args.size)) {
+                    listId = builder.emit(MirWithElementInstr(lowerExpr(args[i]), listId))
+                }
+                listId
+            } else {
+                lowerExpr(args[index])
+            }
+        }
+    }
+
     private fun lowerCall(expr: HirLocalCallExpr): MirInstrId {
         val args = expr.args
-        val exprIds = Array(args.size) { index -> lowerExpr(args[index]) }
+        val exprIds = prepareArgs(args, expr.decl)
         val functionId = builder.getFunctionId(expr.decl)
         return builder.emit(MirCallInstr(functionId, exprIds))
     }
