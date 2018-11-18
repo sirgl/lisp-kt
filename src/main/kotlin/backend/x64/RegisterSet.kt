@@ -1,7 +1,6 @@
 package backend.x64
 
 import backend.Register
-import backend.RegisterParentInfo
 
 object X64Registers {
     private val registers = mutableListOf<Register>()
@@ -11,8 +10,8 @@ object X64Registers {
         return register
     }
 
-    private fun x64Register(name: String, parentInfo: RegisterParentInfo? = null) : Register {
-        return register(Register(parentInfo, 64, name))
+    private fun x64Register(name: String) : Register {
+        return register(Register(name))
     }
 
     val rax = x64Register("rax")
