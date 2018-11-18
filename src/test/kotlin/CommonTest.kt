@@ -1,5 +1,4 @@
 import deps.DependencyValidator
-import frontend.LispLirLowering
 import frontend.QueryDrivenLispFrontend
 import hir.HirImport
 import hir.HirLowering

@@ -70,7 +70,8 @@ private class LexerSession(
     private fun nextNormalToken(): Token? {
         if (endReached()) return createEnd()
         return parseWhitespace()
-                ?: parseComment()
+                ?: parseOneLineComent()
+                ?: parseExtendedComment()
                 ?: parseInt()
                 ?: parseLpar()
                 ?: parseRpar()
@@ -111,7 +112,8 @@ private class LexerSession(
     }
 
     private fun isIdentifierStart(it: Char): Boolean {
-        return it in 'a'..'z' || it in 'A'..'Z' || it == '+' || it == '-' || it == '*' || it == '/' || it == '<' || it == '>' || it == '_'
+        return it in 'a'..'z' || it in 'A'..'Z' || it == '+' || it == '-' || it == '*' || it == '/' || it == '<'
+                || it == '>' || it == '_' || it == '='
     }
 
     private fun isIdentifierTail(it: Char): Boolean {
@@ -162,11 +164,33 @@ private class LexerSession(
 
     private fun parseWhitespace(): Token? = parseByAllCharsRule(TokenType.Whitespace) { it.isWhitespace() }
 
-    // comment is #| |#, also it can be nested
-    private fun parseComment(): Token? {
-//        var unpairedLeft = 0
-//        while ()
-        return null
+    // comment is ; or  #| |#
+    private fun parseExtendedComment(): Token? {
+        if (current() != '#') return null
+        val startOffset = offset
+        var endOffset = offset
+        if (current() != '#') {
+            return null
+        }
+        endOffset++
+        if (endReached(endOffset) || at(endOffset) != '|') return null
+        endOffset++
+        while (!endReached(endOffset) && !endReached(endOffset + 1)
+                && !(at(endOffset) == '|' && at(endOffset + 1) == '#')) {
+            endOffset++
+        }
+        if (endReached(endOffset) || endReached(endOffset + 1)) return null
+        endOffset += 2
+        return createTokenIfPresent(startOffset, endOffset, TokenType.Comment)
+    }
+
+    private fun parseOneLineComent(): Token? {
+        var endOffset = offset
+        if (current() != ';') return null
+        while (!endReached(endOffset) && at(endOffset) != '\n') {
+            endOffset++
+        }
+        return createTokenIfPresent(offset, endOffset, TokenType.Comment)
     }
 
     // Service functions

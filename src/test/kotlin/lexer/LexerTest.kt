@@ -51,6 +51,18 @@ class LexerTest {
     }
 
     @Test
+    fun `test function identifier`() {
+        testLexer("(= a b)", """
+            0@Lpar@"("
+            1@Identifier@"="
+            3@Identifier@"a"
+            5@Identifier@"b"
+            6@Rpar@")"
+            7@End@""
+        """)
+    }
+
+    @Test
     fun `test string literal`() {
         testLexer("\"foo\"", """
             0@String@""foo""
@@ -87,6 +99,42 @@ class LexerTest {
             3@FalseLiteral@"#f"
             6@Identifier@"sad"
             9@End@""
+        """)
+    }
+
+    @Test
+    fun `test one line comments`() {
+        testLexer("#t ;comment1\n15;", """
+            0@TrueLiteral@"#t"
+            13@Int@"15"
+            16@End@""
+        """)
+    }
+
+    @Test
+    fun `test extended comment`() {
+        testLexer("#t #|com|##f", """
+            0@TrueLiteral@"#t"
+            10@FalseLiteral@"#f"
+            12@End@""
+        """)
+    }
+
+    @Test
+    fun `test extended comment with sharp in entry`() {
+        testLexer("#t #|com#|#", """
+            0@TrueLiteral@"#t"
+            11@End@""
+        """)
+    }
+
+    @Test
+    fun `test extended comment at the end`() {
+        testLexer("#|123|", """
+            0@Error@"#|"
+            2@Int@"123"
+            5@Error@"|"
+            6@End@""
         """)
     }
 
