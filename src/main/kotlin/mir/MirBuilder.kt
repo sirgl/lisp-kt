@@ -30,10 +30,12 @@ class MirFunctionBuilder(val name: String, val isMain: Boolean = false, val cont
     private val varTable: MutableMap<HirVarDeclaration, Short> = hashMapOf()
     private var nextVarIndex: Short = 0
     private var nextIfMergeIndex = 0
-
+    private val varNameTable = hashMapOf<Short, String>()
 
     fun addVariable(declaration: HirVarDeclaration): Short {
         varTable[declaration] = nextVarIndex
+        varNameTable[nextVarIndex] = declaration.name
+        nextVarIndex++
         return nextVarIndex
     }
 
@@ -59,7 +61,16 @@ class MirFunctionBuilder(val name: String, val isMain: Boolean = false, val cont
     }
 
     fun finishFunction(hirFunction: HirFunctionDefinition): MirFunction {
-        val function = MirFunctionDefinition(name, blocks, 0, hirFunction.parameters.size, varTable.size.toShort(), isMain)
+        val function = MirFunctionDefinition(
+            name,
+            blocks,
+            0,
+            hirFunction.parameters.size,
+            varTable.size.toShort(),
+            varNameTable.toMap(),
+            isMain
+        )
+        varNameTable.clear()
         function.functionId = context.nextFunctionId()
         context.addFunction(hirFunction, function.functionId)
         return function

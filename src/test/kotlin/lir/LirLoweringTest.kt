@@ -42,11 +42,11 @@ fun main__init :  virtual regs: 1
   0 inplace_i64 reg: %0 value: 0
   1 cond_jump cond: %0 thenIndex: 2 elseIndex: 5
   2 inplace_i64 reg: %1 value: 1
-  3 mov from %1 to %0
+  3 mov from %1 to %1
   4 goto 7
   5 inplace_i64 reg: %3 value: 0
-  6 mov from %3 to %0
-  7 mov from %0 to %5
+  6 mov from %3 to %1
+  7 mov from %1 to %5
   8 return %5
         """.trimIndent(), listOf(
                 "main" withText "(if #t 1 2)"
@@ -60,18 +60,18 @@ fun main__init :  virtual regs: 2
   0 inplace_i64 reg: %0 value: 0
   1 cond_jump cond: %0 thenIndex: 2 elseIndex: 5
   2 inplace_i64 reg: %1 value: 1
-  3 mov from %1 to %0
+  3 mov from %1 to %1
   4 goto 14
   5 inplace_i64 reg: %3 value: 0
   6 cond_jump cond: %3 thenIndex: 7 elseIndex: 10
   7 inplace_i64 reg: %4 value: 0
-  8 mov from %4 to %0
+  8 mov from %4 to %2
   9 goto 12
   10 inplace_i64 reg: %6 value: 1
-  11 mov from %6 to %0
-  12 mov from %0 to %8
-  13 mov from %8 to %0
-  14 mov from %0 to %10
+  11 mov from %6 to %2
+  12 mov from %2 to %8
+  13 mov from %8 to %1
+  14 mov from %1 to %10
   15 return %10
         """.trimIndent(), listOf(
                 "main" withText "(if #t 1 (if #f 2 3))"

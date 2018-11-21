@@ -27,6 +27,8 @@ b0:
         testMir("""
 main:
 fun foo params: 1, totalVars: 1
+var table:
+   0 x
 b0:
   load_const 42 (i32, tagged)
   return b0:i0
@@ -45,19 +47,21 @@ b0:
         testMir("""
 main:
 fun main__init params: 0, totalVars: 1 (main)
+var table:
+   0 __merge_if_0
 b0:
   load_const true (bool, tagged)
   cond_jump cond: b0:i0 then: b1 else: b2
 b1:
   load_const 1 (i32, tagged)
-  store_var: v0 value: b1:i0
+  store_var: v1 value: b1:i0
   goto b3
 b2:
   load_const 2 (i32, tagged)
-  store_var: v0 value: b2:i0
+  store_var: v1 value: b2:i0
   goto b3
 b3:
-  load_var: v0
+  load_var: v1
   return b3:i0
         """.trimIndent(), listOf(
                 "main" withText "(if #t 1 2)"
@@ -69,30 +73,33 @@ b3:
         testMir("""
 main:
 fun main__init params: 0, totalVars: 2 (main)
+var table:
+   0 __merge_if_0
+   1 __merge_if_1
 b0:
   load_const true (bool, tagged)
   cond_jump cond: b0:i0 then: b1 else: b2
 b1:
   load_const 1 (i32, tagged)
-  store_var: v0 value: b1:i0
+  store_var: v1 value: b1:i0
   goto b6
 b2:
   load_const false (bool, tagged)
   cond_jump cond: b2:i0 then: b3 else: b4
 b3:
   load_const 2 (i32, tagged)
-  store_var: v0 value: b3:i0
+  store_var: v2 value: b3:i0
   goto b5
 b4:
   load_const 3 (i32, tagged)
-  store_var: v0 value: b4:i0
+  store_var: v2 value: b4:i0
   goto b5
 b5:
-  load_var: v0
-  store_var: v0 value: b5:i0
+  load_var: v2
+  store_var: v1 value: b5:i0
   goto b6
 b6:
-  load_var: v0
+  load_var: v1
   return b6:i0
         """.trimIndent(), listOf(
                 "main" withText "(if #t 1 (if #f 2 3))"
@@ -104,6 +111,8 @@ b6:
         testMir("""
 main:
 fun print params: 1, totalVars: 1
+var table:
+   0 x
 b0:
   load_const ()
   return b0:i0
@@ -130,6 +139,8 @@ b2:
         testMir("""
 main:
 fun foo params: 1, totalVars: 1
+var table:
+   0 x
 b0:
   load_const 12 (i32, tagged)
   store_var: v0 value: b0:i0
@@ -149,6 +160,8 @@ b0:
         testMir("""
 main:
 fun main__init params: 0, totalVars: 1 (main)
+var table:
+   0 x
 b0:
   load_const 12 (i32, tagged)
   store_var: v0 value: b0:i0
@@ -190,6 +203,9 @@ b0:
         testMir("""
 main:
 fun foo params: 2, totalVars: 2
+var table:
+   0 a
+   1 vp
 b0:
   load_const ()
   return b0:i0
@@ -221,6 +237,8 @@ b0:
   return b0:i0
 
 fun main__init params: 0, totalVars: 1 (main)
+var table:
+   0 f
 b0:
   get_function_reference 0
   store_var: v0 value: b0:i0

@@ -19,6 +19,7 @@ class MirFunctionDefinition(
         private val entryBlockIndex: Short,
         parametersCount: Int,
         val varCount: Short,
+        val varTable: Map<Short, String>,
         val isMain: Boolean = false
 ) : MirTypeResolver, MirFunction(name, parametersCount) {
     val entryBlock: MirBasicBlock
@@ -52,6 +53,12 @@ class MirFunctionDefinition(
                 append(" (main)")
             }
             append("\n")
+            if (varTable.isNotEmpty()) {
+                append("var table:\n")
+                for ((id, name) in varTable) {
+                    append(String.format("%4d %s\n", id, name))
+                }
+            }
             append(blocks.joinToString("\n") { it.toString() })
         }
     }
