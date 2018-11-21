@@ -290,7 +290,7 @@ class CompilationSession(
         val stdlib: List<Source>,
         val config: CompilerConfig
 ) {
-    private fun getDb(): Database {
+    fun getDb(): Database {
         val database: Database = DatabaseImpl(listOf(
                 SimpleValue(inputSourceDescriptor, sources),
                 SimpleValue(stdlibSourceDescriptor, stdlib),
@@ -331,5 +331,11 @@ fun main(args: Array<String>) {
             MirLowering()
     )
 
-    frontend.compile(listOf(InMemorySource("(defn + (x y) ())(defn foo (x) (if x (while #t ())  (if #t 2 3)))", "main")), listOf(), CompilerConfig(0))
+//    frontend.compile(listOf(InMemorySource("(defn + (x y) ())(defn foo (x) (if x (while #t ())  (if #t 2 3)))", "main")), listOf(), CompilerConfig(0))
+    val session = frontend.compilationSession(
+        listOf(InMemorySource("(defn + (x y) ())(defn foo (x) (if x (while #t ())  (if #t 2 3)))", "main")),
+        listOf(),
+        CompilerConfig(0)
+    )
+    println((session.getDb() as DatabaseImpl).getGraphvizOfAllQueries())
 }

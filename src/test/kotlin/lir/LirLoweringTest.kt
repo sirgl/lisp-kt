@@ -90,7 +90,7 @@ fun main__init :  virtual regs: 0
   1 inplace_i64 reg: %1 value: 0
   2 cond_jump cond: %1 thenIndex: 3 elseIndex: 6
   3 inplace_i64 reg: %2 value: 0
-  4 call args: print
+  4 call name: print args: (2)
   5 goto 0
   6 inplace_i64 reg: %4 value: 0
   7 return %4
@@ -131,23 +131,27 @@ fun main__init :  virtual regs: 1
     @Test
     fun `test data`() {
         testMir("""
+String table:
+   0 let
+   1 foo
+   2 x
 fun main__init :  virtual regs: 3
   0 inplace_i64 reg: %0 value: 0
   1 get_str_ptr strIndex: 0
-  2 call args: r__createSymbol
-  3 call args: r__withElement
+  2 call name: r__createSymbol args: (0)
+  3 call name: r__withElement args: (1, 0)
   4 inplace_i64 reg: %3 value: 0
   5 get_str_ptr strIndex: 1
-  6 call args: r__createString
-  7 call args: r__withElement
+  6 call name: r__createString args: (1)
+  7 call name: r__withElement args: (4, 3)
   8 inplace_i64 reg: %6 value: 0
-  9 call args: r__withElement
+  9 call name: r__withElement args: (6, 5)
   10 inplace_i64 reg: %8 value: 0
-  11 call args: r__withElement
-  12 call args: r__withElement
+  11 call name: r__withElement args: (8, 7)
+  12 call name: r__withElement args: (9, 2)
   13 get_str_ptr strIndex: 2
-  14 call args: r__createSymbol
-  15 call args: r__withElement
+  14 call name: r__createSymbol args: (2)
+  15 call name: r__withElement args: (11, 10)
   16 return %12
         """.trimIndent(), listOf(
                 "main" withText "`(let (\"foo\" 12 2) x)"
@@ -167,10 +171,10 @@ fun main__init :  virtual regs: 0
   1 inplace_i64 reg: %1 value: 1
   2 inplace_i64 reg: %2 value: 0
   3 inplace_i64 reg: %3 value: 0
-  4 call args: r__withElement
+  4 call name: r__withElement args: (3, 2)
   5 inplace_i64 reg: %5 value: 1
-  6 call args: r__withElement
-  7 call args: foo
+  6 call name: r__withElement args: (5, 4)
+  7 call name: foo args: (1, 6)
   8 return %7
         """.trimIndent(), listOf(
                 "main" withText "(defn foo (a @vp) ())(foo 1 2 3)"

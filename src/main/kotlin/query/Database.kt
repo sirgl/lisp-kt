@@ -76,6 +76,19 @@ class DatabaseImpl(inputs: List<DatabaseValue<*>>) : Database {
     override fun registerQuery(query: Query<*, *>) {
         queryDescriptorMap[query.outputDescriptor.key] = query
     }
+
+    fun getGraphvizOfAllQueries() : String {
+        return buildString {
+            append("digraph Database {\n")
+            for ((output, query) in queryDescriptorMap) {
+                append("\"${query.javaClass.name}\" -> \"$output\";\n")
+                for (key in query.inputDescriptor.keys()) {
+                    append("\"$key\" -> \"${query.javaClass.name}\";\n")
+                }
+            }
+            append("}")
+        }
+    }
 }
 
 private sealed class SolutionNode(

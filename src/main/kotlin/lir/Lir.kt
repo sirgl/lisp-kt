@@ -40,7 +40,7 @@ class LirGetStrPtrInstr(val strIndex: Int, val destReg: Int) : LirInstr() {
 
 class LirCallInstr(val regArgs: IntArray, val functionName: String) : LirInstr() {
     override fun toString(): String {
-        return "call args: $functionName"
+        return "call name: $functionName args: (${regArgs.joinToString(", ")})"
     }
 }
 

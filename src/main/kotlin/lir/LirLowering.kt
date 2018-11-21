@@ -3,19 +3,23 @@ package lir
 import mir.*
 
 class LirFileContext {
-    private var nextIndex = 0
     private val stringTable = hashMapOf<String, Int>()
+    private val stringList = mutableListOf<String>()
 
     fun getStrIndex(str: String): Int {
         val index = stringTable[str]
         return if (index == null) {
-            val newIndex = nextIndex
-            stringTable[str] = newIndex
-            nextIndex++
-            newIndex
+            val nextIndex = stringList.size
+            stringTable[str] = nextIndex
+            stringList.add(str)
+            nextIndex
         } else {
             index
         }
+    }
+
+    fun getStrTable(): Array<String> {
+        return stringList.toTypedArray()
     }
 }
 
@@ -100,7 +104,7 @@ private class LirFileLowering(val mirFile: MirFile, val world: MirWorld, val con
         val functions = mirFile.functions
             .filterIsInstance<MirFunctionDefinition>()
             .map { lowerFunction(it) }
-        return LirFile(mirFile.source, functions)
+        return LirFile(mirFile.source, functions, context.getStrTable())
 
     }
 
