@@ -23,53 +23,37 @@ import util.InMemorySource
 import util.ResultWithLints
 import util.Source
 
-const val sourcesKey = "sources"
-val inputSourceDescriptor = SingleValueDescriptor<List<Source>>(sourcesKey)
-const val stdlibKey = "stdlib"
-val stdlibSourceDescriptor = SingleValueDescriptor<List<Source>>(stdlibKey)
-const val mergedKey = "merged"
-val mergedSourceDescriptor = SingleValueDescriptor<List<Source>>(mergedKey)
-const val configKey = "config"
-val configDescriptor = SingleValueDescriptor<CompilerConfig>(configKey)
-const val tokensKey = "tokens"
-val tokensDescriptor = SingleValueDescriptor<ResultWithLints<TokenizedSources>>(tokensKey)
-const val astsKey = "asts"
-val astsDescriptor = SingleValueDescriptor<ResultWithLints<List<Ast>>>(astsKey)
-const val initialDependenciesKey = "initial deps"
-val initialDependenciesDescriptor = SingleValueDescriptor<ResultWithLints<List<DependencyEntry>>>(initialDependenciesKey)
-const val macroExpandedAstKey = "macro expanded ast"
-val macroExpandedAstDescriptor = SingleValueDescriptor<ResultWithLints<List<Ast>>>(macroExpandedAstKey)
-const val macroExpandedDependenciesKey = "macro expanded dependencies"
-val macroExpandedDependenciesDescriptor = SingleValueDescriptor<ResultWithLints<List<DependencyEntry>>>(macroExpandedDependenciesKey)
-const val hirKey = "hir"
-val hirDescriptor = SingleValueDescriptor<ResultWithLints<List<HirFile>>>(hirKey)
-const val mirKey = "mir"
-val mirDescriptor = SingleValueDescriptor<ResultWithLints<List<MirFile>>>(mirKey)
-const val lirKey = "lir"
-val lirDescriptor = SingleValueDescriptor<ResultWithLints<List<LirFile>>>(lirKey)
+val inputSourceDescriptor = TypedKey<List<Source>>("sources")
+val stdlibSourceDescriptor = TypedKey<List<Source>>("stdlib")
+val mergedSourceDescriptor = TypedKey<List<Source>>("merged")
+val configDescriptor = TypedKey<CompilerConfig>("config")
+val tokensDescriptor = TypedKey<ResultWithLints<TokenizedSources>>("tokens")
+val astsDescriptor = TypedKey<ResultWithLints<List<Ast>>>("asts")
+val initialDependenciesDescriptor = TypedKey<ResultWithLints<List<DependencyEntry>>>("initial deps")
+val macroExpandedAstDescriptor = TypedKey<ResultWithLints<List<Ast>>>("macro expanded ast")
+val macroExpandedDependenciesDescriptor = TypedKey<ResultWithLints<List<DependencyEntry>>>("macro expanded dependencies")
+val hirDescriptor = TypedKey<ResultWithLints<List<HirFile>>>("hir")
+val mirDescriptor = TypedKey<ResultWithLints<List<MirFile>>>("mir")
+val lirDescriptor = TypedKey<ResultWithLints<List<LirFile>>>("lir")
 
-class MergedQueryInput(
-        val inputs: List<Source>,
-        val stdlib: List<Source>
-)
 
-class MergedQuery : Query<MergedQueryInput, List<Source>> {
-    override fun doQuery(input: MergedQueryInput): List<Source> = input.inputs + input.stdlib
+class MergedQuery : Query<List<Source>> {
+    override fun doQuery(input: TypedStorage): List<Source> {
+        return input[stdlibSourceDescriptor] + input[inputSourceDescriptor]
+    }
 
     override val outputDescriptor = mergedSourceDescriptor
-    override val inputDescriptor =
-            MultiValueDescriptor(listOf(stdlibKey, sourcesKey)) { MergedQueryInput(it[0] as List<Source>, it[1] as List<Source>) }
+    override val inputKey = MultiKey("sources", listOf(stdlibSourceDescriptor, inputSourceDescriptor))
+    override val name: String?
+        get() = "Merge sources from stdlib and user ones"
 }
 
 class TokenizedSources(val sourcesWithTokens: List<Pair<Source, List<Token>>>)
 
-class TokensQuery(
-        val lexer: Lexer,
-        val tokenValidator: TokenValidator
-) : Query<List<Source>, ResultWithLints<TokenizedSources>> {
-    override val outputDescriptor = tokensDescriptor
-    override val inputDescriptor = mergedSourceDescriptor
-
+class TokenizationQuery(
+    val lexer: Lexer,
+    val tokenValidator: TokenValidator
+) : SimpleQuery<List<Source>, ResultWithLints<TokenizedSources>>("Tokenization") {
     override fun doQuery(input: List<Source>): ResultWithLints<TokenizedSources> {
         val lintSink = CollectingSink()
         val sourceWithTokens = input.map { source ->
@@ -83,11 +67,16 @@ class TokensQuery(
         }
         return ResultWithLints.Ok(TokenizedSources(sourceWithTokens), lints)
     }
+
+    override val outputDescriptor = tokensDescriptor
+
+    override val inputKey = mergedSourceDescriptor
+
 }
 
 class AstBuildingQuery(
-        val parser: Parser
-) : Query<ResultWithLints<TokenizedSources>, ResultWithLints<List<Ast>>> {
+    val parser: Parser
+) : SimpleQuery<ResultWithLints<TokenizedSources>, ResultWithLints<List<Ast>>>("Ast building") {
     override fun doQuery(input: ResultWithLints<TokenizedSources>): ResultWithLints<List<Ast>> {
         if (input.isError()) return ResultWithLints.Error(input.lints)
         input as ResultWithLints.Ok
@@ -100,7 +89,8 @@ class AstBuildingQuery(
             val fileNode = when (parseResult) {
                 is ParseResult.Ok -> parseResult.node
                 is ParseResult.Error -> {
-                    val parseLint = Lint(parseResult.text, parseResult.textRange, Severity.Error, Subsystem.Parser, source)
+                    val parseLint =
+                        Lint(parseResult.text, parseResult.textRange, Severity.Error, Subsystem.Parser, source)
                     return ResultWithLints.Error(lints + parseLint)
                 }
             }
@@ -109,12 +99,12 @@ class AstBuildingQuery(
     }
 
     override val outputDescriptor = astsDescriptor
-    override val inputDescriptor = tokensDescriptor
+    override val inputKey = tokensDescriptor
 }
 
 class InitialDependenciesQuery(
-        val dependencyValidator: DependencyValidator
-) : Query<ResultWithLints<List<Ast>>, ResultWithLints<List<DependencyEntry>>> {
+    val dependencyValidator: DependencyValidator
+) : SimpleQuery<ResultWithLints<List<Ast>>, ResultWithLints<List<DependencyEntry>>>("Build dependencies for inintial AST") {
     override fun doQuery(input: ResultWithLints<List<Ast>>): ResultWithLints<List<DependencyEntry>> {
         if (input is ResultWithLints.Error) return ResultWithLints.Error(input.lints)
         val lints = input.lints.toMutableList()
@@ -128,101 +118,78 @@ class InitialDependenciesQuery(
     }
 
     override val outputDescriptor = initialDependenciesDescriptor
-    override val inputDescriptor = astsDescriptor
+    override val inputKey = astsDescriptor
 }
 
-
-class MacroExpansionInput(
-        val config: CompilerConfig,
-        val initialAsts: ResultWithLints<List<Ast>>,
-        val dependecies: ResultWithLints<List<DependencyEntry>>
-)
-
 class MacroExpansionQuery(
-        val macroExpander: MacroExpander
-) : Query<MacroExpansionInput, ResultWithLints<List<Ast>>> {
-    override fun doQuery(input: MacroExpansionInput): ResultWithLints<List<Ast>> {
-        val initialAsts = input.initialAsts
+    val macroExpander: MacroExpander
+) : Query<ResultWithLints<List<Ast>>> {
+    override fun doQuery(input: TypedStorage): ResultWithLints<List<Ast>> {
+        val initialAsts = input[astsDescriptor]
         if (initialAsts is ResultWithLints.Error) return ResultWithLints.Error(initialAsts.lints)
-        val dependecies = input.dependecies
+        val dependecies = input[initialDependenciesDescriptor]
         if (dependecies is ResultWithLints.Error) return ResultWithLints.Error(dependecies.lints)
         initialAsts as ResultWithLints.Ok
         dependecies as ResultWithLints.Ok
         val asts = initialAsts.value
-        val targetSourceIndex = input.config.targetSourceIndex
+        val targetSourceIndex = input[configDescriptor].targetSourceIndex
         val deps = dependecies.value
         val targetSourceEntry = deps[targetSourceIndex]
         return macroExpander.expand(asts, targetSourceEntry)
     }
 
     override val outputDescriptor = macroExpandedAstDescriptor
-    override val inputDescriptor =
-            MultiValueDescriptor(listOf(configKey, astsKey, initialDependenciesKey)) {
-                MacroExpansionInput(
-                        it[0] as CompilerConfig,
-                        it[1] as ResultWithLints<List<Ast>>,
-                        it[2] as ResultWithLints<List<DependencyEntry>>
-                )
-            }
+    override val inputKey = MultiKey("macro input",
+        listOf(configDescriptor, astsDescriptor, initialDependenciesDescriptor))
+
+    override val name: String?
+        get() = "Macro expansion"
 }
 
-class DependencyInput(
-        val compilerConfig: CompilerConfig,
-        val unwrappedAsts: ResultWithLints<List<Ast>>,
-        val initialDependencies: ResultWithLints<List<DependencyEntry>>
-)
-
-class DependenciesRemappingQuery : Query<DependencyInput, ResultWithLints<List<DependencyEntry>>> {
-    override fun doQuery(input: DependencyInput): ResultWithLints<List<DependencyEntry>> {
-        val unwrappedAsts = input.unwrappedAsts
+class DependenciesRemappingQuery : Query<ResultWithLints<List<DependencyEntry>>> {
+    override fun doQuery(input: TypedStorage): ResultWithLints<List<DependencyEntry>> {
+        val unwrappedAsts = input[macroExpandedAstDescriptor]
         if (unwrappedAsts is ResultWithLints.Error) return ResultWithLints.Error(unwrappedAsts.lints)
-        val initialDependencies = input.initialDependencies
+        val initialDependencies = input[initialDependenciesDescriptor]
         if (initialDependencies is ResultWithLints.Error) return ResultWithLints.Error(initialDependencies.lints)
         unwrappedAsts as ResultWithLints.Ok
         initialDependencies as ResultWithLints.Ok
-        val config = input.compilerConfig
+        val config = input[configDescriptor]
         val initialDeps = initialDependencies.value
         val entry = initialDeps[config.targetSourceIndex]
         return ResultWithLints.Ok(entry.remapToNewAst(unwrappedAsts.value))
     }
 
     override val outputDescriptor = macroExpandedDependenciesDescriptor
-    override val inputDescriptor =
-            MultiValueDescriptor(listOf(configKey, macroExpandedAstKey, initialDependenciesKey)) {
-                DependencyInput(
-                        it[0] as CompilerConfig,
-                        it[1] as ResultWithLints<List<Ast>>,
-                        it[2] as ResultWithLints<List<DependencyEntry>>
-                )
-            }
+    override val inputKey = MultiKey("Dependencies remap input",
+        listOf(configDescriptor, macroExpandedAstDescriptor, initialDependenciesDescriptor))
 
+    override val name: String?
+        get() = "Dependencies remapping"
 }
 
-class HirInput(val config: CompilerConfig, val finalGraph: ResultWithLints<List<DependencyEntry>>)
-
-class HirLoweringQuery(val hirLowering: HirLowering) : Query<HirInput, ResultWithLints<List<HirFile>>> {
-    override fun doQuery(input: HirInput): ResultWithLints<List<HirFile>> {
-        val finalGraph = input.finalGraph
+class HirLoweringQuery(val hirLowering: HirLowering) : Query<ResultWithLints<List<HirFile>>> {
+    override fun doQuery(input: TypedStorage): ResultWithLints<List<HirFile>> {
+        val finalGraph = input[macroExpandedDependenciesDescriptor]
         if (finalGraph is ResultWithLints.Error) return ResultWithLints.Error(finalGraph.lints)
         finalGraph as ResultWithLints.Ok
-        val config = input.config
+        val config = input[configDescriptor]
         val entry = finalGraph.value[config.targetSourceIndex]
         return hirLowering.lower(entry as RealDependencyEntry)
     }
 
     override val outputDescriptor = hirDescriptor
 
-    override val inputDescriptor =
-            MultiValueDescriptor(listOf(configKey, macroExpandedDependenciesKey)) {
-                HirInput(
-                        it[0] as CompilerConfig,
-                        it[1] as ResultWithLints<List<DependencyEntry>>
-                )
-            }
+    override val inputKey =
+        MultiKey("Hir lowering descriptor", listOf(configDescriptor, macroExpandedDependenciesDescriptor))
+
+    override val name: String?
+        get() = "Hir lowering"
 }
 
 
-class MirLoweringQuery(val mirLowering: MirLowering) : Query<ResultWithLints<List<HirFile>>, ResultWithLints<List<MirFile>>> {
+class MirLoweringQuery(val mirLowering: MirLowering) :
+    SimpleQuery<ResultWithLints<List<HirFile>>, ResultWithLints<List<MirFile>>>("Mir lowering") {
     override fun doQuery(input: ResultWithLints<List<HirFile>>): ResultWithLints<List<MirFile>> {
         if (input is ResultWithLints.Error) return ResultWithLints.Error(input.lints)
         input as ResultWithLints.Ok
@@ -231,12 +198,13 @@ class MirLoweringQuery(val mirLowering: MirLowering) : Query<ResultWithLints<Lis
     }
 
     override val outputDescriptor = mirDescriptor
-    override val inputDescriptor = hirDescriptor
+    override val inputKey = hirDescriptor
 
 }
 
 
-class LirLoweringQuery(val lirLowering: LirLowering) : Query<ResultWithLints<List<MirFile>>, ResultWithLints<List<LirFile>>> {
+class LirLoweringQuery(val lirLowering: LirLowering) :
+    SimpleQuery<ResultWithLints<List<MirFile>>, ResultWithLints<List<LirFile>>>("Lir lowering") {
     override fun doQuery(input: ResultWithLints<List<MirFile>>): ResultWithLints<List<LirFile>> {
         if (input is ResultWithLints.Error) return ResultWithLints.Error(input.lints)
         input as ResultWithLints.Ok
@@ -245,34 +213,34 @@ class LirLoweringQuery(val lirLowering: LirLowering) : Query<ResultWithLints<Lis
     }
 
     override val outputDescriptor = lirDescriptor
-    override val inputDescriptor = mirDescriptor
+    override val inputKey = mirDescriptor
 
 }
 
 
 class QueryDrivenLispFrontend(
-        val lexer: Lexer,
-        val parser: Parser,
-        val tokenValidator: TokenValidator,
-        val hirLowering: HirLowering,
-        val lirLowering: LirLowering,
-        val dependencyValidator: DependencyValidator,
-        val macroExpander: MacroExpander,
-        val mirLowering: MirLowering
+    val lexer: Lexer,
+    val parser: Parser,
+    val tokenValidator: TokenValidator,
+    val hirLowering: HirLowering,
+    val lirLowering: LirLowering,
+    val dependencyValidator: DependencyValidator,
+    val macroExpander: MacroExpander,
+    val mirLowering: MirLowering
 ) {
 
     fun compilationSession(
-            sources: List<Source>,
-            stdlib: List<Source>,
-            config: CompilerConfig
-    ) : CompilationSession {
+        sources: List<Source>,
+        stdlib: List<Source>,
+        config: CompilerConfig
+    ): CompilationSession {
         return CompilationSession(this, sources, stdlib, config)
     }
 
     fun compile(
-            sources: List<Source>,
-            stdlib: List<Source>,
-            config: CompilerConfig
+        sources: List<Source>,
+        stdlib: List<Source>,
+        config: CompilerConfig
     ) {
 //        val macroses = compilationSession().getMir()
 //        val file = (macroses as ResultWithLints.Ok).value.first()
@@ -285,20 +253,22 @@ class QueryDrivenLispFrontend(
 }
 
 class CompilationSession(
-        val frontend: QueryDrivenLispFrontend,
-        val sources: List<Source>,
-        val stdlib: List<Source>,
-        val config: CompilerConfig
+    val frontend: QueryDrivenLispFrontend,
+    val sources: List<Source>,
+    val stdlib: List<Source>,
+    val config: CompilerConfig
 ) {
     fun getDb(): Database {
-        val database: Database = DatabaseImpl(listOf(
-                SimpleValue(inputSourceDescriptor, sources),
-                SimpleValue(stdlibSourceDescriptor, stdlib),
-                SimpleValue(configDescriptor, config)
-        ))
+        val database: Database = DatabaseImpl(
+            listOf(
+                DatabaseValue(inputSourceDescriptor, sources),
+                DatabaseValue(stdlibSourceDescriptor, stdlib),
+                DatabaseValue(configDescriptor, config)
+            )
+        )
         with(frontend) {
             database.registerQuery(MergedQuery())
-            database.registerQuery(TokensQuery(lexer, tokenValidator))
+            database.registerQuery(TokenizationQuery(lexer, tokenValidator))
             database.registerQuery(AstBuildingQuery(parser))
             database.registerQuery(InitialDependenciesQuery(dependencyValidator))
             database.registerQuery(MacroExpansionQuery(macroExpander))
@@ -321,14 +291,14 @@ class CompilationSession(
 
 fun main(args: Array<String>) {
     val frontend = QueryDrivenLispFrontend(
-            LexerImpl(),
-            Parser(),
-            TokenValidator(),
-            HirLowering(listOf()),
-            LirLowering(),
-            DependencyValidator(),
-            MacroExpander(),
-            MirLowering()
+        LexerImpl(),
+        Parser(),
+        TokenValidator(),
+        HirLowering(listOf()),
+        LirLowering(),
+        DependencyValidator(),
+        MacroExpander(),
+        MirLowering()
     )
 
 //    frontend.compile(listOf(InMemorySource("(defn + (x y) ())(defn foo (x) (if x (while #t ())  (if #t 2 3)))", "main")), listOf(), CompilerConfig(0))

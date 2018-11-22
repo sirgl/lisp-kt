@@ -1,22 +1,39 @@
 package query
 
-interface Query<InputValue, OutputValue> {
-    fun doQuery(input: InputValue) : OutputValue
-    val outputDescriptor: SingleValueDescriptor<OutputValue>
-    val inputDescriptor: ValueDescriptor<InputValue>
+
+interface Query<O> {
+    fun doQuery(input: TypedStorage) : O
+    val outputDescriptor: TypedKey<O>
+    val inputKey: ValueKey
+    val name: String?
+        get() = null
 }
 
-sealed class ValueDescriptor<T> {
-    abstract fun keys() : List<String>
+abstract class SimpleQuery<I, O>(override val name: String) : Query<O> {
+    final override fun doQuery(input: TypedStorage): O = doQuery(input.get(inputKey))
+
+    abstract fun doQuery(input: I) : O
+
+    abstract override val inputKey: TypedKey<I>
 }
 
-class SingleValueDescriptor<T>(val key: String) : ValueDescriptor<T>() {
-    override fun keys(): List<String> = listOf(key)
+sealed class ValueKey(val name: String) {
+    abstract val keys: List<TypedKey<*>>
 }
 
-/**
- * Mapper used only to assemble inputs before query. User can get only query output
- */
-class MultiValueDescriptor<T>(val keys: List<String>, val mapper: (List<Any>) -> T) : ValueDescriptor<T>() {
-    override fun keys(): List<String> = keys
+class TypedKey<T>(name: String) : ValueKey(name) {
+    override val keys: List<TypedKey<*>>
+        get() = listOf(this)
+}
+
+class MultiKey(name: String, val descriptors: List<TypedKey<*>>) : ValueKey(name) {
+    override val keys: List<TypedKey<*>>
+        get() = descriptors
+}
+
+class TypedStorage(private val map: Map<TypedKey<*>, Any>) {
+    @Suppress("UNCHECKED_CAST")
+    operator fun <T> get(key: TypedKey<T>) : T {
+        return map[key] as T
+    }
 }

@@ -7,8 +7,8 @@ class QuerySubsystemTest {
     @Test
     fun `test plain`() {
         val database : Database = DatabaseImpl(listOf(
-                SimpleValue(aDescriptor, A(12)),
-                SimpleValue(dDescriptor, D(5))
+                DatabaseValue(aDescriptor, A(12)),
+            DatabaseValue(dDescriptor, D(5))
         ))
         database.registerQuery(BQuery())
         database.registerQuery(CQuery())
@@ -24,33 +24,29 @@ private class B(val a: A)
 
 private class C(val b: B)
 
-private val aDescriptor = SingleValueDescriptor<A>("A")
-private val dDescriptor = SingleValueDescriptor<D>("D")
-private val bDescriptor = SingleValueDescriptor<B>("B")
-private val cDescriptor = SingleValueDescriptor<C>("C")
+private val aDescriptor = TypedKey<A>("A")
+private val dDescriptor = TypedKey<D>("D")
+private val bDescriptor = TypedKey<B>("B")
+private val cDescriptor = TypedKey<C>("C")
 
 private class AD(val a: A, val d: D)
 
-private class BQuery : Query<AD, B> {
-    override fun doQuery(input: AD): B {
-        return B(input.a)
+private class BQuery : Query<B> {
+    override fun doQuery(input: TypedStorage): B {
+        return B(input[aDescriptor])
     }
 
-    private val adDescriptor = MultiValueDescriptor(listOf("A", "D")) { AD(it[0] as A, it[1] as D) }
-    override val inputDescriptor: ValueDescriptor<AD>
-        get() = adDescriptor
-    override val outputDescriptor: SingleValueDescriptor<B>
-        get() = bDescriptor
+    private val adDescriptor = MultiKey("", listOf(aDescriptor, dDescriptor))
+    override val inputKey = adDescriptor
+    override val outputDescriptor = bDescriptor
 }
 
 
-private class CQuery : Query<B, C> {
+private class CQuery : SimpleQuery<B, C>("") {
     override fun doQuery(input: B): C {
         return C(input)
     }
 
-    override val inputDescriptor: ValueDescriptor<B>
-        get() = bDescriptor
-    override val outputDescriptor: SingleValueDescriptor<C>
-        get() = cDescriptor
+    override val inputKey= bDescriptor
+    override val outputDescriptor = cDescriptor
 }
