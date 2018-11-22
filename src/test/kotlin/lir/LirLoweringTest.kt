@@ -12,7 +12,7 @@ class LirLoweringTest : FrontendTest(emptyList()) {
     @Test
     fun `test top level list`() {
         testMir("""
-fun main__init :  virtual regs: 0
+fun main__init :  virtual regs: 0 paramCount: 0
   0 inplace_i64 reg: %0 value: 0
   1 return %0
         """.trimIndent(), listOf(
@@ -23,11 +23,11 @@ fun main__init :  virtual regs: 0
     @Test
     fun `test function definition`() {
         testMir("""
-fun foo :  virtual regs: 1
+fun foo :  virtual regs: 1 paramCount: 1
   0 inplace_i64 reg: %0 value: 0
   1 return %0
 
-fun main__init :  virtual regs: 0
+fun main__init :  virtual regs: 0 paramCount: 0
   0 get_function_ptr foo %0
   1 return %0
         """.trimIndent(), listOf(
@@ -38,7 +38,7 @@ fun main__init :  virtual regs: 0
     @Test
     fun `test if`() {
         testMir("""
-fun main__init :  virtual regs: 1
+fun main__init :  virtual regs: 1 paramCount: 0
   0 inplace_i64 reg: %0 value: 0
   1 cond_jump cond: %0 thenIndex: 2 elseIndex: 5
   2 inplace_i64 reg: %1 value: 1
@@ -56,7 +56,7 @@ fun main__init :  virtual regs: 1
     @Test
     fun `test if nested`() {
         testMir("""
-fun main__init :  virtual regs: 2
+fun main__init :  virtual regs: 2 paramCount: 0
   0 inplace_i64 reg: %0 value: 0
   1 cond_jump cond: %0 thenIndex: 2 elseIndex: 5
   2 inplace_i64 reg: %1 value: 1
@@ -81,11 +81,11 @@ fun main__init :  virtual regs: 2
     @Test
     fun `test while`() {
         testMir("""
-fun print :  virtual regs: 1
+fun print :  virtual regs: 1 paramCount: 1
   0 inplace_i64 reg: %0 value: 0
   1 return %0
 
-fun main__init :  virtual regs: 0
+fun main__init :  virtual regs: 0 paramCount: 0
   0 get_function_ptr print %0
   1 inplace_i64 reg: %1 value: 0
   2 cond_jump cond: %1 thenIndex: 3 elseIndex: 6
@@ -102,12 +102,12 @@ fun main__init :  virtual regs: 0
     @Test
     fun `test assign`() {
         testMir("""
-fun foo :  virtual regs: 1
+fun foo :  virtual regs: 1 paramCount: 1
   0 inplace_i64 reg: %0 value: 0
   1 mov from %0 to %0
   2 return %1
 
-fun main__init :  virtual regs: 0
+fun main__init :  virtual regs: 0 paramCount: 0
   0 get_function_ptr foo %0
   1 return %0
         """.trimIndent(), listOf(
@@ -118,7 +118,7 @@ fun main__init :  virtual regs: 0
     @Test
     fun `test let`() {
         testMir("""
-fun main__init :  virtual regs: 1
+fun main__init :  virtual regs: 1 paramCount: 0
   0 inplace_i64 reg: %0 value: 0
   1 mov from %0 to %0
   2 mov from %0 to %2
@@ -135,7 +135,7 @@ String table:
    0 let
    1 foo
    2 x
-fun main__init :  virtual regs: 3
+fun main__init :  virtual regs: 3 paramCount: 0
   0 inplace_i64 reg: %0 value: 0
   1 get_str_ptr strIndex: 0
   2 call name: r__createSymbol args: (0)
@@ -162,11 +162,11 @@ fun main__init :  virtual regs: 3
     @Test
     fun `test vararg`() {
         testMir("""
-fun foo :  virtual regs: 2
+fun foo :  virtual regs: 2 paramCount: 2
   0 inplace_i64 reg: %0 value: 0
   1 return %0
 
-fun main__init :  virtual regs: 0
+fun main__init :  virtual regs: 0 paramCount: 0
   0 get_function_ptr foo %0
   1 inplace_i64 reg: %1 value: 1
   2 inplace_i64 reg: %2 value: 0

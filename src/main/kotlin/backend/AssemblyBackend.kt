@@ -1,7 +1,5 @@
 package backend
 
-import backend.codegen.TextAssembler
-import backend.x64.X64Registers
 import lir.*
 
 class AssemblyBackend : Backend {

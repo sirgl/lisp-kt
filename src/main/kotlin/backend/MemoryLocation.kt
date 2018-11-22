@@ -4,12 +4,19 @@ sealed class MemoryLocation {
     abstract val presentableText: String
 }
 
-class Memory(val pointer: Long) : MemoryLocation() {
+sealed class Address : MemoryLocation()
+
+class AddressWithOffset(val register: Register, val offset: Int) : Address() {
+    override val presentableText: String
+        get() = "${register.name} + $offset"
+}
+
+data class AbsAddress(val pointer: Long) : Address() {
     override val presentableText: String
         get() = "0x${pointer.toString(16)}"
 }
 
-class Register(val name: String) : MemoryLocation() {
+data class Register(val name: String) : MemoryLocation() {
     override val presentableText: String
         get() = name
 }

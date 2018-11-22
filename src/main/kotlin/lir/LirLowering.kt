@@ -66,7 +66,7 @@ class LirFunBuilder(val function: MirFunctionDefinition) {
     }
 
     fun finishFunction() : LirFunction {
-        return LirFunction(function.name, instructions, nextRegister)
+        return LirFunction(function.name, instructions, nextRegister, function.parametersCount)
     }
 
     fun toReg(id: MirInstrId) : Int {

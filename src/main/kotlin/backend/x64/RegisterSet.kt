@@ -2,7 +2,7 @@ package backend.x64
 
 import backend.Register
 
-object X64Registers {
+object Regs {
     private val registers = mutableListOf<Register>()
 
     private fun register(register: Register) : Register {
@@ -22,4 +22,6 @@ object X64Registers {
     val rdi = x64Register("rdi")
     val rbp = x64Register("rbp")
     val rsp = x64Register("rsp")
+    val r8 = x64Register("r8")
+    val r9 = x64Register("r9")
 }

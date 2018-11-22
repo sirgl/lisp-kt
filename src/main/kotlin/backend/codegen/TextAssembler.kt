@@ -5,12 +5,12 @@ import util.collection.BiMap
 import util.collection.HashBiMap
 import java.io.OutputStream
 
-class TextAssembler : AssemblerX64 {
+class TextAssembler : Assembler {
     private val labels: BiMap<String, Label> = HashBiMap()
 
     private val sb = StringBuilder()
-    override fun writeFunction(name: String, writer: (FunctionX64Assembler) -> Unit) {
-        val functionAssembler = FunctionX64TextAssembler(labels, sb)
+    override fun writeFunction(name: String, writer: (FunctionAssembler) -> Unit) {
+        val functionAssembler = FunctionTextAssembler(labels, sb)
         functionAssembler.emitLabel(name)
         writer(functionAssembler)
         sb.append("\n")
@@ -22,10 +22,14 @@ class TextAssembler : AssemblerX64 {
     }
 }
 
-class FunctionX64TextAssembler(
+class FunctionTextAssembler(
         private val labels: BiMap<String, Label>,
         private val sb: StringBuilder
-) : FunctionX64Assembler {
+) : FunctionAssembler {
+    override fun emitSub(memoryLocation: MemoryLocation, value: Int) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     private fun addLine(text: String) {
         sb.append(text).append("\n")
     }
