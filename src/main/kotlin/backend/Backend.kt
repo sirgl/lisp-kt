@@ -12,12 +12,3 @@ interface Backend {
 
 class BackendConfiguration(val artifactDirectoryPath: String)
 
-/**
- * Required to write output to array in tests
- */
-interface ArtifactBuilder {
-    /**
-     * @param relativePath path relative to output directory
-     */
-    fun createFileArtifact(relativePath: String, filler: (OutputStream) -> Unit) : FileArtifact
-}

@@ -25,3 +25,6 @@ object Regs {
     val r8 = x64Register("r8")
     val r9 = x64Register("r9")
 }
+
+// all of them are not preserved between function calls
+val parameterRegisters = arrayOf(Regs.rdi, Regs.rsi, Regs.rdx, Regs.rcx, Regs.r8, Regs.r9)

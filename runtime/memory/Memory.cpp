@@ -1,6 +1,7 @@
 #include "Memory.h"
 
 ValueType Value::getType() {
+    // TODO now not only tag should be considered, but heap object examination required
     uint64_t shifted = value >> 61;
     switch (shifted) {
         case 0b000:
@@ -24,25 +25,31 @@ Value::Value(uint64_t value, ValueType type) {
     this->value = value | fullPrefix;
 }
 
-Value::Value(uint64_t value) : value(value){};
+Value::Value(uint64_t value) : value(value){}
+
+uint64_t Value::untag() {
+    // TODO
+    return 0;
+};
 
 uint8_t getPrefix(ValueType type) {
     switch (type) {
-        case ValueType::Nil:
-            return 0b00000000;
-        case ValueType::List:
-            return 0b00000010;
-        case ValueType::Vector:
-            return 0b00000001;
-        case ValueType::Symbol:
-            return 0b00000100;
-        case ValueType::Int:
-            return 0b00000110;
-        case ValueType::Bool:
-            return 0b00000011;
-        case ValueType::Byte:
-            return 0b00000101;
-        case ValueType::Function:
-            return 0b00000111;
+//        TODO
+//        case ValueType::Nil:
+//            return 0b00000000;
+//        case ValueType::List:
+//            return 0b00000010;
+//        case ValueType::Vector:
+//            return 0b00000001;
+//        case ValueType::Symbol:
+//            return 0b00000100;
+//        case ValueType::Int:
+//            return 0b00000110;
+//        case ValueType::Bool:
+//            return 0b00000011;
+//        case ValueType::Byte:
+//            return 0b00000101;
+//        case ValueType::Function:
+//            return 0b00000111;
     }
 }

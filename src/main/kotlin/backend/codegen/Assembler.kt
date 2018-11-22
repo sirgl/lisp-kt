@@ -4,8 +4,9 @@ import backend.MemoryLocation
 import util.LongStorage
 import java.io.OutputStream
 
-// TODO think how to extract result from
 interface Assembler {
+
+    fun writeStringTable(stringTable: Array<String>)
 
     fun writeFunction(name: String, writer: (FunctionAssembler) -> Unit)
 
@@ -14,40 +15,25 @@ interface Assembler {
 
 interface FunctionAssembler {
     // TODO forbid from mem to mem
-    // TODO not only memory, it can contains offsets, derefs and so on
     fun emitMov(from: MemoryLocation, to: MemoryLocation)
+    fun emitMov(immediate: Long, to: MemoryLocation)
+    fun emitMovabs(stringLabel: String, to: MemoryLocation)
 
     fun emitRet()
 
-    // TODO not register?
     fun emitPush(memoryLocation: MemoryLocation)
 
     fun emitPop(memoryLocation: MemoryLocation)
 
-    fun emitLabel(name: String): Label
+    fun emitLabel(name: String)
 
     fun emitCall(name: String)
 
-    fun emitJmp(label: Label)
+    fun emitCmpWithZero(memoryLocation: MemoryLocation)
 
-    fun emitSub(memoryLocation: MemoryLocation, value: Int)
+    fun emitJmp(label: String)
+    fun emitJne(label: String)
 
-    /**
-     * To jump to some label that not yet exists or is external
-     */
-    fun emitJmp(labelName: String)
+    fun emitSub(value: Int, destination: MemoryLocation)
+    fun emitAdd(value: Int, destination: MemoryLocation)
 }
-
-inline class Label(private val storage: LongStorage) {
-    constructor(offset: Int, id: Int) : this(LongStorage(offset, id))
-
-    val offset: Int
-        get() = storage.first
-
-    val id: Int
-        get() = storage.second
-
-    override fun toString(): String = "Label(offset=$offset, id=$id)"
-}
-
-class AssemblerException(message: String) : Exception(message)

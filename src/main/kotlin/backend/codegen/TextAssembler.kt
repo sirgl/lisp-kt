@@ -1,16 +1,18 @@
 package backend.codegen
 
 import backend.MemoryLocation
-import util.collection.BiMap
-import util.collection.HashBiMap
 import java.io.OutputStream
 
 class TextAssembler : Assembler {
-    private val labels: BiMap<String, Label> = HashBiMap()
+    override fun writeStringTable(stringTable: Array<String>) {
+        for (str in stringTable) {
+            sb.append(".asciz \"$str\"\n")
+        }
+    }
 
     private val sb = StringBuilder()
     override fun writeFunction(name: String, writer: (FunctionAssembler) -> Unit) {
-        val functionAssembler = FunctionTextAssembler(labels, sb)
+        val functionAssembler = FunctionTextAssembler(sb)
         functionAssembler.emitLabel(name)
         writer(functionAssembler)
         sb.append("\n")
@@ -19,15 +21,63 @@ class TextAssembler : Assembler {
     override fun save(outputStream: OutputStream) {
         // TODO String is not convertible to byte array in common code
         outputStream.write(sb.toString().toByteArray())
+        sb.clear()
     }
 }
 
 class FunctionTextAssembler(
-        private val labels: BiMap<String, Label>,
         private val sb: StringBuilder
 ) : FunctionAssembler {
-    override fun emitSub(memoryLocation: MemoryLocation, value: Int) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun emitCmpWithZero(memoryLocation: MemoryLocation) {
+        addLineShifted("cmpq $0, ${memoryLocation.assemblyText}")
+    }
+
+    override fun emitMov(from: MemoryLocation, to: MemoryLocation) {
+        addLineShifted("movq %${from.assemblyText}, %${to.assemblyText}")
+    }
+
+    override fun emitRet() {
+        addLineShifted("retq")
+    }
+
+    override fun emitMov(immediate: Long, to: MemoryLocation) {
+        addLineShifted("movq \$$immediate, ${to.assemblyText}")
+    }
+
+    override fun emitMovabs(stringLabel: String, to: MemoryLocation) {
+        addLineShifted("movabsq \$$stringLabel, ${to.assemblyText}")
+    }
+
+    override fun emitPush(memoryLocation: MemoryLocation) {
+        addLineShifted("pushq ${memoryLocation.assemblyText}")
+    }
+
+    override fun emitPop(memoryLocation: MemoryLocation) {
+        addLineShifted("popq ${memoryLocation.assemblyText}")
+    }
+
+    override fun emitLabel(name: String) {
+        addLine(name)
+    }
+
+    override fun emitCall(name: String) {
+        addLineShifted("callq $name")
+    }
+
+    override fun emitJmp(label: String) {
+        addLineShifted("jmp $label")
+    }
+
+    override fun emitJne(label: String) {
+        addLineShifted("jne $label")
+    }
+
+    override fun emitAdd(value: Int, destination: MemoryLocation) {
+        addLineShifted("addq \$$value, ${destination.assemblyText}")
+    }
+
+    override fun emitSub(value: Int, destination: MemoryLocation) {
+        addLineShifted("subq \$$value, ${destination.assemblyText}")
     }
 
     private fun addLine(text: String) {
@@ -36,47 +86,5 @@ class FunctionTextAssembler(
 
     private fun addLineShifted(text: String) {
         sb.append("\t").append(text).append("\n")
-    }
-
-    override fun emitMov(from: MemoryLocation, to: MemoryLocation) {
-        addLineShifted("mov %${from.presentableText}, %${to.presentableText}")
-    }
-
-    override fun emitRet() {
-        addLineShifted("ret")
-    }
-
-    override fun emitPush(memoryLocation: MemoryLocation) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun emitPop(memoryLocation: MemoryLocation) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun emitLabel(name: String): Label {
-        // TODO add label
-//        labels.put(name, Label())
-//        addLine("$name:")
-        TODO()
-    }
-
-    override fun emitCall(name: String) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun emitJmp(label: Label) {
-        val name = labels.valueToKeyView[label] ?: throw AssemblerException("label $label not found")
-        addLine("jmp $name")
-    }
-
-    override fun emitJmp(labelName: String) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-}
-
-class LabelStorage() {
-    fun nextLabel() : Label {
-        TODO()
     }
 }
