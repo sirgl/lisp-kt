@@ -105,8 +105,8 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
             is DataNode -> node
             is LeafNode -> {
                 if (node.token.type == TokenType.Identifier) {
-                    val ident = node.token.text
-                    env.resolve(ident) ?: err("No $ident found in env", node)
+                    val identifier = node.token.text
+                    env.resolve(identifier) ?: err("No $identifier found in env", node)
                 } else {
                     node
                 }
@@ -219,7 +219,7 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
         for (i in (0 until parameters.size)) {
             val parameter = parameters[i]
             if (i == paramLastIndex && parameter.isVararg) {
-                val vararg = args.subList(parameters.lastIndex, args.size)
+                val vararg = args.subList(paramLastIndex, args.size)
                 preparedArgs.add(ListNode(vararg, TextRange(0, 0)))
             } else {
                 preparedArgs.add(args[i])

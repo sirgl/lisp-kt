@@ -10,6 +10,7 @@ import lexer.TokenType
  * list -> ( expr* )
  * atom -> boolLiteral | strLiteral | charLiteral | intLiteral
  * boolLiteral -> true | false
+ * dataNode -> `expr
  */
 class Parser {
     fun parse(tokens: List<Token>) : ParseResult {

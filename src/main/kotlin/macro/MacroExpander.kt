@@ -7,17 +7,15 @@ import parser.*
 import util.ResultWithLints
 import util.Source
 
-// Import semantics: add symbols from global scope of import target to current file
-// No library definition required!
 
 // Steps:
-// Parsing all files (finding libraries)
+// Parsing all files (finding modules)
 // Starting from the target one (implicit main function) starting bypass
 // When meet import - go there first if not yet
 // File bypass: trying to find in top level functions and macroses
 // In target files: recursively visiting nodes
-//   If top level -> try add nodes
-//   If macro call -> create interpreter with env = default env + global macro and interpret call, then replace node with result
+//   If top level -> try add nodes to namespace
+//   If macro call -> create interpreter with env = stdlib env + global macro and defns. Then interpret call and replace node with result
 class MacroExpander {
     /**
      * @return list of ast with the same order

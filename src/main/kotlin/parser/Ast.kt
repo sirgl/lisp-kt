@@ -52,7 +52,6 @@ enum class SyntaxKind {
     List,
     StringLiteral,
     IntLiteral,
-    CharLiteral,
     BoolLiteral,
     Identifier,
     Data,

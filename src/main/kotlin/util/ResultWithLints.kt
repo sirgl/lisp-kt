@@ -9,14 +9,14 @@ sealed class ResultWithLints<T>(val lints: List<Lint>) {
 
     fun <R> map(f: (T) -> R): ResultWithLints<R> {
         return when (this) {
-            is Ok -> return Ok(f(value), lints)
+            is Ok -> Ok(f(value), lints)
             is Error -> Error(lints)
         }
     }
 
     fun mapLintsIfErr(f: (List<Lint>) -> List<Lint>): ResultWithLints<T> {
         return when (this) {
-            is Ok -> return Ok(value, lints)
+            is Ok -> Ok(value, lints)
             is Error -> Error(f(lints))
         }
     }

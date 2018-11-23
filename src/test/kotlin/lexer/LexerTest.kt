@@ -104,10 +104,10 @@ class LexerTest {
 
     @Test
     fun `test one line comments`() {
-        testLexer("#t ;comment1\n15;", """
+        testLexer("#t ;;comment1\n15;", """
             0@TrueLiteral@"#t"
-            13@Int@"15"
-            16@End@""
+            14@Int@"15"
+            17@End@""
         """)
     }
 
