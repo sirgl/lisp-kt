@@ -36,7 +36,7 @@ private class BQuery : Query<B> {
         return B(input[aDescriptor])
     }
 
-    private val adDescriptor = MultiKey("", listOf(aDescriptor, dDescriptor))
+    private val adDescriptor = MultiKey(listOf(aDescriptor, dDescriptor))
     override val inputKey = adDescriptor
     override val outputDescriptor = bDescriptor
 }

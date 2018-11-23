@@ -20,13 +20,13 @@ class MacroExpander {
     /**
      * @return list of ast with the same order
      */
-    fun expand(asts: List<Ast>, target: DependencyEntry) : ResultWithLints<List<Ast>> {
+    fun expand(asts: List<Ast>, target: RealDependencyEntry) : ResultWithLints<List<Ast>> {
         return MacroExpansionContext(asts, target).expand()
     }
 }
 
 // At this point all dependencies must be validated
-private class MacroExpansionContext(asts: List<Ast>, val target: DependencyEntry) {
+private class MacroExpansionContext(asts: List<Ast>, val target: RealDependencyEntry) {
     val newAsts = asts.toMutableList()
 
     fun expand() : ResultWithLints<List<Ast>> {
@@ -34,8 +34,7 @@ private class MacroExpansionContext(asts: List<Ast>, val target: DependencyEntry
         return ResultWithLints.Ok(newAsts)
     }
 
-    fun expandRecursive(node: DependencyEntry) {
-        node as RealDependencyEntry
+    fun expandRecursive(node: RealDependencyEntry) {
         val macroEnv = hashMapOf<String, AstNode>()
         target.dfs {
             val realDependencyEntry = it as RealDependencyEntry

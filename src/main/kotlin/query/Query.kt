@@ -17,16 +17,19 @@ abstract class SimpleQuery<I, O>(override val name: String) : Query<O> {
     abstract override val inputKey: TypedKey<I>
 }
 
-sealed class ValueKey(val name: String) {
+sealed class ValueKey {
+    abstract val name: String
     abstract val keys: List<TypedKey<*>>
 }
 
-class TypedKey<T>(name: String) : ValueKey(name) {
+class TypedKey<T>(override val name: String) : ValueKey() {
     override val keys: List<TypedKey<*>>
         get() = listOf(this)
 }
 
-class MultiKey(name: String, val descriptors: List<TypedKey<*>>) : ValueKey(name) {
+class MultiKey(val descriptors: List<TypedKey<*>>) : ValueKey() {
+    override val name: String
+        get() = "<MULTI>"
     override val keys: List<TypedKey<*>>
         get() = descriptors
 }

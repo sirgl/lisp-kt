@@ -43,7 +43,7 @@ class MergedQuery : Query<List<Source>> {
     }
 
     override val outputDescriptor = mergedSourceDescriptor
-    override val inputKey = MultiKey("sources", listOf(stdlibSourceDescriptor, inputSourceDescriptor))
+    override val inputKey = MultiKey(listOf(stdlibSourceDescriptor, inputSourceDescriptor))
     override val name: String?
         get() = "Merge sources from stdlib and user ones"
 }
@@ -127,20 +127,20 @@ class MacroExpansionQuery(
     override fun doQuery(input: TypedStorage): ResultWithLints<List<Ast>> {
         val initialAsts = input[astsDescriptor]
         if (initialAsts is ResultWithLints.Error) return ResultWithLints.Error(initialAsts.lints)
-        val dependecies = input[initialDependenciesDescriptor]
-        if (dependecies is ResultWithLints.Error) return ResultWithLints.Error(dependecies.lints)
+        val dependencies = input[initialDependenciesDescriptor]
+        if (dependencies is ResultWithLints.Error) return ResultWithLints.Error(dependencies.lints)
         initialAsts as ResultWithLints.Ok
-        dependecies as ResultWithLints.Ok
+        dependencies as ResultWithLints.Ok
         val asts = initialAsts.value
         val targetSourceIndex = input[configDescriptor].targetSourceIndex
-        val deps = dependecies.value
+        val deps = dependencies.value
         val targetSourceEntry = deps[targetSourceIndex]
+        targetSourceEntry as RealDependencyEntry
         return macroExpander.expand(asts, targetSourceEntry)
     }
 
     override val outputDescriptor = macroExpandedAstDescriptor
-    override val inputKey = MultiKey("macro input",
-        listOf(configDescriptor, astsDescriptor, initialDependenciesDescriptor))
+    override val inputKey = MultiKey(listOf(configDescriptor, astsDescriptor, initialDependenciesDescriptor))
 
     override val name: String?
         get() = "Macro expansion"
@@ -161,14 +161,14 @@ class DependenciesRemappingQuery : Query<ResultWithLints<List<DependencyEntry>>>
     }
 
     override val outputDescriptor = macroExpandedDependenciesDescriptor
-    override val inputKey = MultiKey("Dependencies remap input",
-        listOf(configDescriptor, macroExpandedAstDescriptor, initialDependenciesDescriptor))
+    override val inputKey =
+            MultiKey(listOf(configDescriptor, macroExpandedAstDescriptor, initialDependenciesDescriptor))
 
     override val name: String?
         get() = "Dependencies remapping"
 }
 
-class HirLoweringQuery(val hirLowering: HirLowering) : Query<ResultWithLints<List<HirFile>>> {
+class HirLoweringQuery(private val hirLowering: HirLowering) : Query<ResultWithLints<List<HirFile>>> {
     override fun doQuery(input: TypedStorage): ResultWithLints<List<HirFile>> {
         val finalGraph = input[macroExpandedDependenciesDescriptor]
         if (finalGraph is ResultWithLints.Error) return ResultWithLints.Error(finalGraph.lints)
@@ -181,7 +181,7 @@ class HirLoweringQuery(val hirLowering: HirLowering) : Query<ResultWithLints<Lis
     override val outputDescriptor = hirDescriptor
 
     override val inputKey =
-        MultiKey("Hir lowering descriptor", listOf(configDescriptor, macroExpandedDependenciesDescriptor))
+            MultiKey(listOf(configDescriptor, macroExpandedDependenciesDescriptor))
 
     override val name: String?
         get() = "Hir lowering"

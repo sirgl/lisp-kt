@@ -1,19 +1,20 @@
 package hir
 
-import analysis.Handlers
-import analysis.Keywords
 import analysis.Matchers
 import deps.RealDependencyEntry
 import deps.dfs
 import lexer.TokenType
-import linting.*
+import linting.AppendingSink
+import linting.Lint
+import linting.Severity
+import linting.Subsystem
 import parser.*
 import util.ResultWithLints
 import util.Source
 import java.util.*
 import kotlin.collections.HashMap
 
-class HirLowering(val implicitImports: List<HirImport>) {
+class HirLowering(private val implicitImports: List<HirImport>) {
     fun lower(target: RealDependencyEntry): ResultWithLints<List<HirFile>> {
         val context = LoweringContext()
         val lints = mutableListOf<Lint>()
@@ -28,7 +29,7 @@ class HirLowering(val implicitImports: List<HirImport>) {
     }
 
     /**
-     * It is important to lower in dfs order to make sure all dependencies get into context before lowering unit
+     * It is important to lower in dfs post order to make sure all dependencies get into context before lowering unit
      */
     private fun lower(root: FileNode, source: Source, context: LoweringContext): ResultWithLints<HirFile> {
         return UnitHirLowering(root, source, context, implicitImports).lower()
@@ -39,6 +40,7 @@ class HirLowering(val implicitImports: List<HirImport>) {
 
 private class LoweringContext {
     val resolveStack: Deque<MutableMap<String, HirDeclaration>> = ArrayDeque()
+
     init {
         enterScope()
     }
@@ -191,7 +193,8 @@ private class UnitHirLowering(
                         val letInfo = Matchers.LET.extract(node, source).drainTo(lints) ?: return null
                         val vars = mutableListOf<HirVarDeclStmt>()
                         for (declaration in letInfo.declarations) {
-                            val varDeclStmt = HirVarDeclStmt(declaration.name, lowerExpr(declaration.initializer) ?: return null)
+                            val varDeclStmt =
+                                    HirVarDeclStmt(declaration.name, lowerExpr(declaration.initializer) ?: return null)
                             vars.add(varDeclStmt)
                             context.enterScope()
                             context.addToScope(varDeclStmt)
@@ -254,7 +257,7 @@ private class UnitHirLowering(
                         val argsNodes = children.drop(1)
                         val args = mutableListOf<HirExpr>()
                         for (argsNode in argsNodes) {
-                            args.add(lowerExpr(argsNode, false,  false) ?: return null)
+                            args.add(lowerExpr(argsNode, false, false) ?: return null)
                         }
                         val declaration = context.resolve(name)
                         when (declaration) {
@@ -272,7 +275,8 @@ private class UnitHirLowering(
 
     }
 
-    private fun lowerFuncDeclarationCall(args: List<HirExpr>, declaration: HirFunctionDeclaration, first: AstNode): HirLocalCallExpr? {
+    private fun lowerFuncDeclarationCall(args: List<HirExpr>, declaration: HirFunctionDeclaration,
+                                         first: AstNode): HirLocalCallExpr? {
         if (args.size != declaration.parameters.size) {
             if (args.size <= declaration.parameters.size || !declaration.hasVarargs()) {
                 errorLint("Parameter count and args count must match: ${declaration.name}", first.textRange)

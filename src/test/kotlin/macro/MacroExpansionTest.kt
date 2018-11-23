@@ -3,6 +3,7 @@ package macro
 import MultifileAstBasedTest
 import InMemoryFileInfo
 import deps.DependencyGraphBuilder
+import deps.RealDependencyEntry
 import parser.prettyPrint
 import util.ResultWithLints
 import withText
@@ -116,7 +117,9 @@ main:
         val dependencyGraphBuilder = DependencyGraphBuilder(asts)
         val graph = (dependencyGraphBuilder.build() as ResultWithLints.Ok).value
 
-        val resultWithLints = expander.expand(asts, graph[targetIndex])
+        val dependencyEntry = graph[targetIndex]
+        dependencyEntry as RealDependencyEntry
+        val resultWithLints = expander.expand(asts, dependencyEntry)
         val actual = buildString {
             append(resultWithLints.lints.joinToString("\n") { it.toString() })
             append("\n")

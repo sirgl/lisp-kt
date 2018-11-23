@@ -4,6 +4,7 @@ import MultifileAstBasedTest
 import InMemoryFileInfo
 import deps.DependencyEntry
 import deps.DependencyGraphBuilder
+import deps.RealDependencyEntry
 import deps.remapToNewAst
 import macro.MacroExpander
 import util.ResultWithLints
@@ -377,8 +378,10 @@ main : Error in LoweringToHir [24, 27) : Parameter count and args count must mat
         val expander = MacroExpander()
         val dependencyGraphBuilder = DependencyGraphBuilder(asts)
         val graph: List<DependencyEntry> = dependencyGraphBuilder.build().unwrap()
-        val finalAsts = expander.expand(asts, graph[targetIndex]).unwrap()
-        val newGraph = graph[targetIndex].remapToNewAst(finalAsts)
+        val dependencyEntry = graph[targetIndex]
+        dependencyEntry as RealDependencyEntry
+        val finalAsts = expander.expand(asts, dependencyEntry).unwrap()
+        val newGraph = dependencyEntry.remapToNewAst(finalAsts)
         val lowering = HirLowering(emptyList())
         val actual = buildString {
             val loweringResult = lowering.lower(newGraph[targetIndex])
