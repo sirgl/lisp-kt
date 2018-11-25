@@ -102,16 +102,14 @@ fun main__init :  virtual regs: 0 paramCount: 0
     @Test
     fun `test assign`() {
         testMir("""
-fun foo :  virtual regs: 1 paramCount: 1
+fun main__init :  virtual regs: 1 paramCount: 0
   0 inplace_i64 reg: %0 value: 0
   1 mov from %0 to %0
-  2 return %1
-
-fun main__init :  virtual regs: 0 paramCount: 0
-  0 get_function_ptr foo %0
-  1 return %0
+  2 inplace_i64 reg: %2 value: 0
+  3 mov from %2 to %0
+  4 return %3
         """.trimIndent(), listOf(
-                "main" withText "(defn foo (x) (set x 12))"
+                "main" withText "(let (( y 0)) (set y 12))"
         ))
     }
 

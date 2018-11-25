@@ -226,7 +226,12 @@ private class UnitHirLowering(
                         val setInfo = Matchers.SET.extract(node, source).drainTo(lints) ?: return null
                         val newValue = lowerExpr(setInfo.newValue) ?: return null
                         val name = setInfo.name
-                        val varDeclaration = context.resolve(name) as? HirVarDeclaration
+                        val hirDeclaration = context.resolve(name)
+                        if (hirDeclaration is HirParameter) {
+                            errorLint("Parameters can't be changed: $name", node.textRange)
+                            return null
+                        }
+                        val varDeclaration = hirDeclaration as? HirVarDeclaration
                         if (varDeclaration == null) {
                             errorLint("Unresolved variable reference: $name", node.textRange)
                             return null

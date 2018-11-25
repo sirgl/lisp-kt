@@ -373,6 +373,17 @@ main : Error in LoweringToHir [24, 27) : Parameter count and args count must mat
         ))
     }
 
+    @Test
+    fun `test parameters changing`() {
+        testHirLowering("""
+main : Error in LoweringToHir [14, 23) : Parameters can't be changed: x
+        """, listOf(
+                "main" withText """
+        (defn foo (x) (set x 4))
+                """.trimIndent()
+        ))
+    }
+
     private fun testHirLowering(expectedHirPrint: String, files: List<InMemoryFileInfo>, targetIndex: Int = 0) {
         val asts = buildAsts(files)
         val expander = MacroExpander()

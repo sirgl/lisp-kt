@@ -138,20 +138,17 @@ b2:
     fun `test assign`() {
         testMir("""
 main:
-fun foo params: 1, totalVars: 1
+fun main__init params: 0, totalVars: 1 (main)
 var table:
-   0 x
+   0 y
 b0:
-  load_const 12 (i32, tagged)
+  load_const 0 (i32, tagged)
   store_var: v0 value: b0:i0
-  return b0:i1
-
-fun main__init params: 0, totalVars: 0 (main)
-b0:
-  get_function_reference 0
-  return b0:i0
+  load_const 12 (i32, tagged)
+  store_var: v0 value: b0:i2
+  return b0:i3
         """.trimIndent(), listOf(
-                "main" withText "(defn foo (x) (set x 12))"
+                "main" withText "(let (( y 0)) (set y 12))"
         ))
     }
 
