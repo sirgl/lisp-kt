@@ -1,8 +1,14 @@
 package macro
 
 import analysis.Matchers
-import deps.*
-import interpreter.*
+import deps.RealDependencyEntry
+import deps.dfs
+import interpreter.Interpreter
+import interpreter.InterpreterEnv
+import interpreter.InterpreterException
+import linting.Lint
+import linting.Severity
+import linting.Subsystem
 import parser.*
 import util.ResultWithLints
 import util.Source
@@ -30,11 +36,16 @@ private class MacroExpansionContext(asts: List<Ast>, val target: RealDependencyE
     val newAsts = asts.toMutableList()
 
     fun expand() : ResultWithLints<List<Ast>> {
-        expandRecursive(target)
-        return ResultWithLints.Ok(newAsts)
+        return try {
+            expandRecursive()
+            ResultWithLints.Ok(newAsts)
+        } catch (e: InterpreterException) {
+            ResultWithLints.Error(listOf(Lint(e.message ?: "", e.range, Severity.Error,
+                    Subsystem.MacroExpander, target.ast.source)))
+        }
     }
 
-    fun expandRecursive(node: RealDependencyEntry) {
+    fun expandRecursive() {
         val macroEnv = hashMapOf<String, AstNode>()
         target.dfs {
             val realDependencyEntry = it as RealDependencyEntry

@@ -1,10 +1,9 @@
 package macro
 
-import MultifileAstBasedTest
 import InMemoryFileInfo
+import MultifileAstBasedTest
 import deps.DependencyGraphBuilder
 import deps.RealDependencyEntry
-import parser.prettyPrint
 import util.ResultWithLints
 import withText
 import kotlin.test.Test
@@ -106,6 +105,15 @@ main:
 
 (for 0 10 i (print i))
                 """.trimIndent()
+        ))
+    }
+
+    @Test
+    fun `test macro with unknown function call`() {
+        testExpansion("""
+main : Error in MacroExpander [15, 22) : No definition of bar in env
+        """, listOf(
+                "main" withText """(macro foo (x) (bar x)) (foo 4)"""
         ))
     }
 

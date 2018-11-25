@@ -29,7 +29,7 @@ private fun intBoolFunction(f: (List<Int>) -> Boolean): NativeFunction {
 }
 
 
-class InterpreterException(reason: String, private val range: TextRange) : Exception(reason) {
+class InterpreterException(reason: String, val range: TextRange) : Exception(reason) {
     override fun toString(): String {
         return "Interpreter $range: $message"
     }

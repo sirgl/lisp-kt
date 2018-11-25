@@ -24,6 +24,7 @@ enum class Severity {
 enum class Subsystem {
     Lexer,
     Parser,
+    MacroExpander,
     LoweringToHir,
     LoweringToLir,
     Codegen,
