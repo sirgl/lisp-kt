@@ -5,6 +5,7 @@ package frontend
 import deps.*
 import hir.HirFile
 import hir.HirLowering
+import hir.HirValidator
 import lexer.Lexer
 import lexer.LexerImpl
 import lexer.Token
@@ -168,14 +169,21 @@ class DependenciesRemappingQuery : Query<ResultWithLints<List<DependencyEntry>>>
         get() = "Dependencies remapping"
 }
 
-class HirLoweringQuery(private val hirLowering: HirLowering) : Query<ResultWithLints<List<HirFile>>> {
+class HirLoweringQuery(private val hirLowering: HirLowering, private val hirValidator: HirValidator) :
+        Query<ResultWithLints<List<HirFile>>> {
     override fun doQuery(input: TypedStorage): ResultWithLints<List<HirFile>> {
         val finalGraph = input[macroExpandedDependenciesDescriptor]
-        if (finalGraph is ResultWithLints.Error) return ResultWithLints.Error(finalGraph.lints)
+        val lints = finalGraph.lints.toMutableList()
+        if (finalGraph is ResultWithLints.Error) return ResultWithLints.Error(lints)
         finalGraph as ResultWithLints.Ok
         val config = input[configDescriptor]
         val entry = finalGraph.value[config.targetSourceIndex]
-        return hirLowering.lower(entry as RealDependencyEntry)
+        val hirFiles =
+                hirLowering.lower(entry as RealDependencyEntry).drainTo(lints) ?: return ResultWithLints.Error(lints)
+
+        hirValidator.validate(hirFiles, AppendingSink(lints))
+        if (lints.any { it.severity == Severity.Error }) return ResultWithLints.Error(lints)
+        return ResultWithLints.Ok(hirFiles, lints)
     }
 
     override val outputDescriptor = hirDescriptor
@@ -219,14 +227,15 @@ class LirLoweringQuery(val lirLowering: LirLowering) :
 
 
 class QueryDrivenLispFrontend(
-    val lexer: Lexer,
-    val parser: Parser,
-    val tokenValidator: TokenValidator,
-    val hirLowering: HirLowering,
-    val lirLowering: LirLowering,
-    val dependencyValidator: DependencyValidator,
-    val macroExpander: MacroExpander,
-    val mirLowering: MirLowering
+        val lexer: Lexer,
+        val parser: Parser,
+        val tokenValidator: TokenValidator,
+        val hirLowering: HirLowering,
+        val lirLowering: LirLowering,
+        val dependencyValidator: DependencyValidator,
+        val hirValidator: HirValidator,
+        val macroExpander: MacroExpander,
+        val mirLowering: MirLowering
 ) {
 
     fun compilationSession(
@@ -273,11 +282,15 @@ class CompilationSession(
             database.registerQuery(InitialDependenciesQuery(dependencyValidator))
             database.registerQuery(MacroExpansionQuery(macroExpander))
             database.registerQuery(DependenciesRemappingQuery())
-            database.registerQuery(HirLoweringQuery(hirLowering))
+            database.registerQuery(HirLoweringQuery(hirLowering, hirValidator))
             database.registerQuery(MirLoweringQuery(mirLowering))
             database.registerQuery(LirLoweringQuery(lirLowering))
             return database
         }
+    }
+
+    fun getHir(): ResultWithLints<List<HirFile>> {
+        return getDb().queryFor(hirDescriptor)
     }
 
     fun getMir(): ResultWithLints<List<MirFile>> {
@@ -297,6 +310,7 @@ fun main(args: Array<String>) {
         HirLowering(listOf()),
         LirLowering(),
         DependencyValidator(),
+            HirValidator(),
         MacroExpander(),
         MirLowering()
     )

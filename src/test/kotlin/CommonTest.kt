@@ -2,15 +2,16 @@ import deps.DependencyValidator
 import frontend.QueryDrivenLispFrontend
 import hir.HirImport
 import hir.HirLowering
-import parser.Ast
-import parser.ParseResult
-import util.InMemorySource
+import hir.HirValidator
 import lexer.LexerImpl
 import lexer.TokenValidator
 import lir.LirLowering
 import macro.MacroExpander
 import mir.MirLowering
+import parser.Ast
+import parser.ParseResult
 import parser.Parser
+import util.InMemorySource
 
 class InMemoryFileInfo(val text: String, val name: String)
 
@@ -41,6 +42,7 @@ abstract class FrontendTest(val implicitImports: List<HirImport>) {
             HirLowering(implicitImports),
             LirLowering(),
             DependencyValidator(),
+            HirValidator(),
             MacroExpander(),
             MirLowering()
     )
