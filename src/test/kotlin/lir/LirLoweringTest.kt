@@ -12,7 +12,7 @@ class LirLoweringTest : FrontendTest(emptyList()) {
     @Test
     fun `test top level list`() {
         testMir("""
-fun main__init :  virtual regs: 0 paramCount: 0
+fun main__init :  virtual regs: 1 paramCount: 0
   0 inplace_i64 reg: %0 value: 0
   1 return %0
         """.trimIndent(), listOf(
@@ -23,11 +23,11 @@ fun main__init :  virtual regs: 0 paramCount: 0
     @Test
     fun `test function definition`() {
         testMir("""
-fun foo :  virtual regs: 1 paramCount: 1
-  0 inplace_i64 reg: %0 value: 0
-  1 return %0
+fun foo :  virtual regs: 2 paramCount: 1
+  0 inplace_i64 reg: %1 value: 0
+  1 return %1
 
-fun main__init :  virtual regs: 0 paramCount: 0
+fun main__init :  virtual regs: 1 paramCount: 0
   0 get_function_ptr foo %0
   1 return %0
         """.trimIndent(), listOf(
@@ -38,16 +38,16 @@ fun main__init :  virtual regs: 0 paramCount: 0
     @Test
     fun `test if`() {
         testMir("""
-fun main__init :  virtual regs: 1 paramCount: 0
-  0 inplace_i64 reg: %0 value: 0
-  1 cond_jump cond: %0 thenIndex: 2 elseIndex: 5
-  2 inplace_i64 reg: %1 value: 1
-  3 mov from %1 to %1
+fun main__init :  virtual regs: 7 paramCount: 0
+  0 inplace_i64 reg: %1 value: 0
+  1 cond_jump cond: %1 thenIndex: 2 elseIndex: 5
+  2 inplace_i64 reg: %2 value: 1
+  3 mov from %2 to %1
   4 goto 7
-  5 inplace_i64 reg: %3 value: 0
-  6 mov from %3 to %1
-  7 mov from %1 to %5
-  8 return %5
+  5 inplace_i64 reg: %4 value: 0
+  6 mov from %4 to %1
+  7 mov from %1 to %6
+  8 return %6
         """.trimIndent(), listOf(
                 "main" withText "(if #t 1 2)"
         ))
@@ -56,23 +56,23 @@ fun main__init :  virtual regs: 1 paramCount: 0
     @Test
     fun `test if nested`() {
         testMir("""
-fun main__init :  virtual regs: 2 paramCount: 0
-  0 inplace_i64 reg: %0 value: 0
-  1 cond_jump cond: %0 thenIndex: 2 elseIndex: 5
-  2 inplace_i64 reg: %1 value: 1
-  3 mov from %1 to %1
+fun main__init :  virtual regs: 13 paramCount: 0
+  0 inplace_i64 reg: %2 value: 0
+  1 cond_jump cond: %2 thenIndex: 2 elseIndex: 5
+  2 inplace_i64 reg: %3 value: 1
+  3 mov from %3 to %1
   4 goto 14
-  5 inplace_i64 reg: %3 value: 0
-  6 cond_jump cond: %3 thenIndex: 7 elseIndex: 10
-  7 inplace_i64 reg: %4 value: 0
-  8 mov from %4 to %2
+  5 inplace_i64 reg: %5 value: 0
+  6 cond_jump cond: %5 thenIndex: 7 elseIndex: 10
+  7 inplace_i64 reg: %6 value: 0
+  8 mov from %6 to %2
   9 goto 12
-  10 inplace_i64 reg: %6 value: 1
-  11 mov from %6 to %2
-  12 mov from %2 to %8
-  13 mov from %8 to %1
-  14 mov from %1 to %10
-  15 return %10
+  10 inplace_i64 reg: %8 value: 1
+  11 mov from %8 to %2
+  12 mov from %2 to %10
+  13 mov from %10 to %1
+  14 mov from %1 to %12
+  15 return %12
         """.trimIndent(), listOf(
                 "main" withText "(if #t 1 (if #f 2 3))"
         ))
@@ -81,16 +81,16 @@ fun main__init :  virtual regs: 2 paramCount: 0
     @Test
     fun `test while`() {
         testMir("""
-fun print :  virtual regs: 1 paramCount: 1
-  0 inplace_i64 reg: %0 value: 0
-  1 return %0
+fun print :  virtual regs: 2 paramCount: 1
+  0 inplace_i64 reg: %1 value: 0
+  1 return %1
 
-fun main__init :  virtual regs: 0 paramCount: 0
+fun main__init :  virtual regs: 5 paramCount: 0
   0 get_function_ptr print %0
   1 inplace_i64 reg: %1 value: 0
   2 cond_jump cond: %1 thenIndex: 3 elseIndex: 6
   3 inplace_i64 reg: %2 value: 0
-  4 call name: print args: (2)
+  4 call name: print resultReg: %3 args: (%2)
   5 goto 0
   6 inplace_i64 reg: %4 value: 0
   7 return %4
@@ -102,12 +102,12 @@ fun main__init :  virtual regs: 0 paramCount: 0
     @Test
     fun `test assign`() {
         testMir("""
-fun main__init :  virtual regs: 1 paramCount: 0
-  0 inplace_i64 reg: %0 value: 0
-  1 mov from %0 to %0
-  2 inplace_i64 reg: %2 value: 0
-  3 mov from %2 to %0
-  4 return %3
+fun main__init :  virtual regs: 5 paramCount: 0
+  0 inplace_i64 reg: %1 value: 0
+  1 mov from %1 to %0
+  2 inplace_i64 reg: %3 value: 0
+  3 mov from %3 to %0
+  4 return %4
         """.trimIndent(), listOf(
                 "main" withText "(let (( y 0)) (set y 12))"
         ))
@@ -116,11 +116,11 @@ fun main__init :  virtual regs: 1 paramCount: 0
     @Test
     fun `test let`() {
         testMir("""
-fun main__init :  virtual regs: 1 paramCount: 0
-  0 inplace_i64 reg: %0 value: 0
-  1 mov from %0 to %0
-  2 mov from %0 to %2
-  3 return %2
+fun main__init :  virtual regs: 4 paramCount: 0
+  0 inplace_i64 reg: %1 value: 0
+  1 mov from %1 to %0
+  2 mov from %0 to %3
+  3 return %3
         """.trimIndent(), listOf(
                 "main" withText "(let ((x 12)) x)"
         ))
@@ -133,23 +133,23 @@ String table:
    0 let
    1 foo
    2 x
-fun main__init :  virtual regs: 3 paramCount: 0
+fun main__init :  virtual regs: 16 paramCount: 0
   0 inplace_i64 reg: %0 value: 0
-  1 get_str_ptr strIndex: 0
-  2 call name: r__createSymbol args: (0)
-  3 call name: r__withElement args: (1, 0)
+  1 get_str_ptr strIndex: 0 dst: %13
+  2 call name: r__createSymbol resultReg: %1 args: (%13)
+  3 call name: r__withElement resultReg: %2 args: (%1, %0)
   4 inplace_i64 reg: %3 value: 0
-  5 get_str_ptr strIndex: 1
-  6 call name: r__createString args: (1)
-  7 call name: r__withElement args: (4, 3)
+  5 get_str_ptr strIndex: 1 dst: %14
+  6 call name: r__createString resultReg: %4 args: (%14)
+  7 call name: r__withElement resultReg: %5 args: (%4, %3)
   8 inplace_i64 reg: %6 value: 0
-  9 call name: r__withElement args: (6, 5)
+  9 call name: r__withElement resultReg: %7 args: (%6, %5)
   10 inplace_i64 reg: %8 value: 0
-  11 call name: r__withElement args: (8, 7)
-  12 call name: r__withElement args: (9, 2)
-  13 get_str_ptr strIndex: 2
-  14 call name: r__createSymbol args: (2)
-  15 call name: r__withElement args: (11, 10)
+  11 call name: r__withElement resultReg: %9 args: (%8, %7)
+  12 call name: r__withElement resultReg: %10 args: (%9, %2)
+  13 get_str_ptr strIndex: 2 dst: %15
+  14 call name: r__createSymbol resultReg: %11 args: (%15)
+  15 call name: r__withElement resultReg: %12 args: (%11, %10)
   16 return %12
         """.trimIndent(), listOf(
                 "main" withText "`(let (\"foo\" 12 2) x)"
@@ -160,19 +160,19 @@ fun main__init :  virtual regs: 3 paramCount: 0
     @Test
     fun `test vararg`() {
         testMir("""
-fun foo :  virtual regs: 2 paramCount: 2
-  0 inplace_i64 reg: %0 value: 0
-  1 return %0
+fun foo :  virtual regs: 3 paramCount: 2
+  0 inplace_i64 reg: %2 value: 0
+  1 return %2
 
-fun main__init :  virtual regs: 0 paramCount: 0
+fun main__init :  virtual regs: 8 paramCount: 0
   0 get_function_ptr foo %0
   1 inplace_i64 reg: %1 value: 1
   2 inplace_i64 reg: %2 value: 0
   3 inplace_i64 reg: %3 value: 0
-  4 call name: r__withElement args: (3, 2)
+  4 call name: r__withElement resultReg: %4 args: (%3, %2)
   5 inplace_i64 reg: %5 value: 1
-  6 call name: r__withElement args: (5, 4)
-  7 call name: foo args: (1, 6)
+  6 call name: r__withElement resultReg: %6 args: (%5, %4)
+  7 call name: foo resultReg: %7 args: (%1, %6)
   8 return %7
         """.trimIndent(), listOf(
                 "main" withText "(defn foo (a @vp) ())(foo 1 2 3)"

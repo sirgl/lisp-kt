@@ -33,14 +33,12 @@ class LirFunBuilder(val function: MirFunctionDefinition) {
 
     init {
         // assigning register to all values in function
-        var regIndex = 0
         for (block in function.blocks) {
             val blockIndex = block.index
             for ((index, instruction) in block.instructions.withIndex()) {
                 val instrId = MirInstrId(blockIndex, index.toShort())
                 if (instruction is MirValueInstr) {
-                    idToReg[instrId] = regIndex
-                    regIndex++
+                    idToReg[instrId] = nextRegister()
                 }
             }
         }
@@ -184,12 +182,12 @@ private class LirFileLowering(val mirFile: MirFile, val world: MirWorld, val con
                 is MirLocalCallInstr -> {
                     val function = world.resolveFunction(instruction.functionId)
                     val argRegs = instruction.args.map { builder.toReg(it) }.toIntArray()
-                    builder.emit(LirCallInstr(argRegs, function.name))
+                    builder.emit(LirCallInstr(argRegs, function.name, builder.toReg(instrId)))
                 }
                 is MirWithElementInstr -> {
                     val valueReg = builder.toReg(instruction.valueId)
                     val listReg = builder.toReg(instruction.listId)
-                    builder.emit(LirCallInstr(intArrayOf(valueReg, listReg), LirLoweringConstants.RUNTIME_WITH_ELEMENT_FUNCTION_NAME))
+                    builder.emit(LirCallInstr(intArrayOf(valueReg, listReg), LirLoweringConstants.RUNTIME_WITH_ELEMENT_FUNCTION_NAME, builder.toReg(instrId)))
                 }
                 MirAddIntTagInstr -> TODO("bit mask or, opt only")
                 MirAddBoolTagInstr -> TODO("bit mask or, opt only")
@@ -226,13 +224,13 @@ private class LirFileLowering(val mirFile: MirFile, val world: MirWorld, val con
                 val stringAddrRegister = builder.nextRegister()
                 val strIndex = context.getStrIndex(value.value)
                 builder.emit(LirGetStrPtrInstr(strIndex, stringAddrRegister))
-                builder.emit(LirCallInstr(intArrayOf(stringAddrRegister), LirLoweringConstants.RUNTIME_CREATE_STRING_FUNCTION_NAME))
+                builder.emit(LirCallInstr(intArrayOf(stringAddrRegister), LirLoweringConstants.RUNTIME_CREATE_STRING_FUNCTION_NAME, builder.toReg(instrId)))
             }
             is MirValue.MirSymbol -> {
                 val stringAddrRegister = builder.nextRegister()
                 val strIndex = context.getStrIndex(value.value)
                 builder.emit(LirGetStrPtrInstr(strIndex, stringAddrRegister))
-                builder.emit(LirCallInstr(intArrayOf(stringAddrRegister), LirLoweringConstants.RUNTIME_CREATE_SYMBOL_FUNCTION_NAME))
+                builder.emit(LirCallInstr(intArrayOf(stringAddrRegister), LirLoweringConstants.RUNTIME_CREATE_SYMBOL_FUNCTION_NAME, builder.toReg(instrId)))
             }
             MirValue.MirEmptyList -> {
                 builder.emit(LirInplaceI64(builder.toReg(instrId), 0))

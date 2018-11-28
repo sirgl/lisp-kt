@@ -34,13 +34,13 @@ class LirGetFunctionPtrInstr(val name: String, val destReg: Int) : LirInstr() {
 
 class LirGetStrPtrInstr(val strIndex: Int, val destReg: Int) : LirInstr() {
     override fun toString(): String {
-        return "get_str_ptr strIndex: $strIndex"
+        return "get_str_ptr strIndex: $strIndex dst: %$destReg"
     }
 }
 
-class LirCallInstr(val regArgs: IntArray, val functionName: String) : LirInstr() {
+class LirCallInstr(val regArgs: IntArray, val functionName: String, val resultReg: Int) : LirInstr() {
     override fun toString(): String {
-        return "call name: $functionName args: (${regArgs.joinToString(", ")})"
+        return "call name: $functionName resultReg: %$resultReg args: (${regArgs.joinToString(", ") { "%$it" }})"
     }
 }
 
