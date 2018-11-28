@@ -18,7 +18,7 @@ class AssemblyBackend(
         fileAssembler.writeStringTable(file.stringTable)
         for (function in file.functions) {
             val registerMap = registerAllocator.allocateRegisters(function)
-            fileAssembler.writeFunction("") {asm ->
+            fileAssembler.writeFunction(function.name) {asm ->
                 with(FunctionGenerationSession(function, registerMap)) {
                     asm.generate()
                 }
@@ -50,7 +50,9 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
                     emitMov(instrRegisterMap[instruction.from], instrRegisterMap[instruction.to])
                 }
                 is LirBinInstr -> TODO()
-                is LirGetFunctionPtrInstr -> TODO()
+                is LirGetFunctionPtrInstr -> {
+                    emitMov(instruction.name, instrRegisterMap[instruction.destReg])
+                }
                 is LirGetStrPtrInstr -> {
                     emitMovabs("Lstr${instruction.strIndex}", instrRegisterMap[instruction.destReg])
                 }
@@ -63,7 +65,9 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
                         emitMov(realArgPosition, parameterRegisters[argIndex])
                     }
                     emitCall(instruction.functionName)
-                    for (i in function.parameterCount - 1..0) {
+                    emitMov(Regs.rax, instrRegisterMap[instruction.resultReg])
+                    // TODO check that all parameters popped
+                    for (i in function.parameterCount - 1 downTo 0 step 1) {
                         emitPop(instrRegisterMap[i])
                     }
                 }
@@ -73,7 +77,6 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
                 }
                 is LirReturnInstr -> {
                     emitMov(instrRegisterMap[instruction.reg], Regs.rax)
-                    emitRet()
                 }
                 is LirGotoInstr -> {
                     emitJmp(indexToLabel[instruction.instrIndex]!!)
@@ -86,13 +89,12 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
         }
         emitAdd(bytesToAllocateOnStack, Regs.rsp)
         emitPop(Regs.rbp)
-        // TODO cleanup
+        emitRet()
     }
 
     private fun getLabelPositions(): HashMap<Int, String> {
         var nextLabelIndex = 0
         val lirBBStartIndices = hashMapOf<Int, String>()
-        lirBBStartIndices[0] = function.name
         for (instruction in function.instructions) {
             when (instruction) {
                 is LirCondJumpInstr -> {

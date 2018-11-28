@@ -50,4 +50,8 @@ sealed class ResultWithLints<T>(val lints: List<Lint>) {
     }
 }
 
-class NoResultException(val lints: List<Lint>) : Exception()
+class NoResultException(val lints: List<Lint>) : Exception() {
+    override fun toString(): String {
+        return lints.joinToString("\n") { it.toString() }
+    }
+}

@@ -33,7 +33,7 @@ class FunctionTextAssembler(
     }
 
     override fun emitMov(from: MemoryLocation, to: MemoryLocation) {
-        addLineShifted("movq %${from.assemblyText}, %${to.assemblyText}")
+        addLineShifted("movq ${from.assemblyText}, ${to.assemblyText}")
     }
 
     override fun emitRet() {
@@ -44,8 +44,12 @@ class FunctionTextAssembler(
         addLineShifted("movq \$$immediate, ${to.assemblyText}")
     }
 
+    override fun emitMov(functionName: String, to: MemoryLocation) {
+        addLineShifted("movq $functionName, ${to.assemblyText}")
+    }
+
     override fun emitMovabs(stringLabel: String, to: MemoryLocation) {
-        addLineShifted("movabsq \$$stringLabel, ${to.assemblyText}")
+        addLineShifted("movabsq $stringLabel, ${to.assemblyText}")
     }
 
     override fun emitPush(memoryLocation: MemoryLocation) {
@@ -57,7 +61,7 @@ class FunctionTextAssembler(
     }
 
     override fun emitLabel(name: String) {
-        addLine(name)
+        addLine("$name:")
     }
 
     override fun emitCall(name: String) {
