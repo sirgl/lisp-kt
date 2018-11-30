@@ -36,6 +36,10 @@ class FunctionTextAssembler(
         addLineShifted("movq ${from.assemblyText}, ${to.assemblyText}")
     }
 
+    override fun emitComment(text: String) {
+        addLine(""";$text""")
+    }
+
     override fun emitRet() {
         addLineShifted("retq")
     }

@@ -24,6 +24,7 @@ object Regs {
     val rsp = x64Register("rsp")
     val r8 = x64Register("r8")
     val r9 = x64Register("r9")
+    val r10 = x64Register("r10")
 }
 
 // all of them are not preserved between function calls

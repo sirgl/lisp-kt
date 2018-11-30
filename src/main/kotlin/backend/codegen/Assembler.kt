@@ -16,6 +16,7 @@ interface Assembler {
 interface FunctionAssembler {
     // TODO forbid from mem to mem
     fun emitMov(from: MemoryLocation, to: MemoryLocation)
+    fun emitComment(text: String)
     fun emitMov(immediate: Long, to: MemoryLocation)
     fun emitMovabs(stringLabel: String, to: MemoryLocation)
 

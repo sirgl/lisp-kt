@@ -47,7 +47,7 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
             val instrRegisterMap = memoryMap.virtualRegToReal[index]
             when (instruction) {
                 is LirMovInstr -> {
-                    emitMov(instrRegisterMap[instruction.from], instrRegisterMap[instruction.to])
+                    emitMovSmart(instrRegisterMap[instruction.from], instrRegisterMap[instruction.to])
                 }
                 is LirBinInstr -> TODO()
                 is LirGetFunctionPtrInstr -> {
@@ -57,26 +57,30 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
                     emitMovabs("Lstr${instruction.strIndex}", instrRegisterMap[instruction.destReg])
                 }
                 is LirCallInstr -> {
+                    emitComment("save registers for call ${instruction.functionName}")
                     for (i in 0 until function.parameterCount) {
                         emitPush(instrRegisterMap[i])
                     }
                     val realArgPositions = instruction.regArgs.map { instrRegisterMap[it] }
                     for ((argIndex, realArgPosition) in realArgPositions.withIndex()) {
-                        emitMov(realArgPosition, parameterRegisters[argIndex])
+                        emitMovSmart(realArgPosition, parameterRegisters[argIndex])
                     }
                     emitCall(instruction.functionName)
-                    emitMov(Regs.rax, instrRegisterMap[instruction.resultReg])
+                    emitMovSmart(Regs.rax, instrRegisterMap[instruction.resultReg])
+                    emitComment("restore registers for call ${instruction.functionName}")
+
                     // TODO check that all parameters popped
                     for (i in function.parameterCount - 1 downTo 0 step 1) {
                         emitPop(instrRegisterMap[i])
                     }
+                    emitComment("finish handling call ${instruction.functionName}")
                 }
                 is LirCondJumpInstr -> {
                     emitCmpWithZero(instrRegisterMap[instruction.condReg])
                     emitJne(indexToLabel[instruction.elseInstrIndex]!!)
                 }
                 is LirReturnInstr -> {
-                    emitMov(instrRegisterMap[instruction.reg], Regs.rax)
+                    emitMovSmart(instrRegisterMap[instruction.reg], Regs.rax)
                 }
                 is LirGotoInstr -> {
                     emitJmp(indexToLabel[instruction.instrIndex]!!)
@@ -110,5 +114,15 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
             }
         }
         return lirBBStartIndices
+    }
+
+    private fun FunctionAssembler.emitMovSmart(from: MemoryLocation, to: MemoryLocation) {
+        if (from !is Register && to !is Register) {
+            emitComment("mem (${from.assemblyText}) -> mem (${to.assemblyText}) move through temporary register")
+            emitMov(from, Regs.r10)
+            emitMov(Regs.r10, to)
+        } else {
+            emitMov(from, to)
+        }
     }
 }
