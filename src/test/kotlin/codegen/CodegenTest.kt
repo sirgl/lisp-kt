@@ -412,7 +412,7 @@ b0:
         val backend = AssemblyBackend(TextAssembler(), NaiveRegisterAllocator())
         val actual = lir.joinToString("\n") {
             val artifactBuilder = StringArtifactBuilder()
-            backend.runBackend(BackendConfiguration(""), it, artifactBuilder)
+            backend.runBackend(BackendConfiguration(), it, artifactBuilder)
             artifactBuilder.sb.toString()
         }
         assertEquals(expected.trim(), actual.trim())

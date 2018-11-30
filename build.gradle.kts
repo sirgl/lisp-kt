@@ -10,10 +10,12 @@ version = "1.0-SNAPSHOT"
 repositories {
     maven { setUrl("http://dl.bintray.com/kotlin/kotlin-eap") }
     mavenCentral()
+    maven { setUrl("https://jitpack.io") }
 }
 
 dependencies {
     compile(kotlin("stdlib-jdk8"))
+    implementation("com.github.Kotlin:kotlinx.cli:-SNAPSHOT")
     testCompile("org.jetbrains.kotlin", "kotlin-test-junit5", "1.2.61")
 
 }

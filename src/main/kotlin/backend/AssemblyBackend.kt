@@ -14,7 +14,7 @@ class AssemblyBackend(
         config: BackendConfiguration,
         file: LirFile,
         artifactBuilder: ArtifactBuilder
-    ) : List<Artifact> {
+    ) : List<FileArtifact> {
         fileAssembler.writeStringTable(file.stringTable)
         for (function in file.functions) {
             val registerMap = registerAllocator.allocateRegisters(function)
@@ -24,9 +24,9 @@ class AssemblyBackend(
                 }
             }
         }
-        artifactBuilder.createFileArtifact(file.source.path + ".S") { os ->
+        artifactBuilder.createFileArtifact(file.source.path + ".S", { os ->
             fileAssembler.save(os)
-        }
+        })
         return emptyList()
     }
 }
