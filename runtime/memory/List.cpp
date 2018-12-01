@@ -4,15 +4,23 @@
 
 #include "List.h"
 
-ListObj::ListObj(const Header &header, const Value &value) : header(header), value(value) {
-    next = nullptr;
-    last = nullptr;
+void List::print() {
+    std::cout << "(";
+    List* current = this;
+    while (current != nullptr) {
+        current->value.print();
+        current = current->next;
+        if (current != nullptr) {
+            std::cout << " ";
+        }
+    }
+    std::cout << ")";
 }
 
-ListObj *asList(Header *header) {
-    assert(header->type == ValueType::List);
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCDFAInspection"
-    return reinterpret_cast<ListObj*>(header);
-#pragma clang diagnostic pop
+List::List(ValueType type, const Value &value, List *next) : Object(type), value(value), next(next) {}
+
+List *List::allocate(Value value) {
+    List *list = new List(ValueType::List, value, nullptr);
+    finishHeapAllocation(list);
+    return nullptr;
 }

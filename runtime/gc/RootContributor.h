@@ -4,5 +4,5 @@
 
 class RootContributor {
 public:
-    virtual void contribute(std::function<void(Header*)> consumer) = 0;
+    virtual void contribute(std::function<void(Object*)> consumer) = 0;
 };

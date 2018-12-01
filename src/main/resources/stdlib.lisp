@@ -16,6 +16,8 @@ stdlib created by Ivanov Roman and Ivanova Anastasia
 
 (defnat print r__print (x))
 
+(defnat print r__ (x))
+
 ;macros section
 
 (macro inc (i) `(+ i 1))

@@ -1,25 +1,24 @@
 #pragma once
 
 #include "Memory.h"
+#include "Allocation.h"
 
-struct ListEntry {
+
+class List : Object {
+public:
     Value value;
-    ListEntry* next;
-};
+    List* next;
 
-struct ListObj {
-    Header header;
-    Value value;
-    ListObj* next;
-    ListObj* last;
+    List(ValueType type, const Value &value, List *next);
 
-    ListObj(const Header &header, const Value &value);
-
-    void add(Value value) {
-        if (last == nullptr) {
-            // TODO
-        }
+    List* withHead(Value value) {
+        List *headObj = allocate(value);
+        headObj->next = this;
+        return headObj;
     }
+
+    void print() override;
+
+    static List* allocate(Value value);
 };
 
-ListObj* asList(Header* header);

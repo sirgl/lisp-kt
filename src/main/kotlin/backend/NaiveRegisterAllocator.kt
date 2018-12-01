@@ -21,10 +21,10 @@ class NaiveRegisterAllocator : RegisterAllocator {
             registerMap.add(parameterRegisters[i])
         }
 
-        var offset = 8
+        var offset = -8
         for(i in parameterCount until virtualRegistersCount) {
             registerMap.add(AddressWithOffset(Regs.rsp, offset))
-            offset += 8
+            offset -= 8
         }
         return MemoryMap(instructions.map { registerMap })
     }

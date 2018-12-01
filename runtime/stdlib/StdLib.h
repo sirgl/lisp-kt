@@ -2,10 +2,18 @@
 
 #include "../memory/Memory.h"
 
-Value __add(unsigned int count, ...);
+extern "C" Value __add(unsigned int count, ...);
 
-Value r__print(Value value);
+extern "C" Value r__print(Value value);
 
-Value r__add(Value left, Value right);
+extern "C" Value r__printErrorAndExit(Value errorText);
 
-uint64_t r__untag(Value value);
+extern "C" Value r__add(Value left, Value right);
+
+extern "C" uint64_t r__untag(Value value);
+
+extern "C" Value r__withElement(Value value);
+
+extern "C" Value r__createString(char* str);
+
+extern "C" Value r__typeAssert(Value value, uint64_t typeId);
