@@ -10,25 +10,21 @@ Object* current;
 uint64_t allocationCount;
 uint64_t deleteCount;
 
-//List *allocateListObj() {
-//    auto *list = new List(ValueType::List, nil, nil);
-//    current->next = list;
-//    current = list;
-//    allocationCount++;
-//    return list;
-//}
-
-
-//
-//FunctionObj *allocateFunction(LispFunctionPtr function) {
-//    Object header(ValueType::Function);
-//    auto *obj = new FunctionObj(header, function);
-//    current = &obj->header;
-//    allocationCount++;
-//    return nullptr;
-//}
 void finishHeapAllocation(Object *next) {
     current->next = next;
     current = next;
     allocationCount++;
 }
+
+void initializeGCRoot(Object *r) {
+    assert(root == nullptr);
+    root = r;
+    allocationCount = 1;
+    deleteCount = 0;
+
+}
+
+uint64_t getAllocationCount() {
+    return allocationCount;
+}
+

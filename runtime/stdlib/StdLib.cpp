@@ -39,7 +39,7 @@ extern "C" Value r__withElement(Value value) {
         printErrorAndExit("withElement: expected list type");
     }
     auto *list = dynamic_cast<List*>(value.asObject());
-    return Value::fromPtr(list->withHead(value), ValueType::List) ;
+    return Value::fromPtr(list->withHead(value), ValueType::List);
 }
 
 extern "C" Value r__typeAssert(Value value, uint64_t typeId) {

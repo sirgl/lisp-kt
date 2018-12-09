@@ -74,6 +74,7 @@ class LirFunBuilder(val function: MirFunctionDefinition) {
 
 object LirLoweringConstants {
     const val INT_TAG = 0b001L
+    const val INT_TAG_MASK = INT_TAG shl 61
     const val BOOL_TAG = 0b010L
     const val OBJ_TAG = 0b100L
     const val FUNC_REF_TAG = 0b110L
@@ -201,7 +202,7 @@ private class LirFileLowering(val mirFile: MirFile, val world: MirWorld, val con
         when (value) {
             is MirValue.MirInt -> {
                 val intConstant = if (value.tagged) {
-                    value.value.toLong() and LirLoweringConstants.INT_TAG
+                    value.value.toLong() or LirLoweringConstants.INT_TAG_MASK
                 } else {
                     value.value.toLong()
                 }

@@ -1,8 +1,7 @@
 #include <iostream>
-//#include "memory/Memory.h"
-//#include "utils/Utils.h"
-//#include "memory/Allocation.h"
-//#include "stdlib/StdLib.h"
+#include "memory/Allocation.h"
+#include "memory/Symbol.h"
+
 
 
 extern "C" {
@@ -17,17 +16,14 @@ void __entry__() {
     << std::endl;
 }
 
-int main() {
-//    // TODO add functions from stdlib to env
-//    Environment env = Environment();
-//    env.addFunction("+", __add);
-////    entry();
-////    allocateFunction(nullptr);
-//    auto v1 = Value(1, ValueType::Int);
-//    auto v2 = Value(4, ValueType::Int);
-//    auto v3 = Value(3, ValueType::Int);
-//    std::cout << __add(3, v1.value, v2.value, v3.value).asInt() << std::endl;
+void initRoot() {
+    char *rootText = const_cast<char *>("__ROOT__");
+    auto *root = new Symbol(rootText, static_cast<uint32_t>(strlen(rootText)));
+    initializeGCRoot(root);
+}
 
+int main() {
+    initRoot();
     __entry__();
     return 0;
 }

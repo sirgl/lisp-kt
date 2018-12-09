@@ -404,6 +404,19 @@ b0:
         ))
     }
 
+
+    @Test
+    fun `test simple call`() {
+        testCodegen("""
+
+        """.trimIndent(), listOf(
+            "main" withText """
+        (defnat print r__print (x))
+        (print 12)
+                """.trimIndent()
+        ))
+    }
+
     fun testCodegen(expected: String, files: List<InMemoryFileInfo>) {
         val sources = files.map { InMemorySource(it.text, it.name) }
         val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0))
