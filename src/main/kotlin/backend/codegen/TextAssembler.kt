@@ -4,9 +4,19 @@ import backend.MemoryLocation
 import java.io.OutputStream
 
 class TextAssembler : Assembler {
+    override fun writeExportTable(functionNames: List<String>) {
+        for (functionName in functionNames) {
+            sb.append("\t.globl $functionName\n")
+        }
+    }
+
+    override fun markAsText() {
+        sb.append("\t.text\n")
+    }
+
     override fun writeStringTable(stringTable: Array<String>) {
         for (str in stringTable) {
-            sb.append(".asciz \"$str\"\n")
+            sb.append("\t.asciz \"$str\"\n")
         }
     }
 
@@ -38,6 +48,14 @@ class FunctionTextAssembler(
 
     override fun emitComment(text: String) {
         addLine("""//$text""")
+    }
+
+    override fun emitMovabs(from: MemoryLocation, to: MemoryLocation) {
+        addLineShifted("movabsq ${from.assemblyText}, ${to.assemblyText}")
+    }
+
+    override fun emitMovabs(immediate: Long, to: MemoryLocation) {
+        addLineShifted("movabsq \$$immediate, ${to.assemblyText}")
     }
 
     override fun emitRet() {

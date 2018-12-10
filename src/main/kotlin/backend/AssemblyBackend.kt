@@ -5,6 +5,7 @@ import backend.codegen.FunctionAssembler
 import backend.x64.Regs
 import backend.x64.parameterRegisters
 import lir.*
+import kotlin.math.absoluteValue
 
 class AssemblyBackend(
     private val fileAssembler: Assembler,
@@ -15,7 +16,9 @@ class AssemblyBackend(
         file: LirFile,
         artifactBuilder: ArtifactBuilder
     ) : List<FileArtifact> {
+        fileAssembler.markAsText()
         fileAssembler.writeStringTable(file.stringTable)
+        fileAssembler.writeExportTable(file.functions.map { it.name })
         for (function in file.functions) {
             val registerMap = registerAllocator.allocateRegisters(function)
             fileAssembler.writeFunction(function.name) {asm ->
@@ -51,7 +54,8 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
                 }
                 is LirBinInstr -> TODO()
                 is LirGetFunctionPtrInstr -> {
-                    emitMov(instruction.name, instrRegisterMap[instruction.destReg])
+                    emitMov(instruction.name, Regs.rax)
+                    emitMov(Regs.rax, instrRegisterMap[instruction.destReg])
                 }
                 is LirGetStrPtrInstr -> {
                     emitMovabs("Lstr${instruction.strIndex}", instrRegisterMap[instruction.destReg])
@@ -86,7 +90,13 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
                     emitJmp(indexToLabel[instruction.instrIndex]!!)
                 }
                 is LirInplaceI64 -> {
-                    emitMov(instruction.value, instrRegisterMap[instruction.register])
+
+                    if (instruction.value.absoluteValue < 1000000) {
+                        emitMov(instruction.value, instrRegisterMap[instruction.register])
+                    } else {
+                        emitMovabs(instruction.value, Regs.rax)
+                        emitMov(Regs.rax, instrRegisterMap[instruction.register])
+                    }
                 }
                 is LirLoadGlobalVar -> TODO()
             }
@@ -119,8 +129,8 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
     private fun FunctionAssembler.emitMovSmart(from: MemoryLocation, to: MemoryLocation) {
         if (from !is Register && to !is Register) {
             emitComment("mem (${from.assemblyText}) -> mem (${to.assemblyText}) move through temporary register")
-            emitMov(from, Regs.r10)
-            emitMov(Regs.r10, to)
+            emitMov(from, Regs.rax)
+            emitMov(Regs.rax, to)
         } else {
             emitMov(from, to)
         }

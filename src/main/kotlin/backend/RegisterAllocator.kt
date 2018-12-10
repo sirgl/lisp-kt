@@ -10,8 +10,14 @@ class MemoryMap(
 ) {
     fun getBytesToAllocateOnStack() : Int {
         val map = virtualRegToReal.firstOrNull() ?: return 0
-        return map.mapNotNull { it as? AddressWithOffset }
-            .maxBy { it.offset.absoluteValue }?.offset?.absoluteValue ?: 0
+        val probablyNotAligned = map.mapNotNull { it as? AddressWithOffset }
+                .maxBy { it.offset.absoluteValue }?.offset?.absoluteValue ?: 0
+        return if (probablyNotAligned % 16 == 0) {
+            probablyNotAligned
+        } else {
+            assert(probablyNotAligned % 8 == 0)
+            probablyNotAligned + 8
+        }
     }
 }
 

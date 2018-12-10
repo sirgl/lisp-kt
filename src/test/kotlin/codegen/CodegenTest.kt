@@ -429,9 +429,11 @@ main.S:
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}24, %rsp
-	movq r__print, -8(%rsp)
-	movq ${'$'}2305843009213693964, -16(%rsp)
+	subq ${'$'}32, %rsp
+	movq r__print, %rax
+	movq %rax, -8(%rsp)
+	movabsq ${'$'}2305843009213693964, %rax
+	movq %rax, -16(%rsp)
 //save registers for call r__print
 	movq -16(%rsp), %rdi
 	callq r__print
@@ -439,7 +441,7 @@ main__init:
 //restore registers for call r__print
 //finish handling call r__print
 	movq -24(%rsp), %rax
-	addq ${'$'}24, %rsp
+	addq ${'$'}32, %rsp
 	popq %rbp
 	retq
         """.trimIndent(), listOf(

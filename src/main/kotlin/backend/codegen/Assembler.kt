@@ -10,7 +10,11 @@ interface Assembler {
 
     fun writeFunction(name: String, writer: (FunctionAssembler) -> Unit)
 
+    fun markAsText()
+
     fun save(outputStream: OutputStream)
+
+    fun writeExportTable(functionNames: List<String>)
 }
 
 interface FunctionAssembler {
@@ -19,6 +23,8 @@ interface FunctionAssembler {
     fun emitComment(text: String)
     fun emitMov(immediate: Long, to: MemoryLocation)
     fun emitMovabs(stringLabel: String, to: MemoryLocation)
+    fun emitMovabs(from: MemoryLocation, to: MemoryLocation)
+    fun emitMovabs(immediate: Long, to: MemoryLocation)
 
     fun emitMov(functionName: String, to: MemoryLocation)
 
