@@ -2,6 +2,7 @@
 #include "../utils/Utils.h"
 
 ValueType Value::getType() {
+    return ValueType::Int;
     // TODO now not only tag should be considered, but heap object examination required
 //    uint64_t shifted = value >> 61;
 //    switch (shifted) {
@@ -61,10 +62,11 @@ void Value::print() {
         }
         break;
     }
-    std::cout << std::endl;
+    return;
+//    std::cout << std::endl;
 }
 
-Value::Value(uint64_t value, Tag tag) : value(value), tag(tag) {}
+Value::Value(uint64_t value, Tag tag) : value(value) {}
 
 
 

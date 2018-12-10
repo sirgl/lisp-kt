@@ -37,7 +37,7 @@ class FunctionTextAssembler(
     }
 
     override fun emitComment(text: String) {
-        addLine(""";$text""")
+        addLine("""//$text""")
     }
 
     override fun emitRet() {

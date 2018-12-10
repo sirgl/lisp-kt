@@ -71,7 +71,7 @@ class LirGotoInstr(var instrIndex: Int = -1) : LirInstr() {
 
 class LirInplaceI64(val register: Int, val value: Long) : LirInstr() {
     override fun toString(): String {
-        return "inplace_i64 reg: %$register value: $value"
+        return "inplace_i64 reg: %$register value: $value (without tag: ${value and (0b111 shl 61).inv()})"
     }
 }
 

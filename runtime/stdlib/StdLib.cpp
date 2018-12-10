@@ -13,7 +13,10 @@ extern "C" uint64_t r__untag(Value value) {
 }
 
 extern "C" Value r__print(Value value) {
-    value.print();
+//    value.print();
+    auto v = Value(value);
+    uint32_t i = v.asInt();
+    v.print();
     return nil;
 }
 

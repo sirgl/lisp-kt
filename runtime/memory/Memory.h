@@ -5,7 +5,7 @@
 #include "../Error.h"
 #include "Memory.h"
 #include "Types.h"
-
+#include <cassert>
 
 static uint8_t PASSED_MASK = 0b00000001;
 
@@ -42,7 +42,7 @@ uint8_t getPrefix(ValueType type);
 
 struct Value {
     uint64_t value;
-    Tag tag;
+//    Tag tag;
 
 
     ValueType getType();

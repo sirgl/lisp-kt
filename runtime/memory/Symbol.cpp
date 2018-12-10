@@ -2,6 +2,7 @@
 // Created by jetbrains on 14/10/2018.
 //
 
+#include <cstring>
 #include "Symbol.h"
 #include "Allocation.h"
 

@@ -1,6 +1,7 @@
 package backend
 
 import lir.LirFunction
+import kotlin.math.absoluteValue
 
 class MemoryMap(
     // outer list for each lir index of instruction
@@ -10,7 +11,7 @@ class MemoryMap(
     fun getBytesToAllocateOnStack() : Int {
         val map = virtualRegToReal.firstOrNull() ?: return 0
         return map.mapNotNull { it as? AddressWithOffset }
-            .maxBy { it.offset }?.offset ?: 0
+            .maxBy { it.offset.absoluteValue }?.offset?.absoluteValue ?: 0
     }
 }
 

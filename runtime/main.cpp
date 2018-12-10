@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstring>
 #include "memory/Allocation.h"
 #include "memory/Symbol.h"
 
@@ -11,14 +12,15 @@ extern "C" {
 // TODO
 void __entry__() {
 //    __main__();
-    std::cout <<
-    main__init()
-    << std::endl;
+    uint64_t i = main__init();
+    std::cout << std::endl << "result = "  <<  i << std::endl;
+
 }
 
 void initRoot() {
     char *rootText = const_cast<char *>("__ROOT__");
-    auto *root = new Symbol(rootText, static_cast<uint32_t>(strlen(rootText)));
+    size_t i = strlen(rootText);
+    auto *root = new Symbol(rootText, static_cast<uint32_t>(i));
     initializeGCRoot(root);
 }
 
