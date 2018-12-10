@@ -19,7 +19,7 @@ class MirBuilderContext(
     }
 
     fun nextFunctionId(): Int {
-        return nextFunctionId
+        return nextFunctionId++
     }
 }
 

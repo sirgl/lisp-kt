@@ -92,7 +92,7 @@ val standardEnvFunctions: MutableMap<String, NativeFunction> = mutableMapOf(
         "r__gt" to intBoolFunction { list -> list.drop(1).all { it < list[0] } },
         "r__lt" to intBoolFunction { list -> list.drop(1).all { it > list[0] } },
         "r__eq" to intBoolFunction { list -> list.drop(1).all { it == list[0] } },
-        "__print" to intBoolFunction { println(it);true }
+        "r__print" to intBoolFunction { println(it);true }
 )
 
 

@@ -20,7 +20,8 @@ class MirFunctionDefinition(
         parametersCount: Int,
         val varCount: Short,
         val varTable: Map<Short, String>,
-        val isMain: Boolean = false
+        val isMain: Boolean = false,
+        var isEntry: Boolean = false
 ) : MirTypeResolver, MirFunction(name, parametersCount) {
     val entryBlock: MirBasicBlock
     get() = blocks[entryBlockIndex.toInt()]

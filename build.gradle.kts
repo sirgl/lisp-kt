@@ -17,6 +17,7 @@ dependencies {
     compile(kotlin("stdlib-jdk8"))
     implementation("com.github.Kotlin:kotlinx.cli:-SNAPSHOT")
     testCompile("org.jetbrains.kotlin", "kotlin-test-junit5", "1.2.61")
+    testCompile("org.junit.jupiter", "junit-jupiter-params", "5.1.0")
 
 }
 
