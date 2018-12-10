@@ -6,12 +6,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.stream.Stream
+import kotlin.test.assertEquals
 
 
 class DriverTest {
     val uut: Driver = Driver()
-    private val libraryPath = "src/main/resources/stdlib.lisp"
     private val shellCommandExecutor: ShellCommandExecutor = ShellCommandExecutor()
+    private val libraryPath = "src/main/resources/stdlib.lisp"
+    private val runtimePath = "src/test/resources/runtime.o"
 
     @ParameterizedTest
     @MethodSource("testPathProvider")
@@ -19,20 +21,19 @@ class DriverTest {
         val mainFilePath = path.resolve("Main.lisp").toString()
         val outputFileName = path.last().toString()
         val workingDirectory = path.toString()
-        uut.run(Args(mainFilePath, workingDirectory, libraryPath, "src/test/resources/runtime.o",
-                workingDirectory, outputFileName))
-        val result = shellCommandExecutor.runCommand(path.toFile(), "./$outputFileName")
-//        Paths.get()
+        uut.run(Args(mainFilePath, workingDirectory, libraryPath, runtimePath, workingDirectory, outputFileName))
+        val actual = shellCommandExecutor.runCommand(path.toFile(), "./$outputFileName")
+        val expected = Files.readAllLines(path.resolve("expected.txt")).joinToString("\n")
+        assertEquals(expected, actual)
     }
 
     companion object {
         @JvmStatic
-        fun testPathProvider(): Stream<Arguments>? {
+        fun testPathProvider(): Stream<Arguments> {
             val testCasesDir = Paths.get("src/test/resources/integration")
             return Files.list(testCasesDir)
                     .filter { Files.isDirectory(it) }
                     .map { Arguments.of(it) }
-
         }
     }
 }
