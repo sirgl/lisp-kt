@@ -387,7 +387,7 @@ main : Error in LoweringToHir [14, 23) : Parameters can't be changed: x
     private fun testHirLowering(expectedHirPrint: String, files: List<InMemoryFileInfo>, targetIndex: Int = 0) {
         val asts = buildAsts(files)
         val expander = MacroExpander()
-        val dependencyGraphBuilder = DependencyGraphBuilder(asts)
+        val dependencyGraphBuilder = DependencyGraphBuilder(asts, emptyList())
         val graph: List<DependencyEntry> = dependencyGraphBuilder.build().unwrap()
         val dependencyEntry = graph[targetIndex]
         dependencyEntry as RealDependencyEntry

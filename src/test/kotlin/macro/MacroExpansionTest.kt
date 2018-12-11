@@ -122,7 +122,7 @@ main : Error in MacroExpander [15, 22) : No definition of bar in env
     private fun testExpansion(expectedExpansion: String, files: List<InMemoryFileInfo>, targetIndex: Int = 0) {
         val asts = buildAsts(files)
         val expander = MacroExpander()
-        val dependencyGraphBuilder = DependencyGraphBuilder(asts)
+        val dependencyGraphBuilder = DependencyGraphBuilder(asts, emptyList())
         val graph = (dependencyGraphBuilder.build() as ResultWithLints.Ok).value
 
         val dependencyEntry = graph[targetIndex]

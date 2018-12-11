@@ -19,11 +19,19 @@ class HirLowering(private val implicitImports: List<HirImport>) {
         val context = LoweringContext()
         val lints = mutableListOf<Lint>()
         val files = mutableListOf<HirFile>()
+        var isError = false
         target.dfs {
             it as RealDependencyEntry
             val ast = it.ast
-            val file = lower(ast.root, ast.source, context).drainTo(lints) ?: return ResultWithLints.Error(lints)
-            files.add(file)
+            val file = lower(ast.root, ast.source, context)
+            if (file.isError()) {
+                isError = true
+                return@dfs
+            }
+            files.add(file.drainTo(lints)!!)
+        }
+        if (isError) {
+            return ResultWithLints.Error(lints)
         }
         return ResultWithLints.Ok(files)
     }

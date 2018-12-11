@@ -62,23 +62,22 @@ fun DependencyEntry.bfs(f: (DependencyEntry) -> Unit) {
     }
 }
 
-inline fun DependencyEntry.dfs(f: (DependencyEntry) -> Unit) {
-    val stack = ArrayDeque<DependencyEntry>()
-    val passed = hashSetOf<DependencyEntry>()
-    stack.push(this)
-    while (stack.isNotEmpty()) {
-        val entry = stack.pop()
-        passed.add(entry)
-        for (dependency in entry.dependencies) {
-            if (dependency in passed) continue
-            stack.add(dependency)
+fun DependencyEntry.dfs(f: (DependencyEntry) -> Unit) {
+    dfs(f, hashSetOf())
+}
+
+private fun DependencyEntry.dfs(f: (DependencyEntry) -> Unit, passed: MutableSet<DependencyEntry>)  {
+    passed.add(this)
+    for (dependency in dependencies) {
+        if (dependency !in passed) {
+            dependency.dfs(f, passed)
         }
-        f(entry)
     }
+    f(this)
 }
 
 
-class DependencyGraphBuilder(val asts: List<Ast>) {
+class DependencyGraphBuilder(val asts: List<Ast>, val implicitImports: List<String>) {
     fun build() : ResultWithLints<List<DependencyEntry>> {
         val nameToIndex = HashMap<String, Int>() // module name to index
         val dependencyMap = HashMap<Int, MutableList<String>>() // index of module to list of module names as dependencies
@@ -87,7 +86,7 @@ class DependencyGraphBuilder(val asts: List<Ast>) {
             val children = root.children
             val first = children.firstOrNull()
             val source = ast.source
-            dependencyMap[index] = mutableListOf()
+            dependencyMap[index] = implicitImports.toMutableList()
             var isFirst = true
             for (child in children) {
                 if (isFirst) {
@@ -95,6 +94,9 @@ class DependencyGraphBuilder(val asts: List<Ast>) {
                     val moduleInfo = Matchers.MODULE.extractOrNull(first, source)
                     if (moduleInfo != null) {
                         val name = moduleInfo.name
+                        if (name == "stdlib") {
+                            dependencyMap[index]?.removeAll(implicitImports)
+                        }
                         nameToIndex[name] = index
                         continue
                     }

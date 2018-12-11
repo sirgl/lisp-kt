@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 class ShellCommandExecutor {
 
     fun runGcc(compilationPath: String, assemblyFilesToCompile: List<String>,
-               runtimePath: String): String? {
+               runtimePath: String): String {
         val commandParts = mutableListOf<String>()
         commandParts.add("gcc")
         for (asmFilePath in assemblyFilesToCompile) {
@@ -17,7 +17,7 @@ class ShellCommandExecutor {
         return runCommand(commandParts, File(compilationPath))
     }
 
-    fun runCommand(workingDir: File, command: String): String? {
+    fun runCommand(workingDir: File, command: String): String {
         val parts = splitConsideringQuotes(command)
 
         return runCommand(parts, workingDir)
@@ -31,6 +31,7 @@ class ShellCommandExecutor {
                 .start()
 
         proc.waitFor(1, TimeUnit.MINUTES)
+
 
         return proc.inputStream.bufferedReader().readText()
     }

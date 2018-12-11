@@ -40,7 +40,7 @@ val lirDescriptor = TypedKey<ResultWithLints<List<LirFile>>>("lir")
 
 class MergedQuery : Query<List<Source>> {
     override fun doQuery(input: TypedStorage): List<Source> {
-        return input[stdlibSourceDescriptor] + input[inputSourceDescriptor]
+        return input[inputSourceDescriptor] + input[stdlibSourceDescriptor]
     }
 
     override val outputDescriptor = mergedSourceDescriptor
@@ -111,7 +111,7 @@ class InitialDependenciesQuery(
         val lints = input.lints.toMutableList()
         input as ResultWithLints.Ok
         val asts = input.value
-        val dependencyGraphBuilder = DependencyGraphBuilder(asts)
+        val dependencyGraphBuilder = DependencyGraphBuilder(asts, listOf("stdlib"))
         val dependencies = dependencyGraphBuilder.build().drainTo(lints) ?: return ResultWithLints.Error(lints)
         dependencyValidator.validateDependencies(dependencies, AppendingSink(lints))
         if (lints.any { it.severity == Severity.Error }) return ResultWithLints.Error(lints)
@@ -245,20 +245,6 @@ class QueryDrivenLispFrontend(
     ): CompilationSession {
         return CompilationSession(this, sources, stdlib, config)
     }
-
-    fun compile(
-        sources: List<Source>,
-        stdlib: List<Source>,
-        config: CompilerConfig
-    ) {
-//        val macroses = compilationSession().getMir()
-//        val file = (macroses as ResultWithLints.Ok).value.first()
-//        val bbGraph = getBBGraph(file.functions[1])
-//        File("graph.dot").writeText(bbGraph)
-//        println(bbGraph)
-//        println(file)
-
-    }
 }
 
 class CompilationSession(
@@ -314,8 +300,6 @@ fun main(args: Array<String>) {
         MacroExpander(),
         MirLowering()
     )
-
-//    frontend.compile(listOf(InMemorySource("(defn + (x y) ())(defn foo (x) (if x (while #t ())  (if #t 2 3)))", "main")), listOf(), CompilerConfig(0))
     val session = frontend.compilationSession(
         listOf(InMemorySource("(defn + (x y) ())(defn foo (x) (if x (while #t ())  (if #t 2 3)))", "main")),
         listOf(),

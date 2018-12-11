@@ -65,7 +65,7 @@ main
 
     private fun testDependencies(expectedDeps: String, files: List<InMemoryFileInfo>) {
         val asts = buildAsts(files)
-        val dependencyGraphBuilder = DependencyGraphBuilder(asts)
+        val dependencyGraphBuilder = DependencyGraphBuilder(asts, emptyList())
         val graph = dependencyGraphBuilder.build()
         val lintsText = graph.lints.joinToString { it.toString() }
         graph as ResultWithLints.Ok

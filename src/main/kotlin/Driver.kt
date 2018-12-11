@@ -23,7 +23,7 @@ import kotlin.streams.toList
 
 
 class Driver {
-    fun run(parsedArgs: Args) {
+    fun run(parsedArgs: Args) : Boolean {
         val librarySources = findSources(parsedArgs.libraryPath)
         val programSources = findSources(parsedArgs.compilationPath)
         val mainFile = Paths.get(parsedArgs.mainFilePath)
@@ -47,7 +47,7 @@ class Driver {
             System.err.println(lint)
         }
         if (lirResult is ResultWithLints.Error) {
-            return
+            return false
         }
         val lir = lirResult.unwrap()
 
@@ -60,6 +60,7 @@ class Driver {
         val shellCommandExecutor = ShellCommandExecutor()
         shellCommandExecutor.runGcc(parsedArgs.compilationPath, assemblyFilesToCompile.map { it.path },
                 parsedArgs.runtimePath)
+        return true
     }
 }
 

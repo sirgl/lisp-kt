@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.OutputStream
 import java.lang.StringBuilder
+import java.nio.file.Files
 import java.nio.file.Path
 
 
@@ -50,6 +51,7 @@ class StringArtifactBuilder : ArtifactBuilder {
 class PathArtifactBuilder(private val directory: Path) : ArtifactBuilder {
     override fun createFileArtifact(relativePath: String, filler: (OutputStream) -> Unit, type: ArtifactType): FileArtifact {
         val path = directory.resolve(relativePath)
+        Files.createDirectories(path.subpath(0, path.count() - 1))
         val file = File(path.toString())
         filler(file.outputStream())
         return FileArtifact(path.toString(), type)

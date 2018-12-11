@@ -21,8 +21,13 @@ class DriverTest {
         val mainFilePath = path.resolve("Main.lisp").toString()
         val outputFileName = path.last().toString()
         val workingDirectory = path.toString()
-        uut.run(Args(mainFilePath, workingDirectory, libraryPath, runtimePath, workingDirectory, outputFileName))
-        val actual = shellCommandExecutor.runCommand(path.toFile(), "./$outputFileName")
+        val success = uut.run(
+            Args(
+                mainFilePath, workingDirectory, libraryPath, runtimePath, workingDirectory, outputFileName
+            )
+        )
+        if (!success) throw IllegalStateException("Failed to compile")
+        val actual = shellCommandExecutor.runCommand(path.toFile(), "./$outputFileName.o")
         val expected = Files.readAllLines(path.resolve("expected.txt")).joinToString("\n")
         assertEquals(expected, actual)
     }
