@@ -76,19 +76,17 @@ struct Value {
 
     static Value fromBool(bool value) {
         if (value) {
-            return Value(1);
+            return Value(1, Tag::Bool);
         } else {
-            return Value(0);
+            return Value(0, Tag::Bool);
         }
     }
     
-    static Value fromPtr(void* ptr, ValueType type) {
+    static Value fromPtr(void* ptr) {
         if (ptr == nullptr) {
             return Value(0);
         }
-        Tag tag = convertToTag(type);
-        auto prefix = (uint64_t)getPrefix(tag);
-        Value resultPtrValue = Value((prefix << 61) | (uint64_t)ptr);
+        Value resultPtrValue = Value((uint64_t)ptr, Tag::Object);
         return resultPtrValue;
     }
 
@@ -104,8 +102,15 @@ struct Value {
     void print();
 
     explicit Value(uint64_t value);
+    
+    Value(uint64_t untagged, Tag tag) {
+        uint64_t prefixShifted = (uint64_t)getPrefix(tag) << 61;
+        value = untagged | prefixShifted;
+    }
 
     uint64_t untag();
+
+    static Value fromInt(uint32_t i);
 };
 
 static const Value nil = Value(0); // NOLINT(cert-err58-cpp)

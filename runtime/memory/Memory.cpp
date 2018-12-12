@@ -63,3 +63,7 @@ void Value::print() {
         break;
     }
 }
+
+Value Value::fromInt(uint32_t i) {
+    return Value(i, Tag::Int);
+}
