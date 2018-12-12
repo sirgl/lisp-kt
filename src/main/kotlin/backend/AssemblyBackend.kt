@@ -58,7 +58,7 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
                     emitMov(Regs.rax, instrRegisterMap[instruction.destReg])
                 }
                 is LirGetStrPtrInstr -> {
-                    emitMovabs("Lstr${instruction.strIndex}", instrRegisterMap[instruction.destReg])
+                    emitMov("\$Lstr${instruction.strIndex}", instrRegisterMap[instruction.destReg])
                 }
                 is LirCallInstr -> {
                     emitComment("save registers for call ${instruction.functionName}")

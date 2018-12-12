@@ -265,6 +265,63 @@ fun main__init :  virtual regs: 5 paramCount: 0
         ))
     }
 
+    @Test
+    fun `test simple call`() {
+        testMir("""
+main:
+foreign fun r__print params: 1
+
+fun main__init params: 0, totalVars: 0 (main)
+b0:
+  get_function_reference 0
+  load_const Hello (string, tagged)
+  call function: 0 args: (b0:i1)
+  return b0:i2
+        """.trimIndent(), listOf(
+                "main" withText """
+        (defnat print r__print (x))
+        (print "Hello")
+                """.trimIndent()
+        ))
+    }
+
+
+    @Test
+    fun `test string literal`() {
+        testMir("""
+main:
+fun main__init params: 0, totalVars: 0 (main)
+b0:
+  load_const Hello world! (string, tagged)
+  return b0:i0
+        """, listOf(
+                "main" withText """
+        "Hello world!"
+                """.trimIndent()
+        ))
+    }
+
+    @Test
+    fun `test string literal inside print`() {
+        testMir("""
+main:
+foreign fun print params: 1
+
+fun main__init params: 0, totalVars: 0 (main)
+b0:
+  get_function_reference 0
+  load_const Hello world! (string, tagged)
+  call function: 0 args: (b0:i1)
+  return b0:i2
+        """, listOf(
+                "main" withText """
+        (defnat print print (x))
+        (print "Hello world!")
+                """.trimIndent()
+        ))
+    }
+
+
     fun testMir(expected: String, files: List<InMemoryFileInfo>) {
         val sources = files.map { InMemorySource(it.text, it.name) }
         val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0), false)

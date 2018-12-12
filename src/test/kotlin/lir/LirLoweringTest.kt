@@ -218,6 +218,72 @@ fun main__init :  virtual regs: 5 paramCount: 0
         ))
     }
 
+    @Test
+    fun `test simple call`() {
+        testLir("""
+main.S:
+main__init:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}32, %rsp
+	movq r__print, %rax
+	movq %rax, -8(%rsp)
+	movabsq ${'$'}2305843009213693964, %rax
+	movq %rax, -16(%rsp)
+//save registers for call r__print
+	movq -16(%rsp), %rdi
+	callq r__print
+	movq %rax, -24(%rsp)
+//restore registers for call r__print
+//finish handling call r__print
+	movq -24(%rsp), %rax
+	addq ${'$'}32, %rsp
+	popq %rbp
+	retq
+        """.trimIndent(), listOf(
+                "main" withText """
+        (defnat print r__print (x))
+        (print "Hello")
+                """.trimIndent()
+        ))
+    }
+
+
+    @Test
+    fun `test string literal`() {
+        testLir("""
+String table:
+   0 Hello world!
+fun main__init :  virtual regs: 2 paramCount: 0
+  0 get_str_ptr strIndex: 0 dst: %1
+  1 call name: r__createString resultReg: %0 args: (%1)
+  2 return %0
+        """, listOf(
+                "main" withText """
+        "Hello world!"
+                """.trimIndent()
+        ))
+    }
+
+    @Test
+    fun `test string literal inside print`() {
+        testLir("""
+String table:
+   0 Hello world!
+fun main__init :  virtual regs: 4 paramCount: 0
+  0 get_function_ptr print %0
+  1 get_str_ptr strIndex: 0 dst: %3
+  2 call name: r__createString resultReg: %1 args: (%3)
+  3 call name: print resultReg: %2 args: (%1)
+  4 return %2
+        """, listOf(
+                "main" withText """
+        (defnat print print (x))
+        (print "Hello world!")
+                """.trimIndent()
+        ))
+    }
+
     fun testLir(expected: String, files: List<InMemoryFileInfo>) {
         val sources = files.map { InMemorySource(it.text, it.name) }
         val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0), false)

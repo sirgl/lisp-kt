@@ -384,6 +384,42 @@ main : Error in LoweringToHir [14, 23) : Parameters can't be changed: x
         ))
     }
 
+    @Test
+    fun `test string literal`() {
+        testHirLowering("""
+main:
+File
+  Function declaration: (main) main__init
+    Block expr
+      String literal: Hello world!
+        """, listOf(
+                "main" withText """
+        "Hello world!"
+                """.trimIndent()
+        ))
+    }
+
+    @Test
+    fun `test string literal inside print`() {
+        testHirLowering("""
+main:
+File
+  Native function declaration: print (runtime name: print)
+    Parameter: x
+  Function declaration: (main) main__init
+    Block expr
+      Expr stmt
+        Function reference: print
+      Local call: print
+        String literal: Hello world!
+        """, listOf(
+                "main" withText """
+        (defnat print print (x))
+        (print "Hello world!")
+                """.trimIndent()
+        ))
+    }
+
     private fun testHirLowering(expectedHirPrint: String, files: List<InMemoryFileInfo>, targetIndex: Int = 0) {
         val asts = buildAsts(files)
         val expander = MacroExpander()

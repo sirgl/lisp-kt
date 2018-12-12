@@ -26,7 +26,7 @@ interface FunctionAssembler {
     fun emitMovabs(from: MemoryLocation, to: MemoryLocation)
     fun emitMovabs(immediate: Long, to: MemoryLocation)
 
-    fun emitMov(functionName: String, to: MemoryLocation)
+    fun emitMov(text: String, to: MemoryLocation)
 
     fun emitRet()
 

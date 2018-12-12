@@ -15,7 +15,8 @@ class TextAssembler : Assembler {
     }
 
     override fun writeStringTable(stringTable: Array<String>) {
-        for (str in stringTable) {
+        for ((index, str) in stringTable.withIndex()) {
+            sb.append("Lstr$index:\n")
             sb.append("\t.asciz \"$str\"\n")
         }
     }
@@ -66,8 +67,8 @@ class FunctionTextAssembler(
         addLineShifted("movq \$$immediate, ${to.assemblyText}")
     }
 
-    override fun emitMov(functionName: String, to: MemoryLocation) {
-        addLineShifted("movq $functionName, ${to.assemblyText}")
+    override fun emitMov(text: String, to: MemoryLocation) {
+        addLineShifted("movq $text, ${to.assemblyText}")
     }
 
     override fun emitMovabs(stringLabel: String, to: MemoryLocation) {
