@@ -163,7 +163,7 @@ sealed class MirValue {
 
 class MirWithElementInstr(val valueId: MirInstrId, val listId: MirInstrId) : MirValueInstr() {
     override fun pretty(strategy: PrettyPrintStrategy): String {
-        return "with_element list: ${strategy.instrIdRenderer.render(valueId)}, value: ${strategy.instrIdRenderer.render(valueId)}"
+        return "with_element list: ${strategy.instrIdRenderer.render(listId)}, value: ${strategy.instrIdRenderer.render(valueId)}"
     }
 
     override fun computeDependantIndices(): Array<MirInstrId> {

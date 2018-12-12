@@ -76,6 +76,7 @@ object LirLoweringConstants {
     const val INT_TAG = 0b001L
     const val INT_TAG_MASK = INT_TAG shl 61
     const val BOOL_TAG = 0b010L
+    const val BOOL_TAG_MASK = 0b010L shl 61
     const val OBJ_TAG = 0b100L
     const val FUNC_REF_TAG = 0b110L
 
@@ -83,8 +84,8 @@ object LirLoweringConstants {
     const val TRUE_UNTAGGED = 1L
     const val FALSE_UNTAGGED = 0L
 
-    const val TRUE_TAGGED = TRUE_UNTAGGED and BOOL_TAG
-    const val FALSE_TAGGED = FALSE_UNTAGGED and BOOL_TAG
+    const val TRUE_TAGGED = TRUE_UNTAGGED or BOOL_TAG_MASK
+    const val FALSE_TAGGED = FALSE_UNTAGGED or BOOL_TAG_MASK
 
     const val RUNTIME_WITH_ELEMENT_FUNCTION_NAME = "r__withElement"
     const val RUNTIME_CREATE_STRING_FUNCTION_NAME = "r__createString"
@@ -188,7 +189,7 @@ private class LirFileLowering(val mirFile: MirFile, val world: MirWorld, val con
                 is MirWithElementInstr -> {
                     val valueReg = builder.toReg(instruction.valueId)
                     val listReg = builder.toReg(instruction.listId)
-                    builder.emit(LirCallInstr(intArrayOf(valueReg, listReg), LirLoweringConstants.RUNTIME_WITH_ELEMENT_FUNCTION_NAME, builder.toReg(instrId)))
+                    builder.emit(LirCallInstr(intArrayOf(listReg, valueReg), LirLoweringConstants.RUNTIME_WITH_ELEMENT_FUNCTION_NAME, builder.toReg(instrId)))
                 }
                 MirAddIntTagInstr -> TODO("bit mask or, opt only")
                 MirAddBoolTagInstr -> TODO("bit mask or, opt only")

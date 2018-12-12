@@ -68,7 +68,7 @@ private class MirFunctionLowering(
             is HirStringLiteral -> builder.emit(MirLoadValueInstr(MirValue.MirString(expr.value, false)))
             is HirListLiteral -> {
                 var listId = builder.emit(MirLoadValueInstr(MirValue.MirEmptyList))
-                for (literal in expr.literals) {
+                for (literal in expr.literals.reversed()) {
                     listId = builder.emit(MirWithElementInstr(lowerExpr(literal), listId))
                 }
                 listId

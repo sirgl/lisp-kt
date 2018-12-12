@@ -18,6 +18,8 @@ stdlib created by Ivanov Roman and Ivanova Anastasia
 
 (defnat cons r__withElement (list elem))
 
+(defn newline () (print "\n"))
+
 ;macros section
 
 (macro inc (i) `(+ i 1))

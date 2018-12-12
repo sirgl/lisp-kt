@@ -53,12 +53,16 @@ struct Value {
 
     uint32_t asInt() {
         assert(getType() == ValueType::Int);
+        return asIntUnchecked();
+    }
+
+    uint32_t asIntUnchecked() {
         return (uint32_t)value & 0xFFFFFFFF;
     }
 
     bool asBool() {
         assert(getType() == ValueType::Bool);
-        return asInt() != 0;
+        return asIntUnchecked() != 0;
     }
 
     Object* asObject() {
@@ -99,14 +103,12 @@ struct Value {
 
     void print();
 
-    Value(uint64_t value, Tag tag);
-
     explicit Value(uint64_t value);
 
     uint64_t untag();
 };
 
-static const Value nil = Value(0, Tag::Nil); // NOLINT(cert-err58-cpp)
+static const Value nil = Value(0); // NOLINT(cert-err58-cpp)
 
 
 static uint8_t HEAP_OBJECT_TYPE_MASK = 0b00001110; // 8 different heap types allowed

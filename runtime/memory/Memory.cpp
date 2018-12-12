@@ -44,8 +44,14 @@ void Value::print() {
         case Tag::Function:
             std::cout << "Compiled function 0x" << intAsHex(untag());
             break;
-        case Tag::Bool:
-            std::cout << asBool();
+        case Tag::Bool: {
+            bool val = asBool();
+            if (val) {
+                std::cout << "#t";
+            } else {
+                std::cout << "#f";
+            }
+        }
             break;
         case Tag::Int:
             std::cout << asInt();
@@ -57,5 +63,3 @@ void Value::print() {
         break;
     }
 }
-
-Value::Value(uint64_t value, Tag tag) : value(value) {}
