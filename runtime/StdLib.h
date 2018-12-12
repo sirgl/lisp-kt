@@ -33,3 +33,7 @@ extern "C" Value r__not(Value value);
 extern "C" Value r__or(Value left, Value right);
 
 extern "C" Value r__and(Value left, Value right);
+
+extern "C" Value r__first(Value list);
+
+extern "C" Value r__tail(Value list);

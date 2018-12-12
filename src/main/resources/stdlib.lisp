@@ -25,11 +25,13 @@ stdlib created by Ivanov Roman and Ivanova Anastasia
 (defn _ge (a b) (_or (_gt a b) (_eq a b)))
 
 
-; TODO short circuit and and or
-
 (defnat print r__print (x))
 
 (defnat cons r__withElement (list elem))
+
+(defnat first r__first (list))
+
+(defnat tail r__tail (list))
 
 (defn newline () (print "\n"))
 

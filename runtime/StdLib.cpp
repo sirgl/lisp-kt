@@ -2,33 +2,33 @@
 #include "memory/List.h"
 #include "memory/String.h"
 
-void tagAssert(Value value, Tag expected) {
-    if (value.getTag() != expected) {
+void typeAssert(Value value, ValueType expected) {
+    if (value.getType() != expected) {
         printErrorAndExit("Unexpected value type");   
     }
 }
 
 extern "C" Value r__add(Value left, Value right) {
-    tagAssert(left, Tag::Int);
-    tagAssert(right, Tag::Int);
+    typeAssert(left, ValueType::Int);
+    typeAssert(right, ValueType::Int);
     return Value::fromInt(left.asInt() + right.asInt());
 }
 
 extern "C" Value r__sub(Value left, Value right) {
-    tagAssert(left, Tag::Int);
-    tagAssert(right, Tag::Int);
+    typeAssert(left, ValueType::Int);
+    typeAssert(right, ValueType::Int);
     return Value::fromInt(left.asInt() - right.asInt());
 }
 
 extern "C" Value r__mul(Value left, Value right) {
-    tagAssert(left, Tag::Int);
-    tagAssert(right, Tag::Int);
+    typeAssert(left, ValueType::Int);
+    typeAssert(right, ValueType::Int);
     return Value::fromInt(left.asInt() * right.asInt());
 }
 
 extern "C" Value r__div(Value left, Value right) {
-    tagAssert(left, Tag::Int);
-    tagAssert(right, Tag::Int);
+    typeAssert(left, ValueType::Int);
+    typeAssert(right, ValueType::Int);
     uint32_t rightVal = right.asInt();
     if (rightVal == 0) {
         printErrorAndExit("Division by zero");
@@ -37,8 +37,8 @@ extern "C" Value r__div(Value left, Value right) {
 }
 
 extern "C" Value r__rem(Value left, Value right) {
-    tagAssert(left, Tag::Int);
-    tagAssert(right, Tag::Int);
+    typeAssert(left, ValueType::Int);
+    typeAssert(right, ValueType::Int);
     uint32_t rightVal = right.asInt();
     if (rightVal == 0) {
         printErrorAndExit("Division by zero");
@@ -47,8 +47,8 @@ extern "C" Value r__rem(Value left, Value right) {
 }
 
 extern "C" Value r__gt(Value left, Value right) {
-    tagAssert(left, Tag::Int);
-    tagAssert(right, Tag::Int);
+    typeAssert(left, ValueType::Int);
+    typeAssert(right, ValueType::Int);
     return Value::fromBool(left.asInt() > right.asInt());
 }
 
@@ -66,7 +66,7 @@ extern "C" Value r__eq(Value left, Value right) {
 
 
 Value r__not(Value value) {
-    tagAssert(value, Tag::Bool);
+    typeAssert(value, ValueType::Bool);
     return Value::fromBool(!value.asBool());
 }
 
@@ -92,8 +92,7 @@ extern "C" Value r__isList(Value value) {
 }
 
 extern "C" Value r__printErrorAndExit(Value errorText) {
-    tagAssert(errorText, Tag::Object);
-    assert(errorText.getType() == ValueType::String);
+    typeAssert(errorText, ValueType::String);
     errorText.asObject()->print();
     exit(1);
 }
@@ -118,4 +117,16 @@ Value r__createSymbol(char *str) {
     // TODO
     assert(false);
     return Value(0);
+}
+
+Value r__first(Value list) {
+    typeAssert(list, ValueType::List);
+    List *pList = dynamic_cast<List*>(list.asObject());
+    return pList->value;
+}
+
+Value r__tail(Value list) {
+    typeAssert(list, ValueType::List);
+    List *pList = dynamic_cast<List*>(list.asObject());
+    return Value::fromPtr(pList->next);
 }
