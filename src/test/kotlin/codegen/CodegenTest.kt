@@ -82,7 +82,7 @@ main__init:
 	popq %rbp
 	retq
         """.trimIndent(), listOf(
-                "main" withText "(defnat print r__print (x))(print `(10 22 (123 44) #t))"
+                "main" withText "(defnat print r__print (x))(print #t)"
         ))
     }
 
@@ -484,7 +484,77 @@ main__init:
         """.trimIndent(), listOf(
             "main" withText """
         (defnat print r__print (x))
-        (print 12)
+        (print "Hello")
+                """.trimIndent()
+        ))
+    }
+
+
+    @Test
+    fun `test string literal`() {
+        testCodegen("""
+main.S:
+	.text
+Lstr0:
+	.asciz "Hello world!"
+	.globl main__init
+main__init:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+	movabsq Lstr0, -16(%rbp)
+//save registers for call r__createString
+	movq -16(%rbp), %rdi
+	callq r__createString
+	movq %rax, -8(%rbp)
+//restore registers for call r__createString
+//finish handling call r__createString
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
+	popq %rbp
+	retq
+        """, listOf(
+                "main" withText """
+        "Hello world!"
+                """.trimIndent()
+        ))
+    }
+
+    @Test
+    fun `test string literal inside print`() {
+        testCodegen("""
+main.S:
+	.text
+Lstr0:
+	.asciz "Hello world!"
+	.globl main__init
+main__init:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}32, %rsp
+	movq r__print, %rax
+	movq %rax, -8(%rbp)
+	movq ${'$'}Lstr0, -32(%rbp)
+//save registers for call r__createString
+	movq -32(%rbp), %rdi
+	callq r__createString
+	movq %rax, -16(%rbp)
+//restore registers for call r__createString
+//finish handling call r__createString
+//save registers for call r__print
+	movq -16(%rbp), %rdi
+	callq r__print
+	movq %rax, -24(%rbp)
+//restore registers for call r__print
+//finish handling call r__print
+	movq -24(%rbp), %rax
+	addq ${'$'}32, %rsp
+	popq %rbp
+	retq
+        """, listOf(
+                "main" withText """
+        (defnat print r__print (x))
+        (print "Hello world!")
                 """.trimIndent()
         ))
     }

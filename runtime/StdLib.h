@@ -16,4 +16,8 @@ extern "C" Value r__withElement(Value list, Value element);
 
 extern "C" Value r__createString(char* str);
 
+extern "C" Value r__createSymbol(char* str);
+
+extern "C" Value r__typeAssert(Value value, uint64_t typeId);
+
 extern "C" Value r__typeAssert(Value value, uint64_t typeId);

@@ -10,4 +10,6 @@ public:
     String(char *string, uint32_t length);
 
     void print() override;
+
+    static String* allocate(char* str);
 };

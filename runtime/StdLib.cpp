@@ -1,5 +1,6 @@
 #include "StdLib.h"
 #include "memory/List.h"
+#include "memory/String.h"
 
 
 extern "C" Value r__add(Value left, Value right) {
@@ -41,7 +42,7 @@ extern "C" Value r__withElement(Value list, Value element) {
         printErrorAndExit("withElement: expected list type");
     }
     Object *objRef = list.asObject();
-    auto *listRef = dynamic_cast<List*>(objRef); // TODO for some reason it is not working!
+    auto *listRef = dynamic_cast<List*>(objRef);
     List *newList = listRef->withHead(element);
     return Value::fromPtr(newList, ValueType::List);
 }
@@ -50,4 +51,13 @@ extern "C" Value r__typeAssert(Value value, uint64_t typeId) {
     assert(typeId < 8);
 //    Tag tag = typeId;
     return Value(0); // TODO
+}
+
+Value r__createString(char *str) {
+    String *strPtr = String::allocate(str);
+    return Value::fromPtr(strPtr, ValueType::String);
+}
+
+Value r__createSymbol(char *str) {
+    return Value(0);
 }
