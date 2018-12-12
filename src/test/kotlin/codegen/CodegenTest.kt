@@ -50,6 +50,43 @@ main__init:
     }
 
     @Test
+    fun `test print list with value`() {
+        testCodegen("""
+main.S:
+	.text
+	.globl main__init
+main__init:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}48, %rsp
+	movq r__print, %rax
+	movq %rax, -8(%rbp)
+	movq ${'$'}0, -16(%rbp)
+	movabsq ${'$'}2305843009213693964, %rax
+	movq %rax, -24(%rbp)
+//save registers for call r__withElement
+	movq -24(%rbp), %rdi
+	movq -16(%rbp), %rsi
+	callq r__withElement
+	movq %rax, -32(%rbp)
+//restore registers for call r__withElement
+//finish handling call r__withElement
+//save registers for call r__print
+	movq -32(%rbp), %rdi
+	callq r__print
+	movq %rax, -40(%rbp)
+//restore registers for call r__print
+//finish handling call r__print
+	movq -40(%rbp), %rax
+	addq ${'$'}48, %rsp
+	popq %rbp
+	retq
+        """.trimIndent(), listOf(
+                "main" withText "(defnat print r__print (x))(print `(10 22 (123 44) #t))"
+        ))
+    }
+
+    @Test
     fun `test function definition`() {
         testCodegen("""
 main.S:
@@ -454,7 +491,7 @@ main__init:
 
     fun testCodegen(expected: String, files: List<InMemoryFileInfo>) {
         val sources = files.map { InMemorySource(it.text, it.name) }
-        val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0))
+        val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0), false)
         val lir = session.getLir().unwrap()
 
         val backend = AssemblyBackend(TextAssembler(), NaiveRegisterAllocator())

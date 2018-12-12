@@ -104,14 +104,15 @@ class AstBuildingQuery(
 }
 
 class InitialDependenciesQuery(
-    val dependencyValidator: DependencyValidator
+    val dependencyValidator: DependencyValidator,
+    val stdlibModules: List<String>
 ) : SimpleQuery<ResultWithLints<List<Ast>>, ResultWithLints<List<DependencyEntry>>>("Build dependencies for inintial AST") {
     override fun doQuery(input: ResultWithLints<List<Ast>>): ResultWithLints<List<DependencyEntry>> {
         if (input is ResultWithLints.Error) return ResultWithLints.Error(input.lints)
         val lints = input.lints.toMutableList()
         input as ResultWithLints.Ok
         val asts = input.value
-        val dependencyGraphBuilder = DependencyGraphBuilder(asts, listOf("stdlib"))
+        val dependencyGraphBuilder = DependencyGraphBuilder(asts, stdlibModules)
         val dependencies = dependencyGraphBuilder.build().drainTo(lints) ?: return ResultWithLints.Error(lints)
         dependencyValidator.validateDependencies(dependencies, AppendingSink(lints))
         if (lints.any { it.severity == Severity.Error }) return ResultWithLints.Error(lints)
@@ -241,9 +242,10 @@ class QueryDrivenLispFrontend(
     fun compilationSession(
         sources: List<Source>,
         stdlib: List<Source>,
-        config: CompilerConfig
+        config: CompilerConfig,
+        includeStdlib: Boolean = true
     ): CompilationSession {
-        return CompilationSession(this, sources, stdlib, config)
+        return CompilationSession(this, sources, stdlib, config, includeStdlib)
     }
 }
 
@@ -251,7 +253,8 @@ class CompilationSession(
     val frontend: QueryDrivenLispFrontend,
     val sources: List<Source>,
     val stdlib: List<Source>,
-    val config: CompilerConfig
+    val config: CompilerConfig,
+    val includeStdlib: Boolean = true
 ) {
     fun getDb(): Database {
         val database: Database = DatabaseImpl(
@@ -261,11 +264,12 @@ class CompilationSession(
                 DatabaseValue(configDescriptor, config)
             )
         )
+        val stdlibModules = if (includeStdlib) listOf("stdlib") else emptyList()
         with(frontend) {
             database.registerQuery(MergedQuery())
             database.registerQuery(TokenizationQuery(lexer, tokenValidator))
             database.registerQuery(AstBuildingQuery(parser))
-            database.registerQuery(InitialDependenciesQuery(dependencyValidator))
+            database.registerQuery(InitialDependenciesQuery(dependencyValidator, stdlibModules))
             database.registerQuery(MacroExpansionQuery(macroExpander))
             database.registerQuery(DependenciesRemappingQuery())
             database.registerQuery(HirLoweringQuery(hirLowering, hirValidator))

@@ -21,7 +21,7 @@ void initializeGCRoot(Object *r) {
     root = r;
     allocationCount = 1;
     deleteCount = 0;
-
+    current = root;
 }
 
 uint64_t getAllocationCount() {

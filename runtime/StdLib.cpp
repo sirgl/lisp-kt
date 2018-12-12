@@ -1,6 +1,5 @@
 #include "StdLib.h"
-#include "../memory/List.h"
-
+#include "memory/List.h"
 
 
 extern "C" Value r__add(Value left, Value right) {
@@ -15,7 +14,7 @@ extern "C" uint64_t r__untag(Value value) {
 extern "C" Value r__print(Value value) {
 //    value.print();
     auto v = Value(value);
-    uint32_t i = v.asInt();
+//    uint32_t i = v.asInt();
     v.print();
     return nil;
 }
@@ -36,13 +35,15 @@ extern "C" Value r__printErrorAndExit(Value errorText) {
     exit(1);
 }
 
-extern "C" Value r__withElement(Value value) {
-    ValueType type = value.getType();
-    if (!(type == ValueType::List)) {
+extern "C" Value r__withElement(Value list, Value element) {
+    ValueType type = list.getType();
+    if (type != ValueType::List) {
         printErrorAndExit("withElement: expected list type");
     }
-    auto *list = dynamic_cast<List*>(value.asObject());
-    return Value::fromPtr(list->withHead(value), ValueType::List);
+    Object *objRef = list.asObject();
+    auto *listRef = dynamic_cast<List*>(objRef); // TODO for some reason it is not working!
+    List *newList = listRef->withHead(element);
+    return Value::fromPtr(newList, ValueType::List);
 }
 
 extern "C" Value r__typeAssert(Value value, uint64_t typeId) {

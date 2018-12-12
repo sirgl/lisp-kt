@@ -22,5 +22,5 @@ List::List(ValueType type, const Value &value, List *next) : Object(type), value
 List *List::allocate(Value value) {
     List *list = new List(ValueType::List, value, nullptr);
     finishHeapAllocation(list);
-    return nullptr;
+    return list;
 }

@@ -249,9 +249,25 @@ b0:
         ))
     }
 
+
+    @Test
+    fun `test print list with value`() {
+        testMir("""
+fun main__init :  virtual regs: 5 paramCount: 0
+  0 get_function_ptr r__print %0
+  1 inplace_i64 reg: %1 value: 0 (without tag: 0)
+  2 inplace_i64 reg: %2 value: 2305843009213693964 (without tag: 12)
+  3 call name: r__withElement resultReg: %3 args: (%1, %2)
+  4 call name: r__print resultReg: %4 args: (%3)
+  5 return %4
+        """.trimIndent(), listOf(
+                "main" withText "(defnat print r__print (x))(print `(12 22))"
+        ))
+    }
+
     fun testMir(expected: String, files: List<InMemoryFileInfo>) {
         val sources = files.map { InMemorySource(it.text, it.name) }
-        val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0))
+        val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0), false)
         val mir = session.getMir().unwrap()
         val actual = mir.joinToString("\n") { it.toString() }
         assertEquals(expected, actual)

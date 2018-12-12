@@ -10,7 +10,7 @@ import kotlin.test.assertEquals
 
 
 class DriverTest {
-    val uut: Driver = Driver()
+    val driver: Driver = Driver()
     private val shellCommandExecutor: ShellCommandExecutor = ShellCommandExecutor()
     private val libraryPath = "src/main/resources/stdlib.lisp"
     private val runtimePath = "src/test/resources/runtime.o"
@@ -21,7 +21,7 @@ class DriverTest {
         val mainFilePath = path.resolve("Main.lisp").toString()
         val outputFileName = path.last().toString()
         val workingDirectory = path.toString()
-        val success = uut.run(
+        val success = driver.run(
             Args(
                 mainFilePath, workingDirectory, libraryPath, runtimePath, workingDirectory, outputFileName
             )

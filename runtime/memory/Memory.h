@@ -5,6 +5,7 @@
 #include "../Error.h"
 #include "Memory.h"
 #include "Types.h"
+#include "../utils/Utils.h"
 #include <cassert>
 
 static uint8_t PASSED_MASK = 0b00000001;
@@ -38,7 +39,6 @@ struct Object {
 };
 
 
-uint8_t getPrefix(ValueType type);
 
 struct Value {
     uint64_t value;
@@ -79,14 +79,22 @@ struct Value {
     }
     
     static Value fromPtr(void* ptr, ValueType type) {
-        return Value(getPrefix(type) | (uint64_t)ptr);
+        if (ptr == nullptr) {
+            return Value(0);
+        }
+        Tag tag = convertToTag(type);
+        auto prefix = (uint64_t)getPrefix(tag);
+        Value resultPtrValue = Value((prefix << 61) | (uint64_t)ptr);
+        return resultPtrValue;
     }
 
     // Must be aligned to 8
     void* asPointer() {
-        ValueType type = getType();
-        assert(type == ValueType::List || type ==  ValueType::Function || type == ValueType::Symbol);
-        return reinterpret_cast<void *>(value << 3);
+        Tag tag = getTag();
+        assert(tag == Tag::Object);
+        uint64_t mask = ~((uint64_t)0b111 << 61);
+        uint64_t resultPtr = value & mask;
+        return reinterpret_cast<void *>(resultPtr);
     }
 
     void print();

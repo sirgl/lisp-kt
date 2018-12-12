@@ -4,7 +4,7 @@
 #include "Allocation.h"
 
 
-class List : Object {
+class List : public Object {
 public:
     Value value;
     List* next;

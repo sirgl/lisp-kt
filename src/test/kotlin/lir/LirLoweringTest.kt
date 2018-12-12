@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 class LirLoweringTest : FrontendTest(emptyList()) {
     @Test
     fun `test top level list`() {
-        testMir("""
+        testLir("""
 fun main__init :  virtual regs: 1 paramCount: 0
   0 inplace_i64 reg: %0 value: 0 (without tag: 0)
   1 return %0
@@ -22,7 +22,7 @@ fun main__init :  virtual regs: 1 paramCount: 0
 
     @Test
     fun `test function definition`() {
-        testMir("""
+        testLir("""
 fun foo :  virtual regs: 2 paramCount: 1
   0 inplace_i64 reg: %1 value: 2305843009213693994 (without tag: 42)
   1 return %1
@@ -37,7 +37,7 @@ fun main__init :  virtual regs: 1 paramCount: 0
 
     @Test
     fun `test if`() {
-        testMir("""
+        testLir("""
 fun main__init :  virtual regs: 7 paramCount: 0
   0 inplace_i64 reg: %1 value: 0 (without tag: 0)
   1 cond_jump cond: %1 thenIndex: 2 elseIndex: 5
@@ -55,7 +55,7 @@ fun main__init :  virtual regs: 7 paramCount: 0
 
     @Test
     fun `test if nested`() {
-        testMir("""
+        testLir("""
 fun main__init :  virtual regs: 13 paramCount: 0
   0 inplace_i64 reg: %2 value: 0 (without tag: 0)
   1 cond_jump cond: %2 thenIndex: 2 elseIndex: 5
@@ -80,7 +80,7 @@ fun main__init :  virtual regs: 13 paramCount: 0
 
     @Test
     fun `test while`() {
-        testMir("""
+        testLir("""
 fun print :  virtual regs: 2 paramCount: 1
   0 inplace_i64 reg: %1 value: 0 (without tag: 0)
   1 return %1
@@ -101,7 +101,7 @@ fun main__init :  virtual regs: 5 paramCount: 0
 
     @Test
     fun `test assign`() {
-        testMir("""
+        testLir("""
 fun main__init :  virtual regs: 5 paramCount: 0
   0 inplace_i64 reg: %1 value: 2305843009213693952 (without tag: 0)
   1 mov from %1 to %0
@@ -115,7 +115,7 @@ fun main__init :  virtual regs: 5 paramCount: 0
 
     @Test
     fun `test let`() {
-        testMir("""
+        testLir("""
 fun main__init :  virtual regs: 4 paramCount: 0
   0 inplace_i64 reg: %1 value: 2305843009213693964 (without tag: 12)
   1 mov from %1 to %0
@@ -128,7 +128,7 @@ fun main__init :  virtual regs: 4 paramCount: 0
 
     @Test
     fun `test data`() {
-        testMir("""
+        testLir("""
 String table:
    0 let
    1 foo
@@ -159,7 +159,7 @@ fun main__init :  virtual regs: 16 paramCount: 0
 
     @Test
     fun `test vararg`() {
-        testMir("""
+        testLir("""
 fun foo :  virtual regs: 3 paramCount: 2
   0 inplace_i64 reg: %2 value: 0 (without tag: 0)
   1 return %2
@@ -182,7 +182,7 @@ fun main__init :  virtual regs: 8 paramCount: 0
 
     @Test
     fun `test call by variable`() {
-        testMir("""
+        testLir("""
 main:
 fun foo params: 0, totalVars: 0
 b0:
@@ -203,9 +203,24 @@ b0:
         ))
     }
 
-    fun testMir(expected: String, files: List<InMemoryFileInfo>) {
+    @Test
+    fun `test print list with value`() {
+        testLir("""
+fun main__init :  virtual regs: 5 paramCount: 0
+  0 get_function_ptr r__print %0
+  1 inplace_i64 reg: %1 value: 0 (without tag: 0)
+  2 inplace_i64 reg: %2 value: 2305843009213693964 (without tag: 12)
+  3 call name: r__withElement resultReg: %3 args: (%1, %2)
+  4 call name: r__print resultReg: %4 args: (%3)
+  5 return %4
+        """.trimIndent(), listOf(
+                "main" withText "(defnat print r__print (x))(print `(12))"
+        ))
+    }
+
+    fun testLir(expected: String, files: List<InMemoryFileInfo>) {
         val sources = files.map { InMemorySource(it.text, it.name) }
-        val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0))
+        val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0), false)
         val lir = session.getLir().unwrap()
         val actual = lir.joinToString("\n") { it.toString() }
 //        println(lir.first().functions.first().toBBGraph())

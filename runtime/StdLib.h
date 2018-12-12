@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../memory/Memory.h"
+#include "memory/Memory.h"
 
 extern "C" Value __add(unsigned int count, ...);
 
@@ -12,7 +12,7 @@ extern "C" Value r__add(Value left, Value right);
 
 extern "C" uint64_t r__untag(Value value);
 
-extern "C" Value r__withElement(Value value);
+extern "C" Value r__withElement(Value list, Value element);
 
 extern "C" Value r__createString(char* str);
 

@@ -58,8 +58,9 @@ class Driver {
         val assemblyFilesToCompile = artifacts.filter { it.artifactType == ArtifactType.Assembly }
 
         val shellCommandExecutor = ShellCommandExecutor()
-        shellCommandExecutor.runGcc(parsedArgs.compilationPath, assemblyFilesToCompile.map { it.path },
+        val compilationLogs = shellCommandExecutor.runGcc(parsedArgs.compilationPath, assemblyFilesToCompile.map { it.path },
                 parsedArgs.runtimePath)
+        println(compilationLogs)
         return true
     }
 }

@@ -22,3 +22,8 @@ enum class ValueType {
     Bool,
     Function
 };
+
+
+uint8_t getPrefix(Tag type);
+
+Tag convertToTag(ValueType valueType);

@@ -5,8 +5,7 @@ import java.util.concurrent.TimeUnit
 
 class ShellCommandExecutor {
 
-    fun runGcc(compilationPath: String, assemblyFilesToCompile: List<String>,
-               runtimePath: String): String {
+    fun runGcc(compilationPath: String, assemblyFilesToCompile: List<String>, runtimePath: String): String {
         val commandParts = mutableListOf<String>()
         commandParts.add("gcc")
         for (asmFilePath in assemblyFilesToCompile) {
