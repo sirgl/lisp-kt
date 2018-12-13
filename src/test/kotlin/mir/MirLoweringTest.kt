@@ -33,6 +33,24 @@ b0:
   load_const 42 (i32, tagged)
   return b0:i0
 
+fun foo_satellite params: 1, totalVars: 1
+var table:
+   0 listParameters
+b0:
+  load_var: v1
+  list_size list: b0:i0
+  load_const 1 (i32, tagged)
+  binary Eq b0:i1, b0:i2
+  cond_jump cond: b0:i3 then: b1 else: b2
+b1:
+  list_first list: b0:i0
+  list_tail list: b0:i0
+  call function: 0 args: (b1:i0)
+  return b1:i2
+b2:
+  load_const Unexpected parameter count (string, tagged)
+  print_error_end_exit text: b2:i0
+
 fun main__init params: 0, totalVars: 0 (main)
 b0:
   get_function_reference 0
@@ -117,6 +135,24 @@ b0:
   load_const ()
   return b0:i0
 
+fun print_satellite params: 1, totalVars: 1
+var table:
+   0 listParameters
+b0:
+  load_var: v1
+  list_size list: b0:i0
+  load_const 1 (i32, tagged)
+  binary Eq b0:i1, b0:i2
+  cond_jump cond: b0:i3 then: b1 else: b2
+b1:
+  list_first list: b0:i0
+  list_tail list: b0:i0
+  call function: 0 args: (b1:i0)
+  return b1:i2
+b2:
+  load_const Unexpected parameter count (string, tagged)
+  print_error_end_exit text: b2:i0
+
 fun main__init params: 0, totalVars: 0 (main)
 b0:
   get_function_reference 0
@@ -176,18 +212,18 @@ main:
 fun main__init params: 0, totalVars: 0 (main)
 b0:
   load_const ()
-  load_const let (symbol)
-  with_element list: b0:i1, value: b0:i1
-  load_const ()
-  load_const foo (string, tagged)
-  with_element list: b0:i4, value: b0:i4
-  load_const 12 (i32, tagged)
-  with_element list: b0:i6, value: b0:i6
-  load_const 2 (i32, tagged)
-  with_element list: b0:i8, value: b0:i8
-  with_element list: b0:i9, value: b0:i9
   load_const x (symbol)
-  with_element list: b0:i11, value: b0:i11
+  with_element list: b0:i0, value: b0:i1
+  load_const ()
+  load_const 2 (i32, tagged)
+  with_element list: b0:i3, value: b0:i4
+  load_const 12 (i32, tagged)
+  with_element list: b0:i5, value: b0:i6
+  load_const foo (string, tagged)
+  with_element list: b0:i7, value: b0:i8
+  with_element list: b0:i2, value: b0:i9
+  load_const let (symbol)
+  with_element list: b0:i10, value: b0:i11
   return b0:i12
         """.trimIndent(), listOf(
                 "main" withText "`(let (\"foo\" 12 2) x)"
@@ -207,15 +243,33 @@ b0:
   load_const ()
   return b0:i0
 
+fun foo_satellite params: 1, totalVars: 1
+var table:
+   0 listParameters
+b0:
+  load_var: v1
+  list_size list: b0:i0
+  load_const 2 (i32, tagged)
+  binary Ge b0:i1, b0:i2
+  cond_jump cond: b0:i3 then: b1 else: b2
+b1:
+  list_first list: b0:i0
+  list_tail list: b0:i0
+  call function: 0 args: (b1:i0, b1:i1)
+  return b1:i2
+b2:
+  load_const Unexpected parameter count (string, tagged)
+  print_error_end_exit text: b2:i0
+
 fun main__init params: 0, totalVars: 0 (main)
 b0:
   get_function_reference 0
   load_const 1 (i32, tagged)
   load_const ()
   load_const 2 (i32, tagged)
-  with_element list: b0:i3, value: b0:i3
+  with_element list: b0:i2, value: b0:i3
   load_const 3 (i32, tagged)
-  with_element list: b0:i5, value: b0:i5
+  with_element list: b0:i4, value: b0:i5
   call function: 0 args: (b0:i1, b0:i6)
   return b0:i7
         """.trimIndent(), listOf(
@@ -232,6 +286,22 @@ fun foo params: 0, totalVars: 0
 b0:
   load_const ()
   return b0:i0
+
+fun foo_satellite params: 1, totalVars: 1
+var table:
+   0 listParameters
+b0:
+  load_var: v1
+  list_size list: b0:i0
+  load_const 0 (i32, tagged)
+  binary Eq b0:i1, b0:i2
+  cond_jump cond: b0:i3 then: b1 else: b2
+b1:
+  call function: 0 args: ()
+  return b1:i0
+b2:
+  load_const Unexpected parameter count (string, tagged)
+  print_error_end_exit text: b2:i0
 
 fun main__init params: 0, totalVars: 1 (main)
 var table:
@@ -253,13 +323,37 @@ b0:
     @Test
     fun `test print list with value`() {
         testMir("""
-fun main__init :  virtual regs: 5 paramCount: 0
-  0 get_function_ptr r__print %0
-  1 inplace_i64 reg: %1 value: 0 (without tag: 0)
-  2 inplace_i64 reg: %2 value: 2305843009213693964 (without tag: 12)
-  3 call name: r__withElement resultReg: %3 args: (%1, %2)
-  4 call name: r__print resultReg: %4 args: (%3)
-  5 return %4
+main:
+foreign fun r__print params: 1
+
+fun print_satellite params: 1, totalVars: 1
+var table:
+   0 listParameters
+b0:
+  load_var: v1
+  list_size list: b0:i0
+  load_const 1 (i32, tagged)
+  binary Eq b0:i1, b0:i2
+  cond_jump cond: b0:i3 then: b1 else: b2
+b1:
+  list_first list: b0:i0
+  list_tail list: b0:i0
+  call function: 0 args: (b1:i0)
+  return b1:i2
+b2:
+  load_const Unexpected parameter count (string, tagged)
+  print_error_end_exit text: b2:i0
+
+fun main__init params: 0, totalVars: 0 (main)
+b0:
+  get_function_reference 0
+  load_const ()
+  load_const 22 (i32, tagged)
+  with_element list: b0:i1, value: b0:i2
+  load_const 12 (i32, tagged)
+  with_element list: b0:i3, value: b0:i4
+  call function: 0 args: (b0:i5)
+  return b0:i6
         """.trimIndent(), listOf(
                 "main" withText "(defnat print r__print (x))(print `(12 22))"
         ))
@@ -270,6 +364,24 @@ fun main__init :  virtual regs: 5 paramCount: 0
         testMir("""
 main:
 foreign fun r__print params: 1
+
+fun print_satellite params: 1, totalVars: 1
+var table:
+   0 listParameters
+b0:
+  load_var: v1
+  list_size list: b0:i0
+  load_const 1 (i32, tagged)
+  binary Eq b0:i1, b0:i2
+  cond_jump cond: b0:i3 then: b1 else: b2
+b1:
+  list_first list: b0:i0
+  list_tail list: b0:i0
+  call function: 0 args: (b1:i0)
+  return b1:i2
+b2:
+  load_const Unexpected parameter count (string, tagged)
+  print_error_end_exit text: b2:i0
 
 fun main__init params: 0, totalVars: 0 (main)
 b0:
@@ -294,7 +406,7 @@ fun main__init params: 0, totalVars: 0 (main)
 b0:
   load_const Hello world! (string, tagged)
   return b0:i0
-        """, listOf(
+        """.trim(), listOf(
                 "main" withText """
         "Hello world!"
                 """.trimIndent()
@@ -307,13 +419,31 @@ b0:
 main:
 foreign fun print params: 1
 
+fun print_satellite params: 1, totalVars: 1
+var table:
+   0 listParameters
+b0:
+  load_var: v1
+  list_size list: b0:i0
+  load_const 1 (i32, tagged)
+  binary Eq b0:i1, b0:i2
+  cond_jump cond: b0:i3 then: b1 else: b2
+b1:
+  list_first list: b0:i0
+  list_tail list: b0:i0
+  call function: 0 args: (b1:i0)
+  return b1:i2
+b2:
+  load_const Unexpected parameter count (string, tagged)
+  print_error_end_exit text: b2:i0
+
 fun main__init params: 0, totalVars: 0 (main)
 b0:
   get_function_reference 0
   load_const Hello world! (string, tagged)
   call function: 0 args: (b0:i1)
   return b0:i2
-        """, listOf(
+        """.trim(), listOf(
                 "main" withText """
         (defnat print print (x))
         (print "Hello world!")

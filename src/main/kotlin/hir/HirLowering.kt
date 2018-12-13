@@ -291,7 +291,7 @@ private class UnitHirLowering(
     private fun lowerFuncDeclarationCall(args: List<HirExpr>, declaration: HirFunctionDeclaration,
                                          first: AstNode): HirLocalCallExpr? {
         if (args.size != declaration.parameters.size) {
-            if (args.size <= declaration.parameters.size || !declaration.hasVarargs()) {
+            if (args.size <= declaration.parameters.size || !declaration.hasVararg()) {
                 errorLint("Parameter count and args count must match: ${declaration.name}", first.textRange)
                 return null
             }

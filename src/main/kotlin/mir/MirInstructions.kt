@@ -88,7 +88,7 @@ object MirAddObjTagInstr : MirTagAddInstr() {
 // TODO untag?
 
 
-sealed class MirBinaryIntInstr(
+class MirBinaryIntInstr(
         val opType: MirBinaryOpType,
         val leftId: MirInstrId,
         val rightId: MirInstrId
@@ -158,6 +158,30 @@ sealed class MirValue {
             }
             append(")")
         }
+    }
+}
+
+class MirListSizeInstruction(val listId: MirInstrId) : MirValueInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return "list_size list: ${strategy.instrIdRenderer.render(listId)}"
+    }
+}
+
+class MirListFirstInstruction(val listId: MirInstrId) : MirValueInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return "list_first list: ${strategy.instrIdRenderer.render(listId)}"
+    }
+}
+
+class MirListTailInstruction(val listId: MirInstrId) : MirValueInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return "list_tail list: ${strategy.instrIdRenderer.render(listId)}"
+    }
+}
+
+class MirPrintErrorAndExitInstruction(val errorTextId: MirInstrId) : MirValueInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return "print_error_end_exit text: ${strategy.instrIdRenderer.render(errorTextId)}"
     }
 }
 

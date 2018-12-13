@@ -11,7 +11,15 @@ class MirLowering {
     }
 
     private fun lower(file: HirFile, context: MirBuilderContext): MirFile {
-        val functions = file.functions.map { lower(it, file, context) }
+        val functions = file.functions.flatMap {
+            val function = lower(it, file, context)
+            if (it.isMain) {
+                listOf(function)
+            } else {
+                val satellite = createSatelliteRepackager(it, function.functionId, context)
+            listOf(function, satellite)
+            }
+        }
         return MirFile(file.source, functions)
     }
 
@@ -95,7 +103,7 @@ private class MirFunctionLowering(
         return Array(decl.parameters.size) { index ->
             val lastIndex = decl.parameters.lastIndex
             // all tail arguments packed into list
-            if (index == lastIndex && decl.hasVarargs()) {
+            if (index == lastIndex && decl.hasVararg()) {
                 var listId = builder.emit(MirLoadValueInstr(MirValue.MirEmptyList))
                 for (i in (lastIndex until args.size)) {
                     listId = builder.emit(MirWithElementInstr(lowerExpr(args[i]), listId))
@@ -188,4 +196,60 @@ private class MirFunctionLowering(
             }
         }
     }
+}
+
+/**
+ * Create function-satellite, that will repack arguments (checking size) from list and call original function
+ * Consider, that first item in list is first argument
+ */
+fun createSatelliteRepackager(function: HirFunctionDeclaration, originalFunctionId: Int, context: MirBuilderContext): MirFunction {
+    val builder = MirFunctionBuilder(function.satelliteName, false, context)
+    val parameter = HirParameter("listParameters", false)
+    val parameterListVarIndex = builder.addVariable(parameter)
+    val parameterListId = builder.emit(MirLoadInstr(parameterListVarIndex))
+    val realParameterCountId = builder.emit(MirListSizeInstruction(parameterListId))
+    val declaredParameterCount = function.parameters.size
+    val expectedParametersCountId = builder.emit(MirLoadValueInstr(MirValue.MirInt(declaredParameterCount, true)))
+    val operation = if (function.hasVararg()) {
+        MirBinaryOpType.Ge
+    } else {
+        MirBinaryOpType.Eq
+    }
+    val conditionId = builder.emit(MirBinaryIntInstr(operation, realParameterCountId, expectedParametersCountId))
+    // true - ok path, else - wrong count of parameters
+    val conditionalJumpInstr = MirCondJumpInstruction(conditionId)
+    builder.emit(conditionalJumpInstr)
+    builder.finishBlock()
+
+    // ok path
+    val parameterCount = if (function.hasVararg()) {
+        declaredParameterCount - 1
+    } else {
+        declaredParameterCount
+    }
+    val parameterIds = mutableListOf<MirInstrId>()
+    var currentParameterListId = parameterListId
+    for(i in 0 until parameterCount) {
+        parameterIds.add(builder.emit(MirListFirstInstruction(currentParameterListId)))
+        currentParameterListId = builder.emit(MirListTailInstruction(currentParameterListId))
+    }
+    if (function.hasVararg()) {
+        parameterIds.add(currentParameterListId)
+    }
+    val callResultId = builder.emit(MirLocalCallInstr(originalFunctionId, parameterIds.toTypedArray()))
+    builder.emit(MirReturnInstruction(callResultId))
+    val thenBlockId = builder.finishBlock()
+    conditionalJumpInstr.thenBlockIndex = thenBlockId
+
+    // error path
+    val errorTextId = builder.emit(MirLoadValueInstr(MirValue.MirString("Unexpected parameter count", false)))
+    builder.emit(MirPrintErrorAndExitInstruction(errorTextId))
+    val elseBlockId = builder.finishBlock()
+    conditionalJumpInstr.elseBlockIndex = elseBlockId
+
+    val satelliteDeclaration = object : HirFunctionDeclaration {
+        override val parameters = listOf(parameter)
+        override val name= function.satelliteName
+    }
+    return builder.finishFunction(satelliteDeclaration)
 }

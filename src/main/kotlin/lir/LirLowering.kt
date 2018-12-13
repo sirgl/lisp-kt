@@ -194,6 +194,11 @@ private class LirFileLowering(val mirFile: MirFile, val world: MirWorld, val con
                 MirAddIntTagInstr -> TODO("bit mask or, opt only")
                 MirAddBoolTagInstr -> TODO("bit mask or, opt only")
                 MirAddObjTagInstr -> TODO("bit mask or, opt only")
+                is MirListSizeInstruction -> TODO()
+                is MirListFirstInstruction -> TODO()
+                is MirListTailInstruction -> TODO()
+                is MirPrintErrorAndExitInstruction -> TODO()
+                is MirBinaryIntInstr -> TODO()
             }
         }
     }

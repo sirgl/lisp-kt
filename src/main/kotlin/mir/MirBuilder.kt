@@ -60,7 +60,7 @@ class MirFunctionBuilder(val name: String, val isMain: Boolean = false, val cont
         return index
     }
 
-    fun finishFunction(hirFunction: HirFunctionDefinition): MirFunction {
+    fun finishFunction(hirFunction: HirFunctionDeclaration, satellite: Boolean = false): MirFunction {
         val function = MirFunctionDefinition(
             name,
             blocks,
@@ -68,7 +68,8 @@ class MirFunctionBuilder(val name: String, val isMain: Boolean = false, val cont
             hirFunction.parameters.size,
             varTable.size.toShort(),
             varNameTable.toMap(),
-            isMain
+            isMain,
+            satellite
         )
         varNameTable.clear()
         function.functionId = context.nextFunctionId()

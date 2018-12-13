@@ -81,9 +81,16 @@ class HirParameter(
 interface HirFunctionDeclaration : HirDeclaration {
     val parameters: List<HirParameter>
 
-    fun hasVarargs(): Boolean {
+    fun hasVararg(): Boolean {
         return parameters.lastOrNull()?.isVararg ?: false
     }
+
+    val satelliteName: String
+        get() {
+            return name + "_satellite"
+        }
+    val isMain: Boolean
+        get() = false
 }
 
 class HirNativeFunctionDeclaration(
@@ -103,7 +110,7 @@ class HirFunctionDefinition(
         override val name: String,
         override val parameters: List<HirParameter>,
         val body: HirBlockExpr, // TODO make optional to make it possible to make forward declarations
-        val isMain: Boolean = false
+        override val isMain: Boolean = false
 ) : HirNode(), HirFunctionDeclaration {
     override val children: List<HirNode>
         get() = childrenFrom(parameters, body)

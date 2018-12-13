@@ -2,7 +2,8 @@ package mir
 
 sealed class MirFunction(
         val name: String,
-        val parametersCount: Int
+        val parametersCount: Int,
+        val isSatellite: Boolean = false
 ) {
     var functionId : Int = -1
 }
@@ -21,8 +22,9 @@ class MirFunctionDefinition(
         val varCount: Short,
         val varTable: Map<Short, String>,
         val isMain: Boolean = false,
-        var isEntry: Boolean = false
-) : MirTypeResolver, MirFunction(name, parametersCount) {
+        var isEntry: Boolean = false,
+        isSatellite: Boolean = false
+) : MirTypeResolver, MirFunction(name, parametersCount, isSatellite) {
     val entryBlock: MirBasicBlock
     get() = blocks[entryBlockIndex.toInt()]
 
