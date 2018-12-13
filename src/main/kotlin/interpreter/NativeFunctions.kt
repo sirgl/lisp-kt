@@ -2,10 +2,7 @@ package interpreter
 
 import lexer.Token
 import lexer.TokenType
-import parser.AstNode
-import parser.LeafNode
-import parser.ListNode
-import parser.SyntaxKind
+import parser.*
 
 // In this functions text range is not preserved!
 
@@ -74,17 +71,28 @@ object ConsFun : NativeFunction({args, _ ->
 
 object TailFun : NativeFunction({args, _ ->
     val list = args[0]
-    ListNode(list.children.drop(1), list.textRange)
+    typeAssert(list, SyntaxKind.Data)
+    val tail = (list as DataNode).node.children.drop(1)
+    DataNode(ListNode(tail, list.textRange), list.textRange)
 })
 
 object FirstFun : NativeFunction({args, _ ->
     val list = args[0]
-    list.children.first()
+    typeAssert(list, SyntaxKind.Data)
+    (list as DataNode).node.children.first()
 })
 
 object ListSizeFun : NativeFunction({args, _ ->
     val list = args[0]
-    list.children.size.toAst()
+    val size = when (list) {
+        is ListNode -> {
+            if (list.children.isNotEmpty()) err("Unexpected non empty non data node in size function", list)
+            0
+        }
+        is DataNode -> list.node.children.size
+        else -> err("Unexpected node type for size function", list)
+    }
+    size.toAst()
 })
 
 object PrintErrorAndExitFun : NativeFunction({args, _ ->

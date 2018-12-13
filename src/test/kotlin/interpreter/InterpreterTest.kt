@@ -82,6 +82,59 @@ class InterpreterTest {
         """.trimIndent(), "10")
     }
 
+    @Test
+    fun `test tail`() {
+        testResult("""
+            ; List related functions
+            (defnat cons r__withElement (list elem))
+            (defnat first r__first (list))
+            (defnat tail r__tail (list))
+            (defnat size r__size (list))
+            (defn is-empty (list) (_eq (size list) 0))
+            (tail `(12 "foo" 33))
+        """.trimIndent(), "`(\"foo\" 33)")
+    }
+
+    @Test
+    fun `test first`() {
+        testResult("""
+            ; List related functions
+            (defnat cons r__withElement (list elem))
+            (defnat first r__first (list))
+            (defnat tail r__tail (list))
+            (defnat size r__size (list))
+            (defn is-empty (list) (_eq (size list) 0))
+            (first `(12 "foo" 33))
+        """.trimIndent(), "12")
+    }
+
+    @Test
+    fun `test size`() {
+        testResult("""
+            ; List related functions
+            (defnat cons r__withElement (list elem))
+            (defnat first r__first (list))
+            (defnat tail r__tail (list))
+            (defnat size r__size (list))
+            (defn is-empty (list) (_eq (size list) 0))
+            (size `(12 "foo" 33))
+        """.trimIndent(), "3")
+    }
+
+    @Test
+    fun `test isEmpty`() {
+        testResult("""
+            ; List related functions
+            (defnat _eq r__eq (a b))
+            (defnat cons r__withElement (list elem))
+            (defnat first r__first (list))
+            (defnat tail r__tail (list))
+            (defnat size r__size (list))
+            (defn is-empty (list) (_eq (size list) 0))
+            (is-empty `(12 "foo" 33))
+        """.trimIndent(), "#f")
+    }
+
 
     @Test
     fun `test let in next definition previous accessible`() {
