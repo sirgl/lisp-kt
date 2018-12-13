@@ -1,19 +1,16 @@
 package hir
 
-import MultifileAstBasedTest
+import FrontendTest
 import InMemoryFileInfo
-import deps.DependencyEntry
-import deps.DependencyGraphBuilder
-import deps.RealDependencyEntry
-import deps.remapToNewAst
-import macro.MacroExpander
+import frontend.CompilerConfig
+import util.InMemorySource
 import util.ResultWithLints
 import withText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 
-class HirLoweringTest : MultifileAstBasedTest() {
+class HirLoweringTest : FrontendTest(listOf()) {
     @Test
     fun `test top level`() {
         testHirLowering("""
@@ -421,24 +418,14 @@ File
     }
 
     private fun testHirLowering(expectedHirPrint: String, files: List<InMemoryFileInfo>, targetIndex: Int = 0) {
-        val asts = buildAsts(files)
-        val expander = MacroExpander()
-        val dependencyGraphBuilder = DependencyGraphBuilder(asts, emptyList())
-        val graph: List<DependencyEntry> = dependencyGraphBuilder.build().unwrap()
-        val dependencyEntry = graph[targetIndex]
-        dependencyEntry as RealDependencyEntry
-        val finalAsts = expander.expand(asts, dependencyEntry).unwrap()
-        val newGraph = dependencyEntry.remapToNewAst(finalAsts)
-        val lowering = HirLowering(emptyList())
-        val actual = buildString {
-            val loweringResult = lowering.lower(newGraph[targetIndex])
-            append(loweringResult.lints.joinToString("\n"))
-            if (loweringResult.lints.isNotEmpty()) {
-                append("\n")
-            }
-            if (loweringResult is ResultWithLints.Ok) {
-                append(loweringResult.value.joinToString("\n\n") { it.source.path + ":\n" + it.pretty() })
-            }
+        val sources = files.map { InMemorySource(it.text, it.name) }
+        val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0), false)
+        val resultWithLints = session.getHir()
+        val actual: String = if (resultWithLints is ResultWithLints.Error) {
+            resultWithLints.lints.joinToString("\n")
+        } else {
+            val hir = resultWithLints.unwrap()
+            hir.joinToString("\n") { it.source.path + ":\n" + it.pretty() }
         }
         assertEquals(expectedHirPrint.trim(), actual.trim())
     }

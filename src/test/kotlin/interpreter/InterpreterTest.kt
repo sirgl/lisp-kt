@@ -281,8 +281,8 @@ class InterpreterTest {
                 val result = try {
                     Interpreter().eval(parseResult.node).lispy()
                 }  catch (e: InterpreterException) {
-                    e.toString()
                     e.printStackTrace()
+                    e.toString()
                 }
                 assertEquals(expectedResult, result)
             }

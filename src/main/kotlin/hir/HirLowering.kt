@@ -24,6 +24,7 @@ class HirLowering(private val implicitImports: List<HirImport>) {
             it as RealDependencyEntry
             val ast = it.ast
             val file = lower(ast.root, ast.source, context)
+            lints.addAll(file.lints)
             if (file.isError()) {
                 isError = true
                 return@dfs

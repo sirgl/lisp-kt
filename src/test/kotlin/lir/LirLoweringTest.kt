@@ -23,12 +23,28 @@ fun main__init :  virtual regs: 1 paramCount: 0
     @Test
     fun `test function definition`() {
         testLir("""
+String table:
+   0 Unexpected parameter count
 fun foo :  virtual regs: 2 paramCount: 1
   0 inplace_i64 reg: %1 value: 2305843009213693994 (without tag: 42)
   1 return %1
 
+fun foo_satellite :  virtual regs: 11 paramCount: 1
+  0 mov from %1 to %1
+  1 call name: r__size resultReg: %2 args: (%1)
+  2 inplace_i64 reg: %3 value: 2305843009213693953 (without tag: 1)
+  3 call name: r__ge resultReg: %4 args: (%2, %3)
+  4 cond_jump cond: %4 thenIndex: 5 elseIndex: 9
+  5 call name: r__first resultReg: %5 args: (%1)
+  6 call name: r__tail resultReg: %6 args: (%1)
+  7 call name: foo resultReg: %7 args: (%5)
+  8 return %7
+  9 get_str_ptr strIndex: 0 dst: %10
+  10 call name: r__createString resultReg: %8 args: (%10)
+  11 call name: r__printErrorAndExit resultReg: %9 args: (%8)
+
 fun main__init :  virtual regs: 1 paramCount: 0
-  0 get_function_ptr foo %0
+  0 get_function_ptr foo_satellite %0
   1 return %0
         """.trimIndent(), listOf(
                 "main" withText "(defn foo(x) 42)"
@@ -39,7 +55,7 @@ fun main__init :  virtual regs: 1 paramCount: 0
     fun `test if`() {
         testLir("""
 fun main__init :  virtual regs: 7 paramCount: 0
-  0 inplace_i64 reg: %1 value: 0 (without tag: 0)
+  0 inplace_i64 reg: %1 value: 4611686018427387905 (without tag: 1)
   1 cond_jump cond: %1 thenIndex: 2 elseIndex: 5
   2 inplace_i64 reg: %2 value: 2305843009213693953 (without tag: 1)
   3 mov from %2 to %1
@@ -57,12 +73,12 @@ fun main__init :  virtual regs: 7 paramCount: 0
     fun `test if nested`() {
         testLir("""
 fun main__init :  virtual regs: 13 paramCount: 0
-  0 inplace_i64 reg: %2 value: 0 (without tag: 0)
+  0 inplace_i64 reg: %2 value: 4611686018427387905 (without tag: 1)
   1 cond_jump cond: %2 thenIndex: 2 elseIndex: 5
   2 inplace_i64 reg: %3 value: 2305843009213693953 (without tag: 1)
   3 mov from %3 to %1
   4 goto 14
-  5 inplace_i64 reg: %5 value: 0 (without tag: 0)
+  5 inplace_i64 reg: %5 value: 4611686018427387904 (without tag: 0)
   6 cond_jump cond: %5 thenIndex: 7 elseIndex: 10
   7 inplace_i64 reg: %6 value: 2305843009213693954 (without tag: 2)
   8 mov from %6 to %2
@@ -81,13 +97,29 @@ fun main__init :  virtual regs: 13 paramCount: 0
     @Test
     fun `test while`() {
         testLir("""
+String table:
+   0 Unexpected parameter count
 fun print :  virtual regs: 2 paramCount: 1
   0 inplace_i64 reg: %1 value: 0 (without tag: 0)
   1 return %1
 
+fun print_satellite :  virtual regs: 11 paramCount: 1
+  0 mov from %1 to %1
+  1 call name: r__size resultReg: %2 args: (%1)
+  2 inplace_i64 reg: %3 value: 2305843009213693953 (without tag: 1)
+  3 call name: r__ge resultReg: %4 args: (%2, %3)
+  4 cond_jump cond: %4 thenIndex: 5 elseIndex: 9
+  5 call name: r__first resultReg: %5 args: (%1)
+  6 call name: r__tail resultReg: %6 args: (%1)
+  7 call name: print resultReg: %7 args: (%5)
+  8 return %7
+  9 get_str_ptr strIndex: 0 dst: %10
+  10 call name: r__createString resultReg: %8 args: (%10)
+  11 call name: r__printErrorAndExit resultReg: %9 args: (%8)
+
 fun main__init :  virtual regs: 5 paramCount: 0
-  0 get_function_ptr print %0
-  1 inplace_i64 reg: %1 value: 0 (without tag: 0)
+  0 get_function_ptr print_satellite %0
+  1 inplace_i64 reg: %1 value: 4611686018427387905 (without tag: 1)
   2 cond_jump cond: %1 thenIndex: 3 elseIndex: 6
   3 inplace_i64 reg: %2 value: 2305843009213693994 (without tag: 42)
   4 call name: print resultReg: %3 args: (%2)
@@ -130,26 +162,26 @@ fun main__init :  virtual regs: 4 paramCount: 0
     fun `test data`() {
         testLir("""
 String table:
-   0 let
+   0 x
    1 foo
-   2 x
+   2 let
 fun main__init :  virtual regs: 16 paramCount: 0
   0 inplace_i64 reg: %0 value: 0 (without tag: 0)
   1 get_str_ptr strIndex: 0 dst: %13
   2 call name: r__createSymbol resultReg: %1 args: (%13)
-  3 call name: r__withElement resultReg: %2 args: (%1, %0)
+  3 call name: r__withElement resultReg: %2 args: (%0, %1)
   4 inplace_i64 reg: %3 value: 0 (without tag: 0)
-  5 get_str_ptr strIndex: 1 dst: %14
-  6 call name: r__createString resultReg: %4 args: (%14)
-  7 call name: r__withElement resultReg: %5 args: (%4, %3)
-  8 inplace_i64 reg: %6 value: 2305843009213693964 (without tag: 12)
-  9 call name: r__withElement resultReg: %7 args: (%6, %5)
-  10 inplace_i64 reg: %8 value: 2305843009213693954 (without tag: 2)
-  11 call name: r__withElement resultReg: %9 args: (%8, %7)
-  12 call name: r__withElement resultReg: %10 args: (%9, %2)
+  5 inplace_i64 reg: %4 value: 2305843009213693954 (without tag: 2)
+  6 call name: r__withElement resultReg: %5 args: (%3, %4)
+  7 inplace_i64 reg: %6 value: 2305843009213693964 (without tag: 12)
+  8 call name: r__withElement resultReg: %7 args: (%5, %6)
+  9 get_str_ptr strIndex: 1 dst: %14
+  10 call name: r__createString resultReg: %8 args: (%14)
+  11 call name: r__withElement resultReg: %9 args: (%7, %8)
+  12 call name: r__withElement resultReg: %10 args: (%2, %9)
   13 get_str_ptr strIndex: 2 dst: %15
   14 call name: r__createSymbol resultReg: %11 args: (%15)
-  15 call name: r__withElement resultReg: %12 args: (%11, %10)
+  15 call name: r__withElement resultReg: %12 args: (%10, %11)
   16 return %12
         """.trimIndent(), listOf(
                 "main" withText "`(let (\"foo\" 12 2) x)"
@@ -160,18 +192,34 @@ fun main__init :  virtual regs: 16 paramCount: 0
     @Test
     fun `test vararg`() {
         testLir("""
+String table:
+   0 Unexpected parameter count
 fun foo :  virtual regs: 3 paramCount: 2
   0 inplace_i64 reg: %2 value: 0 (without tag: 0)
   1 return %2
 
+fun foo_satellite :  virtual regs: 11 paramCount: 1
+  0 mov from %1 to %1
+  1 call name: r__size resultReg: %2 args: (%1)
+  2 inplace_i64 reg: %3 value: 2305843009213693954 (without tag: 2)
+  3 call name: _ge resultReg: %4 args: (%2, %3)
+  4 cond_jump cond: %4 thenIndex: 5 elseIndex: 9
+  5 call name: r__first resultReg: %5 args: (%1)
+  6 call name: r__tail resultReg: %6 args: (%1)
+  7 call name: foo resultReg: %7 args: (%5, %6)
+  8 return %7
+  9 get_str_ptr strIndex: 0 dst: %10
+  10 call name: r__createString resultReg: %8 args: (%10)
+  11 call name: r__printErrorAndExit resultReg: %9 args: (%8)
+
 fun main__init :  virtual regs: 8 paramCount: 0
-  0 get_function_ptr foo %0
+  0 get_function_ptr foo_satellite %0
   1 inplace_i64 reg: %1 value: 2305843009213693953 (without tag: 1)
   2 inplace_i64 reg: %2 value: 0 (without tag: 0)
   3 inplace_i64 reg: %3 value: 2305843009213693954 (without tag: 2)
-  4 call name: r__withElement resultReg: %4 args: (%3, %2)
+  4 call name: r__withElement resultReg: %4 args: (%2, %3)
   5 inplace_i64 reg: %5 value: 2305843009213693955 (without tag: 3)
-  6 call name: r__withElement resultReg: %6 args: (%5, %4)
+  6 call name: r__withElement resultReg: %6 args: (%4, %5)
   7 call name: foo resultReg: %7 args: (%1, %6)
   8 return %7
         """.trimIndent(), listOf(
@@ -206,8 +254,24 @@ b0:
     @Test
     fun `test print list with value`() {
         testLir("""
+String table:
+   0 Unexpected parameter count
+fun print_satellite :  virtual regs: 11 paramCount: 1
+  0 mov from %1 to %1
+  1 call name: r__size resultReg: %2 args: (%1)
+  2 inplace_i64 reg: %3 value: 2305843009213693953 (without tag: 1)
+  3 call name: r__ge resultReg: %4 args: (%2, %3)
+  4 cond_jump cond: %4 thenIndex: 5 elseIndex: 9
+  5 call name: r__first resultReg: %5 args: (%1)
+  6 call name: r__tail resultReg: %6 args: (%1)
+  7 call name: r__print resultReg: %7 args: (%5)
+  8 return %7
+  9 get_str_ptr strIndex: 0 dst: %10
+  10 call name: r__createString resultReg: %8 args: (%10)
+  11 call name: r__printErrorAndExit resultReg: %9 args: (%8)
+
 fun main__init :  virtual regs: 5 paramCount: 0
-  0 get_function_ptr r__print %0
+  0 get_function_ptr print_satellite %0
   1 inplace_i64 reg: %1 value: 0 (without tag: 0)
   2 inplace_i64 reg: %2 value: 2305843009213693964 (without tag: 12)
   3 call name: r__withElement resultReg: %3 args: (%1, %2)
@@ -221,25 +285,29 @@ fun main__init :  virtual regs: 5 paramCount: 0
     @Test
     fun `test simple call`() {
         testLir("""
-main.S:
-main__init:
-	pushq %rbp
-	movq %rsp, %rbp
-	subq ${'$'}32, %rsp
-	movq r__print, %rax
-	movq %rax, -8(%rsp)
-	movabsq ${'$'}2305843009213693964, %rax
-	movq %rax, -16(%rsp)
-//save registers for call r__print
-	movq -16(%rsp), %rdi
-	callq r__print
-	movq %rax, -24(%rsp)
-//restore registers for call r__print
-//finish handling call r__print
-	movq -24(%rsp), %rax
-	addq ${'$'}32, %rsp
-	popq %rbp
-	retq
+String table:
+   0 Unexpected parameter count
+   1 Hello
+fun print_satellite :  virtual regs: 11 paramCount: 1
+  0 mov from %1 to %1
+  1 call name: r__size resultReg: %2 args: (%1)
+  2 inplace_i64 reg: %3 value: 2305843009213693953 (without tag: 1)
+  3 call name: r__ge resultReg: %4 args: (%2, %3)
+  4 cond_jump cond: %4 thenIndex: 5 elseIndex: 9
+  5 call name: r__first resultReg: %5 args: (%1)
+  6 call name: r__tail resultReg: %6 args: (%1)
+  7 call name: r__print resultReg: %7 args: (%5)
+  8 return %7
+  9 get_str_ptr strIndex: 0 dst: %10
+  10 call name: r__createString resultReg: %8 args: (%10)
+  11 call name: r__printErrorAndExit resultReg: %9 args: (%8)
+
+fun main__init :  virtual regs: 4 paramCount: 0
+  0 get_function_ptr print_satellite %0
+  1 get_str_ptr strIndex: 1 dst: %3
+  2 call name: r__createString resultReg: %1 args: (%3)
+  3 call name: r__print resultReg: %2 args: (%1)
+  4 return %2
         """.trimIndent(), listOf(
                 "main" withText """
         (defnat print r__print (x))
@@ -269,10 +337,25 @@ fun main__init :  virtual regs: 2 paramCount: 0
     fun `test string literal inside print`() {
         testLir("""
 String table:
-   0 Hello world!
+   0 Unexpected parameter count
+   1 Hello world!
+fun print_satellite :  virtual regs: 11 paramCount: 1
+  0 mov from %1 to %1
+  1 call name: r__size resultReg: %2 args: (%1)
+  2 inplace_i64 reg: %3 value: 2305843009213693953 (without tag: 1)
+  3 call name: r__ge resultReg: %4 args: (%2, %3)
+  4 cond_jump cond: %4 thenIndex: 5 elseIndex: 9
+  5 call name: r__first resultReg: %5 args: (%1)
+  6 call name: r__tail resultReg: %6 args: (%1)
+  7 call name: print resultReg: %7 args: (%5)
+  8 return %7
+  9 get_str_ptr strIndex: 0 dst: %10
+  10 call name: r__createString resultReg: %8 args: (%10)
+  11 call name: r__printErrorAndExit resultReg: %9 args: (%8)
+
 fun main__init :  virtual regs: 4 paramCount: 0
-  0 get_function_ptr print %0
-  1 get_str_ptr strIndex: 0 dst: %3
+  0 get_function_ptr print_satellite %0
+  1 get_str_ptr strIndex: 1 dst: %3
   2 call name: r__createString resultReg: %1 args: (%3)
   3 call name: print resultReg: %2 args: (%1)
   4 return %2
@@ -290,6 +373,6 @@ fun main__init :  virtual regs: 4 paramCount: 0
         val lir = session.getLir().unwrap()
         val actual = lir.joinToString("\n") { it.toString() }
 //        println(lir.first().functions.first().toBBGraph())
-        assertEquals(expected, actual)
+        assertEquals(expected.trim(), actual.trim())
     }
 }

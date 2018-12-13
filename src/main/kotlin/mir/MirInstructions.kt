@@ -92,7 +92,7 @@ class MirBinaryIntInstr(
         val opType: MirBinaryOpType,
         val leftId: MirInstrId,
         val rightId: MirInstrId
-) : MirInstr() {
+) : MirValueInstr() {
     override fun pretty(strategy: PrettyPrintStrategy): String {
         return "binary $opType ${strategy.instrIdRenderer.render(leftId)}, ${strategy.instrIdRenderer.render(rightId)}"
     }

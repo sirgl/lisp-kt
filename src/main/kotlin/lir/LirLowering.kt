@@ -90,6 +90,13 @@ object LirLoweringConstants {
     const val RUNTIME_WITH_ELEMENT_FUNCTION_NAME = "r__withElement"
     const val RUNTIME_CREATE_STRING_FUNCTION_NAME = "r__createString"
     const val RUNTIME_CREATE_SYMBOL_FUNCTION_NAME = "r__createSymbol"
+    const val RUNTIME_LIST_SIZE_FUNCTION_NAME = "r__size"
+    const val RUNTIME_LIST_FIRST_FUNCTION_NAME = "r__first"
+    const val RUNTIME_LIST_TAIL_FUNCTION_NAME = "r__tail"
+    const val RUNTIME_PRINT_ERROR_AND_EXIT_FUNCTION_NAME = "r__printErrorAndExit"
+    const val RUNTIME_UNTAG_FUNCTION_NAME = "r__untag"
+    const val RUNTIME_GE_FUNCTION_NAME = "_ge" // just known stdlib function
+    const val RUNTIME_EQ_FUNCTION_NAME = "r__ge"
 }
 
 class LirLowering {
@@ -194,11 +201,32 @@ private class LirFileLowering(val mirFile: MirFile, val world: MirWorld, val con
                 MirAddIntTagInstr -> TODO("bit mask or, opt only")
                 MirAddBoolTagInstr -> TODO("bit mask or, opt only")
                 MirAddObjTagInstr -> TODO("bit mask or, opt only")
-                is MirListSizeInstruction -> TODO()
-                is MirListFirstInstruction -> TODO()
-                is MirListTailInstruction -> TODO()
-                is MirPrintErrorAndExitInstruction -> TODO()
-                is MirBinaryIntInstr -> TODO()
+                is MirListSizeInstruction -> {
+                    val listReg = builder.toReg(instruction.listId)
+                    builder.emit(LirCallInstr(intArrayOf(listReg), LirLoweringConstants.RUNTIME_LIST_SIZE_FUNCTION_NAME, builder.toReg(instrId)))
+                }
+                is MirListFirstInstruction -> {
+                    val listReg = builder.toReg(instruction.listId)
+                    builder.emit(LirCallInstr(intArrayOf(listReg), LirLoweringConstants.RUNTIME_LIST_FIRST_FUNCTION_NAME, builder.toReg(instrId)))
+                }
+                is MirListTailInstruction -> {
+                    val listReg = builder.toReg(instruction.listId)
+                    builder.emit(LirCallInstr(intArrayOf(listReg), LirLoweringConstants.RUNTIME_LIST_TAIL_FUNCTION_NAME, builder.toReg(instrId)))
+                }
+                is MirPrintErrorAndExitInstruction -> {
+                    val textReg = builder.toReg(instruction.errorTextId)
+                    builder.emit(LirCallInstr(intArrayOf(textReg), LirLoweringConstants.RUNTIME_PRINT_ERROR_AND_EXIT_FUNCTION_NAME, builder.toReg(instrId)))
+                }
+                is MirBinaryIntInstr -> {
+                    val intrinsicName = when (instruction.opType) {
+                        MirBinaryOpType.Ge -> LirLoweringConstants.RUNTIME_GE_FUNCTION_NAME
+                        MirBinaryOpType.Eq -> LirLoweringConstants.RUNTIME_EQ_FUNCTION_NAME
+                        else -> TODO()
+                    }
+                    val leftReg = builder.toReg(instruction.leftId)
+                    val rightReg = builder.toReg(instruction.rightId)
+                    builder.emit(LirCallInstr(intArrayOf(leftReg, rightReg), intrinsicName, builder.toReg(instrId)))
+                }
             }
         }
     }

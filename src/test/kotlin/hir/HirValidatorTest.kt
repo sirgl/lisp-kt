@@ -35,7 +35,7 @@ main : Error in LoweringToHir [0, 0) : The function should not capture variables
 
     private fun testHir(expected: String, files: List<InMemoryFileInfo>) {
         val sources = files.map { InMemorySource(it.text, it.name) }
-        val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0))
+        val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0), false)
         val resultWithLints = session.getHir()
         val actual: String = if (resultWithLints is ResultWithLints.Error) {
             resultWithLints.lints.joinToString("\n")
