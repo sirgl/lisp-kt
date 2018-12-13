@@ -37,3 +37,5 @@ extern "C" Value r__and(Value left, Value right);
 extern "C" Value r__first(Value list);
 
 extern "C" Value r__tail(Value list);
+
+extern "C" Value r__size(Value list);

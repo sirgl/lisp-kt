@@ -20,5 +20,8 @@ public:
     void print() override;
 
     static List* allocate(Value value);
+
+    // TODO better to store size inside
+    uint32_t size();
 };
 

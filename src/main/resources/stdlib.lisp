@@ -4,7 +4,9 @@
 stdlib created by Ivanov Roman and Ivanova Anastasia
 |#
 
-; binary low level operations are not exposed
+(defnat untag r__untag (tagged))
+
+; Binary low level operations are not exposed
 (defnat _add r__add (a b))
 (defnat _sub r__sub (a b))
 (defnat _mul r__mul (a b))
@@ -25,18 +27,41 @@ stdlib created by Ivanov Roman and Ivanova Anastasia
 (defn _ge (a b) (_or (_gt a b) (_eq a b)))
 
 
-(defnat print r__print (x))
-
+; List related functions
 (defnat cons r__withElement (list elem))
-
 (defnat first r__first (list))
-
 (defnat tail r__tail (list))
+(defnat size r__size (list))
+(defn is-empty (list) (_eq (size list) 0))
 
+
+; Chain operations
+(macro and (@args)
+     (if (empty args)
+        #t
+        (if (first args)
+            (and (tail args))
+            #f
+        )
+     )
+)
+
+(macro or (@args)
+     (if (empty args)
+        #t
+        (if (first args)
+            #f
+            (or (tail args))
+        )
+     )
+)
+
+; input/output
+(defnat print r__print (x))
 (defn newline () (print "\n"))
 
-;macros section
 
+;macros section
 (macro inc (i) `(+ i 1))
 
 (macro loop (block) `(while #t block))

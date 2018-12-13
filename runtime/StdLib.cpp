@@ -130,3 +130,12 @@ Value r__tail(Value list) {
     List *pList = dynamic_cast<List*>(list.asObject());
     return Value::fromPtr(pList->next);
 }
+
+Value r__size(Value list) {
+    if (list.getTag() == Tag::Nil) {
+        return Value::fromInt(0);
+    }
+    typeAssert(list, ValueType::List);
+    List *pList = dynamic_cast<List*>(list.asObject());
+    return Value::fromInt(pList->size());
+}

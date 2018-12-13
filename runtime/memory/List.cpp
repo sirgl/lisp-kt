@@ -24,3 +24,10 @@ List *List::allocate(Value value) {
     finishHeapAllocation(list);
     return list;
 }
+
+uint32_t List::size() {
+    if (next == nullptr) {
+        return 1;
+    }
+    return next->size() + 1;
+}
