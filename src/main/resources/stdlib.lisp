@@ -43,25 +43,29 @@ stdlib created by Ivanov Roman and Ivanova Anastasia
 
 
 ; Chain operations
-(macro and (@args)
-     (if (empty args)
+(macro and-list (l)
+    (if (is-empty l)
         #t
-        (if (first args)
-            (and (tail args))
+        (if (first l)
+            (and-list (tail l))
             #f
         )
      )
 )
 
-(macro or (@args)
-     (if (empty args)
-        #t
+(macro and (@args) (and-list args))
+
+(macro or-list (args)
+     (if (is-empty args)
+        #f
         (if (first args)
-            #f
-            (or (tail args))
+            #t
+            (or-list (tail args))
         )
      )
 )
+
+(macro or (@args) (or-list args))
 
 ; input/output
 (defnat print r__print (x))

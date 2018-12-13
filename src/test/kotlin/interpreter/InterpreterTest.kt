@@ -124,8 +124,8 @@ class InterpreterTest {
     @Test
     fun `test isEmpty`() {
         testResult("""
-            ; List related functions
             (defnat _eq r__eq (a b))
+            ; List related functions
             (defnat cons r__withElement (list elem))
             (defnat first r__first (list))
             (defnat tail r__tail (list))
@@ -133,6 +133,59 @@ class InterpreterTest {
             (defn is-empty (list) (_eq (size list) 0))
             (is-empty `(12 "foo" 33))
         """.trimIndent(), "#f")
+    }
+
+    @Test
+    fun `test and chain macro`() {
+        testResult("""
+            (defnat _eq r__eq (a b))
+            ; List related functions
+            (defnat first r__first (list))
+            (defnat tail r__tail (list))
+            (defnat size r__size (list))
+            (defn is-empty (list) (_eq (size list) 0))
+
+            (macro and-list (l)
+                (if (is-empty l)
+                    #t
+                    (if (first l)
+                        (and-list (tail l))
+                        #f
+                    )
+                 )
+            )
+
+            ; Chain operations
+            (macro and (@args)
+                 (and-list args)
+            )
+            (and #t #t #t #f #t)
+        """.trimIndent(), "#f")
+    }
+
+    @Test
+    fun `test or chain macro`() {
+        testResult("""
+            (defnat _eq r__eq (a b))
+            ; List related functions
+            (defnat first r__first (list))
+            (defnat tail r__tail (list))
+            (defnat size r__size (list))
+            (defn is-empty (list) (_eq (size list) 0))
+
+            (macro or-list (args)
+                 (if (is-empty args)
+                    #f
+                    (if (first args)
+                        #t
+                        (or-list (tail args))
+                    )
+                 )
+            )
+
+            (macro or (@args) (or-list args))
+            (or #f #f #f #t #f)
+        """.trimIndent(), "#t")
     }
 
 
@@ -229,6 +282,7 @@ class InterpreterTest {
                     Interpreter().eval(parseResult.node).lispy()
                 }  catch (e: InterpreterException) {
                     e.toString()
+                    e.printStackTrace()
                 }
                 assertEquals(expectedResult, result)
             }

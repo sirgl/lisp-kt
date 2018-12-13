@@ -192,7 +192,8 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
             val parameter = parameters[i]
             if (i == paramLastIndex && parameter.isVararg) {
                 val vararg = args.subList(paramLastIndex, args.size)
-                preparedArgs.add(ListNode(vararg, TextRange(0, 0)))
+                val textRange = TextRange(0, 0)
+                preparedArgs.add(DataNode(ListNode(vararg, textRange), textRange))
             } else {
                 preparedArgs.add(args[i])
             }
