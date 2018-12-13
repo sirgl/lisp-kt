@@ -53,7 +53,7 @@ b2:
 
 fun main__init params: 0, totalVars: 0 (main)
 b0:
-  get_function_reference 0
+  get_function_reference 1
   return b0:i0
         """.trimIndent(), listOf(
                 "main" withText "(defn foo(x) 42)"
@@ -155,7 +155,7 @@ b2:
 
 fun main__init params: 0, totalVars: 0 (main)
 b0:
-  get_function_reference 0
+  get_function_reference 1
   load_const true (bool, tagged)
   cond_jump cond: b0:i1 then: b1 else: b2
 b1:
@@ -263,7 +263,7 @@ b2:
 
 fun main__init params: 0, totalVars: 0 (main)
 b0:
-  get_function_reference 0
+  get_function_reference 1
   load_const 1 (i32, tagged)
   load_const ()
   load_const 2 (i32, tagged)
@@ -307,11 +307,12 @@ fun main__init params: 0, totalVars: 1 (main)
 var table:
    0 f
 b0:
-  get_function_reference 0
+  get_function_reference 1
   store_var: v0 value: b0:i0
   load_var: v0
-  call_by_reference referneceInstr: b0:i2 args: ()
-  return b0:i3
+  load_const ()
+  call_by_reference referneceInstr: b0:i2 args: (b0:i3)
+  return b0:i4
         """.trimIndent(), listOf(
             "main" withText """
         (let ((f (defn foo () ()))) (f))
@@ -346,7 +347,7 @@ b2:
 
 fun main__init params: 0, totalVars: 0 (main)
 b0:
-  get_function_reference 0
+  get_function_reference 1
   load_const ()
   load_const 22 (i32, tagged)
   with_element list: b0:i1, value: b0:i2
@@ -385,7 +386,7 @@ b2:
 
 fun main__init params: 0, totalVars: 0 (main)
 b0:
-  get_function_reference 0
+  get_function_reference 1
   load_const Hello (string, tagged)
   call function: 0 args: (b0:i1)
   return b0:i2
@@ -439,7 +440,7 @@ b2:
 
 fun main__init params: 0, totalVars: 0 (main)
 b0:
-  get_function_reference 0
+  get_function_reference 1
   load_const Hello world! (string, tagged)
   call function: 0 args: (b0:i1)
   return b0:i2

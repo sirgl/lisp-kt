@@ -1,21 +1,24 @@
 package mir
 
 import hir.HirFunctionDeclaration
-import hir.HirFunctionDefinition
 import hir.HirVarDeclaration
 
 class MirBuilderContext(
         private var nextFunctionId: Int = 0
 
 ) {
-    private val functionToId: MutableMap<HirFunctionDeclaration, Int> = hashMapOf()
+    private val functionNameToId: MutableMap<String, Int> = hashMapOf()
 
     fun addFunction(function: HirFunctionDeclaration, id: Int) {
-        functionToId[function] = id
+        functionNameToId[function.name] = id
     }
 
     fun getFunctionId(function: HirFunctionDeclaration) : Int {
-        return functionToId[function]!!
+        return functionNameToId[function.name]!!
+    }
+
+    fun getFunctionId(functionName: String) : Int {
+        return functionNameToId[functionName]!!
     }
 
     fun nextFunctionId(): Int {
@@ -79,6 +82,10 @@ class MirFunctionBuilder(val name: String, val isMain: Boolean = false, val cont
 
     fun getFunctionId(function: HirFunctionDeclaration) : Int {
         return context.getFunctionId(function)
+    }
+
+    fun getFunctionId(functionName: String) : Int {
+        return context.getFunctionId(functionName)
     }
 
     fun currentBlockId(): Short {
