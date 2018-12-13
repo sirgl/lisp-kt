@@ -38,7 +38,7 @@ class InterpreterTest {
 
     @Test
     fun `test env function`() {
-        testResult("(defnat + r__add (a b c))(+ 1 2 3)", "6")
+        testResult("(defnat + r__add (a b))(+ 1 2)", "3")
     }
 
     @Test
@@ -55,7 +55,15 @@ class InterpreterTest {
     fun `test while`() {
         testResult("""
             (defnat + r__add (a b))
-            (defnat < r__lt (a b))
+            (defnat _gt r__gt (a b))
+            (macro _and (a b) (if a b #f))
+            (defnat _eq r__eq (a b))
+            (macro ! (a) (if a #f #t))
+            (defn < (a b) (_and
+                    (!(_gt a b))
+                    (!(_eq a b))
+                )
+            )
             (let ((i 0))
                 (while (< i 10)
                     (set i (+ i 1))

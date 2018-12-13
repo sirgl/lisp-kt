@@ -65,11 +65,6 @@ extern "C" Value r__eq(Value left, Value right) {
 }
 
 
-Value r__not(Value value) {
-    typeAssert(value, ValueType::Bool);
-    return Value::fromBool(!value.asBool());
-}
-
 extern "C" uint64_t r__untag(Value value) {
     return value.value & (~(0b111L << 61));
 }

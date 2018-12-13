@@ -11,24 +11,6 @@ open class NativeFunction(val function: (List<AstNode>, Interpreter) -> AstNode)
     fun call(args: List<AstNode>, interpreter: Interpreter): AstNode = function(args, interpreter)
 }
 
-private fun <T> intTFunction(f: (List<Int>) -> T?, tokenTypeMapper: (T) -> TokenType, syntaxKind: SyntaxKind): NativeFunction {
-    return NativeFunction { argNodes, interpreter ->
-        val values = argNodes.map { (interpreter.eval(it) as LeafNode).token.text.toInt() }
-        val tResult = f(values) ?: return@NativeFunction emptyListNode()
-        val token = Token(-1, tResult.toString(), tokenTypeMapper(tResult))
-        LeafNode(token, syntaxKind)
-    }
-}
-
-private fun intFunction(f: (List<Int>) -> Int?): NativeFunction {
-    return intTFunction(f, { TokenType.Int }, SyntaxKind.IntLiteral)
-}
-
-private fun intBoolFunction(f: (List<Int>) -> Boolean): NativeFunction {
-    return intTFunction(f, { if (it) TokenType.TrueLiteral else TokenType.FalseLiteral }, SyntaxKind.BoolLiteral)
-}
-
-
 class InterpreterException(reason: String, val range: TextRange) : Exception(reason) {
     override fun toString(): String {
         return "Interpreter $range: $message"
@@ -37,7 +19,7 @@ class InterpreterException(reason: String, val range: TextRange) : Exception(rea
 
 class InterpreterEnv(
         globalScope: MutableMap<String, AstNode> = mutableMapOf(),
-        private val nativeFunctions: Map<String, NativeFunction> = standardEnvFunctions
+        private val nativeFunctions: Map<String, NativeFunction> = standardNativeFunctions
 ) {
     private val envStack = ArrayDeque<MutableMap<String, AstNode>>()
 
@@ -84,19 +66,8 @@ class InterpreterEnv(
     }
 }
 
-val standardEnvFunctions: MutableMap<String, NativeFunction> = mutableMapOf(
-        "r__add" to intFunction { it.sum() },
-        "r__mul" to intFunction { it.reduce { acc, i -> acc * i } },
-        "r__sub" to intFunction { it[0] - it.drop(1).sum() },
-        "r__div" to intFunction { it[0] / it.drop(1).reduce { acc, i -> acc * i } },
-        "r__gt" to intBoolFunction { list -> list.drop(1).all { it < list[0] } },
-        "r__lt" to intBoolFunction { list -> list.drop(1).all { it > list[0] } },
-        "r__eq" to intBoolFunction { list -> list.drop(1).all { it == list[0] } },
-        "r__print" to intBoolFunction { println(it);true }
-)
 
-
-class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(), standardEnvFunctions)) {
+class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(), standardNativeFunctions)) {
 
     // assumes no macro inside
     @Throws(InterpreterException::class)
@@ -106,7 +77,8 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
             is LeafNode -> {
                 if (node.token.type == TokenType.Identifier) {
                     val identifier = node.token.text
-                    env.resolve(identifier) ?: err("No $identifier found in env", node)
+                    env.resolve(identifier)
+                            ?: err("No $identifier found in env", node)
                 } else {
                     node
                 }
@@ -267,7 +239,25 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
         val nativeFunction = env.findNativeFun(nameInRuntime)
             ?: err("No $nameInProgram runtime function registered ($nameInRuntime runtime name expected)", entry)
         val preparedArgs = prepareArgs(nativeFun, args)
-        return nativeFunction.call(preparedArgs.map { eval(it) }, this)
+        val evaled = evalArgs(preparedArgs)
+
+        val result = nativeFunction.call(evaled, this)
+        return result
+    }
+
+    private fun evalArgs(preparedArgs: List<AstNode>): List<AstNode> {
+        return preparedArgs.map {
+            var node: AstNode = it
+            while (true) {
+                node = eval(node)
+                val isIdent = node is LeafNode && node.token.type == TokenType.Identifier
+                val isCall = node is ListNode && (node.children.firstOrNull() as? LeafNode)?.token?.type == TokenType.Identifier
+                if (!(isIdent || isCall)) {
+                    break
+                }
+            }
+            node
+        }
     }
 
     private fun callDefn(
@@ -276,9 +266,9 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
     ): AstNode {
         val defnNode = Matchers.DEFN.forceExtract(entry)
         checkParameterCount(args.size, defnNode, entry)
-        env.enterScope()
-        val preparedArgs = prepareArgs(defnNode, args)
+        val preparedArgs = evalArgs(prepareArgs(defnNode, args))
         for ((index, parameter) in defnNode.parameters.map { it.name }.withIndex()) {
+            env.enterScope()
             env.addToScope(parameter, preparedArgs[index])
         }
         var last: AstNode? = null

@@ -16,15 +16,22 @@ stdlib created by Ivanov Roman and Ivanova Anastasia
 (defnat _gt r__gt (a b))
 (defnat _eq r__eq (a b))
 
-(defnat ! r__not (b))
 
 (macro _and (a b) (if a b #f))
 (macro _or (a b) (if a #t b))
-(macro _not (a) (if a #f #t))
+(macro ! (a) (if a #f #t))
 
-(defn _lt (a b) (!(_gt a b) ))
-(defn _le (a b) (_or (_lt a b) (_eq a b)))
-(defn _ge (a b) (_or (_gt a b) (_eq a b)))
+(defn _lt (a b) (_and
+                    (!(_gt a b))
+                    (!(_eq a b))
+                )
+)
+(defn _le (a b) (! (_gt a b)
+                )
+)
+(defn _ge (a b) (! (_lt a b)
+                )
+)
 
 
 ; List related functions

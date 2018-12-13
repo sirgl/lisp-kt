@@ -113,7 +113,7 @@ private class LexerSession(
 
     private fun isIdentifierStart(it: Char): Boolean {
         return it in 'a'..'z' || it in 'A'..'Z' || it == '+' || it == '-' || it == '*' || it == '/' || it == '<'
-                || it == '>' || it == '_' || it == '='
+                || it == '>' || it == '_' || it == '=' || it == '!'
     }
 
     private fun isIdentifierTail(it: Char): Boolean {

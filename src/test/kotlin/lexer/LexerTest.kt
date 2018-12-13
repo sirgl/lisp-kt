@@ -63,6 +63,17 @@ class LexerTest {
     }
 
     @Test
+    fun `test excl identifier`() {
+        testLexer("(! a)", """
+            0@Lpar@"("
+            1@Identifier@"!"
+            3@Identifier@"a"
+            4@Rpar@")"
+            5@End@""
+        """)
+    }
+
+    @Test
     fun `test string literal`() {
         testLexer("\"foo\"", """
             0@String@""foo""
