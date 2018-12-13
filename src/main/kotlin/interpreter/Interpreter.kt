@@ -7,7 +7,7 @@ import lexer.TokenType
 import parser.*
 import java.util.*
 
-class NativeFunction(val function: (List<AstNode>, Interpreter) -> AstNode) {
+open class NativeFunction(val function: (List<AstNode>, Interpreter) -> AstNode) {
     fun call(args: List<AstNode>, interpreter: Interpreter): AstNode = function(args, interpreter)
 }
 
@@ -266,7 +266,8 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
         val nameInRuntime = nativeFun.nameInRuntime
         val nativeFunction = env.findNativeFun(nameInRuntime)
             ?: err("No $nameInProgram runtime function registered ($nameInRuntime runtime name expected)", entry)
-        return nativeFunction.call(prepareArgs(nativeFun, args), this)
+        val preparedArgs = prepareArgs(nativeFun, args)
+        return nativeFunction.call(preparedArgs.map { eval(it) }, this)
     }
 
     private fun callDefn(
@@ -288,7 +289,6 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
         return last!!
     }
 
-    private fun err(reason: String, node: AstNode): Nothing = throw InterpreterException(reason, node.textRange)
 
     private fun AstNode.asBool(): Boolean? {
         return when {
@@ -302,7 +302,9 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
     }
 }
 
-private fun emptyListNode() = ListNode(emptyList(), TextRange(0, 0))
+internal fun err(reason: String, node: AstNode): Nothing = throw InterpreterException(reason, node.textRange)
+
+internal fun emptyListNode() = ListNode(emptyList(), TextRange(0, 0))
 
 
 // Required for macro substitution
