@@ -219,8 +219,8 @@ private class MirFunctionLowering(
 fun createSatelliteRepackager(function: HirFunctionDeclaration, originalFunctionId: Int, context: MirBuilderContext): MirFunction {
     val builder = MirFunctionBuilder(function.satelliteName, false, context)
     val parameter = HirParameter("listParameters", false)
-    val parameterListVarIndex = builder.addVariable(parameter)
-    val parameterListId = builder.emit(MirLoadInstr(parameterListVarIndex))
+//    val parameterListVarIndex = builder.addVariable(parameter)
+    val parameterListId = builder.emit(MirLoadInstr(0))
     val realParameterCountId = builder.emit(MirListSizeInstruction(parameterListId))
     val declaredParameterCount = function.parameters.size
     val expectedParametersCountId = builder.emit(MirLoadValueInstr(MirValue.MirInt(declaredParameterCount, true)))
@@ -271,7 +271,8 @@ fun createSatelliteRepackager(function: HirFunctionDeclaration, originalFunction
 
 fun createEntryWrapper(originalFunctionId: Int, context: MirBuilderContext) : MirFunction {
     val builder = MirFunctionBuilder("__entry__", false, context)
-    builder.emit(MirLocalCallInstr(originalFunctionId, emptyArray()))
+    val result = builder.emit(MirLocalCallInstr(originalFunctionId, emptyArray()))
+    builder.emit(MirReturnInstruction(result))
     builder.finishBlock()
     return builder.finishFunction(object: HirFunctionDeclaration {
         override val parameters: List<HirParameter>

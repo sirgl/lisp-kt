@@ -271,7 +271,7 @@ fun __entry__ :  virtual regs: 1 paramCount: 0
   0 call name: main__init resultReg: %0 args: ()
         """.trimIndent(), listOf(
             "main" withText """
-        (let ((f (defn foo () ()))) (f))
+            (let ((x (defn f () 42) )) (x))
                 """.trimIndent()
         ))
     }

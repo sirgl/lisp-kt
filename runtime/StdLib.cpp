@@ -138,5 +138,9 @@ Value r__size(Value list) {
 }
 
 Value r__tagFunction(void *function) {
-    return Value::fromFunctionPtr(function);
+    auto value = Value::fromFunctionPtr(function);
+    auto tag = value.getTag();
+    auto converted = value.asPointer();
+    assert(converted == function);
+    return value;
 }

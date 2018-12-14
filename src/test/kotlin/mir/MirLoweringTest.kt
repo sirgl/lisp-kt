@@ -327,12 +327,12 @@ b0:
     fun `test call by variable`() {
         testMir("""
 main:
-fun foo params: 0, totalVars: 0
+fun f params: 0, totalVars: 0
 b0:
-  load_const ()
+  load_const 42 (i32, tagged)
   return b0:i0
 
-fun foo_satellite params: 1, totalVars: 1
+fun f_satellite params: 1, totalVars: 1
 var table:
    0 listParameters
 b0:
@@ -351,7 +351,7 @@ b2:
 
 fun main__init params: 0, totalVars: 1 (main)
 var table:
-   0 f
+   0 x
 b0:
   get_function_reference 1
   store_var: v0 value: b0:i0
@@ -366,7 +366,7 @@ b0:
   call function: 2 args: ()
         """.trimIndent(), listOf(
             "main" withText """
-        (let ((f (defn foo () ()))) (f))
+        (let ((x (defn f () 42) )) (x))
                 """.trimIndent()
         ))
     }

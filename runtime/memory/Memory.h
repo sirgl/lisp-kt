@@ -101,7 +101,7 @@ struct Value {
     // Must be aligned to 8
     void* asPointer() {
         Tag tag = getTag();
-        assert(tag == Tag::Object);
+        assert(tag == Tag::Object || tag == Tag::Function);
         uint64_t mask = ~((uint64_t)0b111 << 61);
         uint64_t resultPtr = value & mask;
         return reinterpret_cast<void *>(resultPtr);

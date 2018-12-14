@@ -640,32 +640,25 @@ main__init:
 	retq
         """, listOf(
                 "main" withText """
-            (defnat + r__add (a b))
-            (defnat _gt r__gt (a b))
-            (macro _and (a b) `(if a b #f))
-            (defnat _eq r__eq (a b))
-            (defnat print r__print (a))
-            (macro not (a) `(if a #f #t))
-            (defn lt (a b) (_and
-                    (not (_gt a b))
-                    (not (_eq a b))
-                )
-            )
-            (defn _ge (a b) (not (lt a b)
-                )
-            )
-            (let ((i 0))
-                (while (lt i 10)
-                    (print i)
-                    (print "\n")
-                    (set i (+ i 1))
-                )
-                i
-            )
+            (let ((x (defn f () 42) )) (x))
 
                 """.trimIndent()
         ))
     }
+//                (defnat + r__add (a b))
+//            (defnat _gt r__gt (a b))
+//            (macro _and (a b) `(if a b #f))
+//            (defnat _eq r__eq (a b))
+//            (defnat print r__print (a))
+//            (macro not (a) `(if a #f #t))
+//            (defn lt (a b) (_and
+//                    (not (_gt a b))
+//                    (not (_eq a b))
+//                )
+//            )
+//            (defn _ge (a b) (not (lt a b)
+//                )
+//            )
 
     fun testCodegen(expected: String, files: List<InMemoryFileInfo>) {
         val sources = files.map { InMemorySource(it.text, it.name) }

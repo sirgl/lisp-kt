@@ -55,7 +55,7 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
                 }
                 is LirBinInstr -> TODO()
                 is LirGetFunctionPtrInstr -> {
-                    emitMov(mangle(instruction.name), Regs.rax)
+                    emitMov(mangle(instruction.name) + "@GOTPCREL(%rip)", Regs.rax)
                     emitMov(Regs.rax, instrRegisterMap[instruction.destReg])
                 }
                 is LirGetStrPtrInstr -> {
@@ -86,6 +86,9 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
                 }
                 is LirReturnInstr -> {
                     emitMovSmart(instrRegisterMap[instruction.reg], Regs.rax)
+                    emitAdd(bytesToAllocateOnStack, Regs.rsp)
+                    emitPop(Regs.rbp)
+                    emitRet()
                 }
                 is LirGotoInstr -> {
                     emitJmp(mangle(indexToLabel[instruction.instrIndex]!!))
@@ -119,9 +122,7 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
                 }
             }
         }
-        emitAdd(bytesToAllocateOnStack, Regs.rsp)
-        emitPop(Regs.rbp)
-        emitRet()
+
     }
 
     private fun getLabelPositions(labelHolder: LabelIndexHolder): HashMap<Int, String> {
