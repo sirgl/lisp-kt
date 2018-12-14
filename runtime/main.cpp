@@ -3,18 +3,8 @@
 #include "memory/Allocation.h"
 #include "memory/Symbol.h"
 
-
-
 extern "C" {
-    uint64_t main__init();
-}
-
-// TODO
-void __entry__() {
-//    __main__();
-    uint64_t i = main__init();
-    std::cout << std::endl << "result = "  <<  i << std::endl;
-
+    extern Value __entry__();
 }
 
 void initRoot() {
@@ -26,6 +16,8 @@ void initRoot() {
 
 int main() {
     initRoot();
-    __entry__();
+    Value result = __entry__();
+    std::cout << std::endl;
+    result.print();
     return 0;
 }

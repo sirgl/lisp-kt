@@ -72,7 +72,8 @@ private class MacroExpansionContext(asts: List<Ast>, val target: RealDependencyE
                 val name = nameNode.token.text
 
                 val maybeMacro = macroEnv[name]
-                return if (maybeMacro != null && Matchers.MACRO.matches(maybeMacro)) {
+                return if (maybeMacro != null
+                        && Matchers.MACRO.matches(maybeMacro)) {
                     val env = InterpreterEnv(macroEnv)
                     val newBody = Interpreter(env).eval(node)
                     ExpansionResult(newBody, true)
@@ -111,6 +112,7 @@ private class MacroExpansionContext(asts: List<Ast>, val target: RealDependencyE
                     val macroResult = Matchers.MACRO.extract(child, source)
                     when (macroResult) {
                         is ResultWithLints.Ok -> {
+                            wasExpansion = true
                             val macroNode = macroResult.value
                             macroEnv[macroNode.name] = child
                             null
@@ -119,10 +121,20 @@ private class MacroExpansionContext(asts: List<Ast>, val target: RealDependencyE
                     }
                 }
                 Matchers.DEFN.matches(child, source) -> {
+                    var finalDefn = child
                     Matchers.DEFN.extract(child, source).ifPresent {
-                        macroEnv[it.name] = child
+                        val remappedBody = it.body.map { expandWithContext(it, macroEnv) }
+                                .map {
+                                    if (it.wasExpansion) {
+                                        wasExpansion = true
+                                    }
+                                    it.ast
+                                }
+                        val prevChildren = child.children
+                        finalDefn = ListNode(listOf(prevChildren[0], prevChildren[1], prevChildren[2]) + remappedBody, TextRange(0,0))
+                        macroEnv[it.name] = finalDefn
                     }
-                    child
+                    finalDefn
                 }
                 Matchers.DEFNAT.matches(child, source) -> {
                     Matchers.DEFNAT.extract(child, source).ifPresent {

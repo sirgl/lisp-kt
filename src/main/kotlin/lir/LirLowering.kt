@@ -95,8 +95,9 @@ object LirLoweringConstants {
     const val RUNTIME_LIST_TAIL_FUNCTION_NAME = "r__tail"
     const val RUNTIME_PRINT_ERROR_AND_EXIT_FUNCTION_NAME = "r__printErrorAndExit"
     const val RUNTIME_UNTAG_FUNCTION_NAME = "r__untag"
+    const val RUNTIME_TAG_FUNCTION_FUNCTION_NAME = "r__tagFunction"
     const val RUNTIME_GE_FUNCTION_NAME = "_ge" // just known stdlib function
-    const val RUNTIME_EQ_FUNCTION_NAME = "r__ge"
+    const val RUNTIME_EQ_FUNCTION_NAME = "r__eq"
 }
 
 class LirLowering {
@@ -181,7 +182,9 @@ private class LirFileLowering(val mirFile: MirFile, val world: MirWorld, val con
                 }
                 is MirGetFunctionReference -> {
                     val function = world.resolveFunction(instruction.functionId)
-                    builder.emit(LirGetFunctionPtrInstr(function.name, builder.toReg(instrId)))
+                    val untaggedRes = builder.nextRegister()
+                    builder.emit(LirGetFunctionPtrInstr(function.name, untaggedRes))
+                    builder.emit(LirCallInstr(intArrayOf(untaggedRes), LirLoweringConstants.RUNTIME_TAG_FUNCTION_FUNCTION_NAME, builder.toReg(instrId)))
                 }
                 is MirCallByRefInstr -> {
                     builder.emit(LirCallByPtrInstr(

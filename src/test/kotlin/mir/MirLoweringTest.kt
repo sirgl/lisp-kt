@@ -177,16 +177,18 @@ b2:
 fun main__init params: 0, totalVars: 0 (main)
 b0:
   get_function_reference 1
-  load_const true (bool, tagged)
-  untag value: b0:i1
-  cond_jump cond: b0:i2 then: b1 else: b2
+  goto b1
 b1:
-  load_const 42 (i32, tagged)
-  call function: 0 args: (b1:i0)
-  goto b0
+  load_const true (bool, tagged)
+  untag value: b1:i0
+  cond_jump cond: b1:i1 then: b2 else: b3
 b2:
+  load_const 42 (i32, tagged)
+  call function: 0 args: (b2:i0)
+  goto b1
+b3:
   load_const ()
-  return b2:i0
+  return b3:i0
 
 fun __entry__ params: 0, totalVars: 0
 b0:
@@ -355,8 +357,9 @@ b0:
   store_var: v0 value: b0:i0
   load_var: v0
   load_const ()
-  call_by_reference referneceInstr: b0:i2 args: b0:i3
-  return b0:i4
+  untag value: b0:i2
+  call_by_reference referneceInstr: b0:i4 args: b0:i3
+  return b0:i5
 
 fun __entry__ params: 0, totalVars: 0
 b0:
@@ -519,12 +522,46 @@ b0:
         ))
     }
 
+    @Test
+    fun `test let while`() {
+        testMir("""
+main:
+fun main__init params: 0, totalVars: 1 (main)
+var table:
+   0 b
+b0:
+  load_const true (bool, tagged)
+  store_var: v0 value: b0:i0
+  goto b1
+b1:
+  load_var: v0
+  untag value: b1:i0
+  cond_jump cond: b1:i1 then: b2 else: b3
+b2:
+  load_const false (bool, tagged)
+  store_var: v0 value: b2:i0
+  goto b1
+b3:
+  load_const ()
+  return b3:i0
+
+fun __entry__ params: 0, totalVars: 0
+b0:
+  call function: 0 args: ()
+        """, listOf(
+                "main" withText """
+            (let ((b #t)) (while b (set b #f)))
+
+                """.trimIndent()
+        ))
+    }
+
 
     fun testMir(expected: String, files: List<InMemoryFileInfo>) {
         val sources = files.map { InMemorySource(it.text, it.name) }
         val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0), false)
         val mir = session.getMir().unwrap()
         val actual = mir.joinToString("\n") { it.toString() }
-        assertEquals(expected, actual)
+        assertEquals(expected.trim(), actual.trim())
     }
 }

@@ -11,7 +11,9 @@ void typeAssert(Value value, ValueType expected) {
 extern "C" Value r__add(Value left, Value right) {
     typeAssert(left, ValueType::Int);
     typeAssert(right, ValueType::Int);
-    return Value::fromInt(left.asInt() + right.asInt());
+    Value value = Value::fromInt(left.asInt() + right.asInt());
+    Tag tag = value.getTag();
+    return value;
 }
 
 extern "C" Value r__sub(Value left, Value right) {
@@ -133,4 +135,8 @@ Value r__size(Value list) {
     typeAssert(list, ValueType::List);
     List *pList = dynamic_cast<List*>(list.asObject());
     return Value::fromInt(pList->size());
+}
+
+Value r__tagFunction(void *function) {
+    return Value::fromFunctionPtr(function);
 }

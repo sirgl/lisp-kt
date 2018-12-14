@@ -17,19 +17,19 @@ stdlib created by Ivanov Roman and Ivanova Anastasia
 (defnat _eq r__eq (a b))
 
 
-(macro _and (a b) (if a b #f))
-(macro _or (a b) (if a #t b))
-(macro ! (a) (if a #f #t))
+(macro _and (a b) `(if a b #f))
+(macro _or (a b) `(if a #t b))
+(macro not (a) `(if a #f #t))
 
 (defn _lt (a b) (_and
                     (!(_gt a b))
                     (!(_eq a b))
                 )
 )
-(defn _le (a b) (! (_gt a b)
+(defn _le (a b) (not (_gt a b)
                 )
 )
-(defn _ge (a b) (! (_lt a b)
+(defn _ge (a b) (not (_lt a b)
                 )
 )
 

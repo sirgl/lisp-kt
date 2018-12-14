@@ -27,9 +27,9 @@ uint8_t getPrefix(Tag type) {
         case Tag::Function:
             return 0b110;
         case Tag::Bool:
-            return 0b001;
-        case Tag::Int:
             return 0b010;
+        case Tag::Int:
+            return 0b001;
         case Tag::Object:
             return 0b100;
         default:

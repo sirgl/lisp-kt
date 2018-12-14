@@ -37,11 +37,12 @@ interface FunctionAssembler {
     fun emitLabel(name: String)
 
     fun emitCall(name: String)
+    fun emitCallByPtrRax()
 
     fun emitCmpWithZero(memoryLocation: MemoryLocation)
 
     fun emitJmp(label: String)
-    fun emitJne(label: String)
+    fun emitJe(label: String)
 
     fun emitSub(value: Int, destination: MemoryLocation)
     fun emitAdd(value: Int, destination: MemoryLocation)

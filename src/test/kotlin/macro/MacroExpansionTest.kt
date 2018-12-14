@@ -98,6 +98,35 @@ main:
         """.trimIndent()))
     }
 
+    @Test
+    fun `test while real example`() {
+        testExpansion("""
+main:
+(defnat + r__add (a b))
+(defnat _gt r__gt (a b))
+(defnat _eq r__eq (a b))
+(defn < (a b) (if (if (_gt a b) #f #t) (if (_eq a b) #f #t) #f))
+(let ((i 0)) (while (< i 10) (set i (+ i 1))) i)
+        """.trimIndent(), listOf("main" withText  """
+            (defnat + r__add (a b))
+            (defnat _gt r__gt (a b))
+            (macro _and (a b) `(if a b #f))
+            (defnat _eq r__eq (a b))
+            (macro not (a) `(if a #f #t))
+            (defn < (a b) (_and
+                    (not (_gt a b))
+                    (not (_eq a b))
+                )
+            )
+            (let ((i 0))
+                (while (< i 10)
+                    (set i (+ i 1))
+                )
+                i
+            )
+        """.trimIndent()))
+    }
+
 
     @Test
     fun `test macro in macro `() {

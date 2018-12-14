@@ -120,6 +120,7 @@ main__init:
 main.S:
 	.text
 	.globl main__init
+	.globl __entry__
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
@@ -133,7 +134,7 @@ main__init:
 //restore registers for call r__untag
 //finish handling call r__untag
 	cmpq ${'$'}0, -24(%rbp)
-	jne L1
+	je L1
 L0:
 	movabsq ${'$'}2305843009213693953, %rax
 	movq %rax, -32(%rbp)
@@ -153,6 +154,19 @@ L2:
 	movq %rax, -64(%rbp)
 	movq -64(%rbp), %rax
 	addq ${'$'}64, %rsp
+	popq %rbp
+	retq
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
+	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
 """.trimIndent(), listOf(
@@ -208,7 +222,24 @@ L2:
 	popq %rbp
 	retq
         """.trimIndent(), listOf(
-                "main" withText "(if #t 1 (if #f 2 3))"
+                "main" withText """
+            (defnat + r__add (a b))
+            (defnat _gt r__gt (a b))
+            (macro _and (a b) (if a b #f))
+            (defnat _eq r__eq (a b))
+            (macro not (a) `(if a #f #t))
+            (defn < (a b) (_and
+                    (not (_gt a b))
+                    (not (_eq a b))
+                )
+            )
+            (let ((i 0))
+                (while (< i 10)
+                    (set i (+ i 1))
+                )
+                i
+            )
+                """.trimIndent()
         ))
     }
 
@@ -573,6 +604,65 @@ main__init:
                 "main" withText """
         (defnat print r__print (x))
         (print "Hello world!")
+                """.trimIndent()
+        ))
+    }
+    @Test
+    fun `test real`() {
+        testCodegen("""
+main.S:
+	.text
+Lstr0:
+	.asciz "Hello world!"
+	.globl main__init
+main__init:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}32, %rsp
+	movq r__print, %rax
+	movq %rax, -8(%rbp)
+	movq ${'$'}Lstr0, -32(%rbp)
+//save registers for call r__createString
+	movq -32(%rbp), %rdi
+	callq r__createString
+	movq %rax, -16(%rbp)
+//restore registers for call r__createString
+//finish handling call r__createString
+//save registers for call r__print
+	movq -16(%rbp), %rdi
+	callq r__print
+	movq %rax, -24(%rbp)
+//restore registers for call r__print
+//finish handling call r__print
+	movq -24(%rbp), %rax
+	addq ${'$'}32, %rsp
+	popq %rbp
+	retq
+        """, listOf(
+                "main" withText """
+            (defnat + r__add (a b))
+            (defnat _gt r__gt (a b))
+            (macro _and (a b) `(if a b #f))
+            (defnat _eq r__eq (a b))
+            (defnat print r__print (a))
+            (macro not (a) `(if a #f #t))
+            (defn lt (a b) (_and
+                    (not (_gt a b))
+                    (not (_eq a b))
+                )
+            )
+            (defn _ge (a b) (not (lt a b)
+                )
+            )
+            (let ((i 0))
+                (while (lt i 10)
+                    (print i)
+                    (print "\n")
+                    (set i (+ i 1))
+                )
+                i
+            )
+
                 """.trimIndent()
         ))
     }

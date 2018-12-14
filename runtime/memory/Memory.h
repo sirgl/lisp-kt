@@ -90,6 +90,14 @@ struct Value {
         return resultPtrValue;
     }
 
+    static Value fromFunctionPtr(void* ptr) {
+        if (ptr == nullptr) {
+            return Value(0);
+        }
+        Value resultPtrValue = Value((uint64_t)ptr, Tag::Function);
+        return resultPtrValue;
+    }
+
     // Must be aligned to 8
     void* asPointer() {
         Tag tag = getTag();

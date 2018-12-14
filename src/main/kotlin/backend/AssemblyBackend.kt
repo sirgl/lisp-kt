@@ -18,7 +18,7 @@ class AssemblyBackend(
     ) : List<FileArtifact> {
         fileAssembler.markAsText()
         fileAssembler.writeStringTable(file.stringTable)
-        fileAssembler.writeExportTable(file.functions.map { it.name })
+        fileAssembler.writeExportTable(file.functions.map { mangle(it.name) })
         val labelIndexHolder = LabelIndexHolder()
         for (function in file.functions) {
             val registerMap = registerAllocator.allocateRegisters(function)
@@ -55,7 +55,7 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
                 }
                 is LirBinInstr -> TODO()
                 is LirGetFunctionPtrInstr -> {
-                    emitMov(instruction.name, Regs.rax)
+                    emitMov(mangle(instruction.name), Regs.rax)
                     emitMov(Regs.rax, instrRegisterMap[instruction.destReg])
                 }
                 is LirGetStrPtrInstr -> {
@@ -70,7 +70,7 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
                     for ((argIndex, realArgPosition) in realArgPositions.withIndex()) {
                         emitMovSmart(realArgPosition, parameterRegisters[argIndex])
                     }
-                    emitCall(instruction.functionName)
+                    emitCall(mangle(instruction.functionName))
                     emitMovSmart(Regs.rax, instrRegisterMap[instruction.resultReg])
                     emitComment("restore registers for call ${instruction.functionName}")
 
@@ -82,13 +82,13 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
                 }
                 is LirCondJumpInstr -> {
                     emitCmpWithZero(instrRegisterMap[instruction.condReg])
-                    emitJne(indexToLabel[instruction.elseInstrIndex]!!)
+                    emitJe(mangle(indexToLabel[instruction.elseInstrIndex]!!))
                 }
                 is LirReturnInstr -> {
                     emitMovSmart(instrRegisterMap[instruction.reg], Regs.rax)
                 }
                 is LirGotoInstr -> {
-                    emitJmp(indexToLabel[instruction.instrIndex]!!)
+                    emitJmp(mangle(indexToLabel[instruction.instrIndex]!!))
                 }
                 is LirInplaceI64 -> {
 
@@ -100,6 +100,23 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
                     }
                 }
                 is LirLoadGlobalVar -> TODO()
+                is LirCallByPtrInstr -> {
+                    emitComment("save registers for call by ptr")
+                    for (i in 0 until function.parameterCount) {
+                        emitPush(instrRegisterMap[i])
+                    }
+                    emitMov(instrRegisterMap[instruction.argumentReg], Regs.rdi)
+                    emitMov(instrRegisterMap[instruction.functionReg], Regs.rax)
+                    emitCallByPtrRax()
+                    emitMov(Regs.rax, instrRegisterMap[instruction.resultReg])
+                    emitComment("restore registers for call by ptr")
+
+                    // TODO check that all parameters popped
+                    for (i in function.parameterCount - 1 downTo 0 step 1) {
+                        emitPop(instrRegisterMap[i])
+                    }
+                    emitComment("finish handling call call by ptr")
+                }
             }
         }
         emitAdd(bytesToAllocateOnStack, Regs.rsp)
@@ -142,5 +159,31 @@ class LabelIndexHolder {
         val index = nextLabelIndex
         nextLabelIndex++
         return index
+    }
+}
+
+fun mangle(functionName: String): String {
+    return buildString {
+        for (ch in functionName) {
+            append(mangle(ch))
+        }
+    }
+}
+
+private fun mangle(ch: Char): String {
+    return when (ch) {
+        '+' -> "m__plus"
+        '-' -> "m__minus"
+        '@' -> "m__at"
+        '*' -> "m__mul"
+        '/' -> "m__div"
+        '%' -> "m__percent"
+        '$' -> "m__dollar"
+        '&' -> "m__and"
+        '|' -> "m__or"
+        '!' -> "m__not"
+        '^' -> "m__cap"
+        '.' -> "m__dot"
+        else -> ch.toString()
     }
 }

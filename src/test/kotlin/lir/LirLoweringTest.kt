@@ -257,13 +257,18 @@ fun foo_satellite :  virtual regs: 10 paramCount: 1
   9 call name: r__createString resultReg: %7 args: (%9)
   10 call name: r__printErrorAndExit resultReg: %8 args: (%7)
 
-fun main__init :  virtual regs: 6 paramCount: 0
-  0 get_function_ptr foo_satellite %1
-  1 mov from %1 to %0
-  2 mov from %0 to %3
-  3 inplace_i64 reg: %4 value: 0 (without tag: 0)
-  4 call_by_ptr: function: 3 args: 4 result: 5
-  5 return %5
+fun main__init :  virtual regs: 8 paramCount: 0
+  0 get_function_ptr foo_satellite %7
+  1 call name: r__tagFunction resultReg: %1 args: (%7)
+  2 mov from %1 to %0
+  3 mov from %0 to %3
+  4 inplace_i64 reg: %4 value: 0 (without tag: 0)
+  5 call name: r__untag resultReg: %5 args: (%3)
+  6 call_by_ptr: function: 5 args: 4 result: 6
+  7 return %6
+
+fun __entry__ :  virtual regs: 1 paramCount: 0
+  0 call name: main__init resultReg: %0 args: ()
         """.trimIndent(), listOf(
             "main" withText """
         (let ((f (defn foo () ()))) (f))
@@ -386,6 +391,31 @@ fun main__init :  virtual regs: 4 paramCount: 0
                 "main" withText """
         (defnat print print (x))
         (print "Hello world!")
+                """.trimIndent()
+        ))
+    }
+
+    @Test
+    fun `test let while`() {
+        testLir("""
+fun main__init :  virtual regs: 8 paramCount: 0
+  0 inplace_i64 reg: %1 value: 4611686018427387905 (without tag: 1)
+  1 mov from %1 to %0
+  2 mov from %0 to %3
+  3 call name: r__untag resultReg: %4 args: (%3)
+  4 cond_jump cond: %4 thenIndex: 5 elseIndex: 8
+  5 inplace_i64 reg: %5 value: 4611686018427387904 (without tag: 0)
+  6 mov from %5 to %0
+  7 goto 2
+  8 inplace_i64 reg: %7 value: 0 (without tag: 0)
+  9 return %7
+
+fun __entry__ :  virtual regs: 1 paramCount: 0
+  0 call name: main__init resultReg: %0 args: ()
+        """, listOf(
+                "main" withText """
+            (let ((b #t)) (while b (set b #f)))
+
                 """.trimIndent()
         ))
     }

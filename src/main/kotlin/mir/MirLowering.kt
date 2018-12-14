@@ -99,7 +99,8 @@ private class MirFunctionLowering(
                 for (arg in args.reversed()) {
                    argList = builder.emit(MirWithElementInstr(arg, argList))
                 }
-                builder.emit(MirCallByRefInstr(funcRefInstrId, argList))
+                val funcRefIdUntagged = builder.emit(MirUntagInstruction(funcRefInstrId))
+                builder.emit(MirCallByRefInstr(funcRefIdUntagged, argList))
             }
         }
     }
@@ -129,12 +130,17 @@ private class MirFunctionLowering(
     }
 
     private fun lowerWhile(expr: HirWhileExpr): MirInstrId {
+        val gotoConditionInstruction = MirGotoInstruction()
+        builder.emit(gotoConditionInstruction)
+        builder.finishBlock()
+
         // condition
         val conditionId = lowerExpr(expr.condition)
         val untaggedCondition = builder.emit(MirUntagInstruction(conditionId))
         val conditionJumpInstr = MirCondJumpInstruction(untaggedCondition)
         builder.emit(conditionJumpInstr)
         val conditionBlock = builder.finishBlock()
+        gotoConditionInstruction.basicBlockIndex = conditionBlock
 
         // body
         lowerExpr(expr.body)

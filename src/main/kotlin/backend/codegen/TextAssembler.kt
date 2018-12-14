@@ -1,6 +1,7 @@
 package backend.codegen
 
 import backend.MemoryLocation
+import backend.mangle
 import java.io.OutputStream
 
 class TextAssembler : Assembler {
@@ -24,7 +25,7 @@ class TextAssembler : Assembler {
     private val sb = StringBuilder()
     override fun writeFunction(name: String, writer: (FunctionAssembler) -> Unit) {
         val functionAssembler = FunctionTextAssembler(sb)
-        functionAssembler.emitLabel(name)
+        functionAssembler.emitLabel(mangle(name))
         writer(functionAssembler)
         sb.append("\n")
     }
@@ -71,6 +72,10 @@ class FunctionTextAssembler(
         addLineShifted("movq $text, ${to.assemblyText}")
     }
 
+    override fun emitCallByPtrRax() {
+        addLineShifted("call *%rax")
+    }
+
     override fun emitMovabs(stringLabel: String, to: MemoryLocation) {
         addLineShifted("movabsq $stringLabel, ${to.assemblyText}")
     }
@@ -95,8 +100,8 @@ class FunctionTextAssembler(
         addLineShifted("jmp $label")
     }
 
-    override fun emitJne(label: String) {
-        addLineShifted("jne $label")
+    override fun emitJe(label: String) {
+        addLineShifted("je $label")
     }
 
     override fun emitAdd(value: Int, destination: MemoryLocation) {

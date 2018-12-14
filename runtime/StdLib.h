@@ -37,3 +37,5 @@ extern "C" Value r__first(Value list);
 extern "C" Value r__tail(Value list);
 
 extern "C" Value r__size(Value list);
+
+extern "C" Value r__tagFunction(void* function);
