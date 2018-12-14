@@ -91,6 +91,8 @@ interface HirFunctionDeclaration : HirDeclaration {
         }
     val isMain: Boolean
         get() = false
+    val isEntry: Boolean
+        get() = false
 }
 
 class HirNativeFunctionDeclaration(
@@ -110,7 +112,8 @@ class HirFunctionDefinition(
         override val name: String,
         override val parameters: List<HirParameter>,
         val body: HirBlockExpr, // TODO make optional to make it possible to make forward declarations
-        override val isMain: Boolean = false
+        override val isMain: Boolean = false,
+        override val isEntry: Boolean = false
 ) : HirNode(), HirFunctionDeclaration {
     override val children: List<HirNode>
         get() = childrenFrom(parameters, body)

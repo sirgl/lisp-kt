@@ -20,10 +20,12 @@ class HirLowering(private val implicitImports: List<HirImport>) {
         val lints = mutableListOf<Lint>()
         val files = mutableListOf<HirFile>()
         var isError = false
+        var isTarget = true
         target.dfs {
             it as RealDependencyEntry
             val ast = it.ast
-            val file = lower(ast.root, ast.source, context)
+            val file = lower(ast.root, ast.source, context, isTarget)
+            isTarget = false
             lints.addAll(file.lints)
             if (file.isError()) {
                 isError = true
@@ -40,8 +42,8 @@ class HirLowering(private val implicitImports: List<HirImport>) {
     /**
      * It is important to lower in dfs post order to make sure all dependencies get into context before lowering unit
      */
-    private fun lower(root: FileNode, source: Source, context: LoweringContext): ResultWithLints<HirFile> {
-        return UnitHirLowering(root, source, context, implicitImports).lower()
+    private fun lower(root: FileNode, source: Source, context: LoweringContext, isTarget: Boolean): ResultWithLints<HirFile> {
+        return UnitHirLowering(root, source, context, implicitImports, isTarget).lower()
     }
 
 }
@@ -93,7 +95,8 @@ private class UnitHirLowering(
         val root: AstNode,
         val source: Source,
         val context: LoweringContext,
-        implicitImports: List<HirImport>
+        implicitImports: List<HirImport>,
+        val isTarget: Boolean
 ) {
     val imports = implicitImports.toMutableList()
     val lints = mutableListOf<Lint>()
@@ -109,8 +112,8 @@ private class UnitHirLowering(
     fun lower(): ResultWithLints<HirFile> {
         val block = lowerBlock(root.children, true) ?: return ResultWithLints.Error(lints)
         // Convention for top level code in file (all code in HIR must be in function, so synthetic one is created)
-        val name = source.path.replace('/', '_') + "__init"
-        functions.add(HirFunctionDefinition(name, emptyList(), block, true))
+        val name = source.path.replace('/', '_').replace('.', '_') + "__init"
+        functions.add(HirFunctionDefinition(name, emptyList(), block, true, isTarget))
         return ResultWithLints.Ok(HirFile(source, imports, functions, moduleName))
     }
 

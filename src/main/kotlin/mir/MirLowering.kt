@@ -13,8 +13,13 @@ class MirLowering {
     private fun lower(file: HirFile, context: MirBuilderContext): MirFile {
         val functions = file.functions.flatMap {
             val function = lower(it, file, context)
+
             if (it.isMain) {
-                listOf(function)
+                if (it.isEntry) {
+                    listOf(function, createEntryWrapper(function.functionId, context))
+                } else {
+                    listOf(function)
+                }
             } else {
                 val satellite = createSatelliteRepackager(it, function.functionId, context)
             listOf(function, satellite)
@@ -256,4 +261,16 @@ fun createSatelliteRepackager(function: HirFunctionDeclaration, originalFunction
         override val name= function.satelliteName
     }
     return builder.finishFunction(satelliteDeclaration)
+}
+
+fun createEntryWrapper(originalFunctionId: Int, context: MirBuilderContext) : MirFunction {
+    val builder = MirFunctionBuilder("__entry__", false, context)
+    builder.emit(MirLocalCallInstr(originalFunctionId, emptyArray()))
+    builder.finishBlock()
+    return builder.finishFunction(object: HirFunctionDeclaration {
+        override val parameters: List<HirParameter>
+            get() = emptyList()
+        override val name: String
+            get() = "__entry__"
+    })
 }

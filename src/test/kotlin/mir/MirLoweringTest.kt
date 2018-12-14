@@ -17,6 +17,10 @@ fun main__init params: 0, totalVars: 0 (main)
 b0:
   load_const ()
   return b0:i0
+
+fun __entry__ params: 0, totalVars: 0
+b0:
+  call function: 0 args: ()
         """.trimIndent(), listOf(
                 "main" withText "()"
         ))
@@ -56,6 +60,10 @@ fun main__init params: 0, totalVars: 0 (main)
 b0:
   get_function_reference 1
   return b0:i0
+
+fun __entry__ params: 0, totalVars: 0
+b0:
+  call function: 2 args: ()
         """.trimIndent(), listOf(
                 "main" withText "(defn foo(x) 42)"
         ))
@@ -83,6 +91,10 @@ b2:
 b3:
   load_var: v1
   return b3:i0
+
+fun __entry__ params: 0, totalVars: 0
+b0:
+  call function: 0 args: ()
         """.trimIndent(), listOf(
                 "main" withText "(if #t 1 2)"
         ))
@@ -123,6 +135,10 @@ b5:
 b6:
   load_var: v1
   return b6:i0
+
+fun __entry__ params: 0, totalVars: 0
+b0:
+  call function: 0 args: ()
         """.trimIndent(), listOf(
                 "main" withText "(if #t 1 (if #f 2 3))"
         ))
@@ -171,6 +187,10 @@ b1:
 b2:
   load_const ()
   return b2:i0
+
+fun __entry__ params: 0, totalVars: 0
+b0:
+  call function: 2 args: ()
         """.trimIndent(), listOf(
                 "main" withText "(defn print (x) ())(while #t (print 42))"
         ))
@@ -189,6 +209,10 @@ b0:
   load_const 12 (i32, tagged)
   store_var: v0 value: b0:i2
   return b0:i3
+
+fun __entry__ params: 0, totalVars: 0
+b0:
+  call function: 0 args: ()
         """.trimIndent(), listOf(
                 "main" withText "(let (( y 0)) (set y 12))"
         ))
@@ -206,6 +230,10 @@ b0:
   store_var: v0 value: b0:i0
   load_var: v0
   return b0:i2
+
+fun __entry__ params: 0, totalVars: 0
+b0:
+  call function: 0 args: ()
         """.trimIndent(), listOf(
                 "main" withText "(let ((x 12)) x)"
         ))
@@ -231,6 +259,10 @@ b0:
   load_const let (symbol)
   with_element list: b0:i10, value: b0:i11
   return b0:i12
+
+fun __entry__ params: 0, totalVars: 0
+b0:
+  call function: 0 args: ()
         """.trimIndent(), listOf(
                 "main" withText "`(let (\"foo\" 12 2) x)"
         ))
@@ -279,6 +311,10 @@ b0:
   with_element list: b0:i4, value: b0:i5
   call function: 0 args: (b0:i1, b0:i6)
   return b0:i7
+
+fun __entry__ params: 0, totalVars: 0
+b0:
+  call function: 2 args: ()
         """.trimIndent(), listOf(
                 "main" withText "(defn foo (a @vp) ())(foo 1 2 3)"
         ))
@@ -321,6 +357,10 @@ b0:
   load_const ()
   call_by_reference referneceInstr: b0:i2 args: b0:i3
   return b0:i4
+
+fun __entry__ params: 0, totalVars: 0
+b0:
+  call function: 2 args: ()
         """.trimIndent(), listOf(
             "main" withText """
         (let ((f (defn foo () ()))) (f))
@@ -364,6 +404,10 @@ b0:
   with_element list: b0:i3, value: b0:i4
   call function: 0 args: (b0:i5)
   return b0:i6
+
+fun __entry__ params: 0, totalVars: 0
+b0:
+  call function: 2 args: ()
         """.trimIndent(), listOf(
                 "main" withText "(defnat print r__print (x))(print `(12 22))"
         ))
@@ -400,6 +444,10 @@ b0:
   load_const Hello (string, tagged)
   call function: 0 args: (b0:i1)
   return b0:i2
+
+fun __entry__ params: 0, totalVars: 0
+b0:
+  call function: 2 args: ()
         """.trimIndent(), listOf(
                 "main" withText """
         (defnat print r__print (x))
@@ -417,6 +465,10 @@ fun main__init params: 0, totalVars: 0 (main)
 b0:
   load_const Hello world! (string, tagged)
   return b0:i0
+
+fun __entry__ params: 0, totalVars: 0
+b0:
+  call function: 0 args: ()
         """.trim(), listOf(
                 "main" withText """
         "Hello world!"
@@ -455,6 +507,10 @@ b0:
   load_const Hello world! (string, tagged)
   call function: 0 args: (b0:i1)
   return b0:i2
+
+fun __entry__ params: 0, totalVars: 0
+b0:
+  call function: 2 args: ()
         """.trim(), listOf(
                 "main" withText """
         (defnat print print (x))
