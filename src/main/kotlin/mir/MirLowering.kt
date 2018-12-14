@@ -94,7 +94,7 @@ private class MirFunctionLowering(
                 for (arg in args.reversed()) {
                    argList = builder.emit(MirWithElementInstr(arg, argList))
                 }
-                builder.emit(MirCallByRefInstr(funcRefInstrId, arrayOf(argList)))
+                builder.emit(MirCallByRefInstr(funcRefInstrId, argList))
             }
         }
     }
@@ -126,7 +126,8 @@ private class MirFunctionLowering(
     private fun lowerWhile(expr: HirWhileExpr): MirInstrId {
         // condition
         val conditionId = lowerExpr(expr.condition)
-        val conditionJumpInstr = MirCondJumpInstruction(conditionId)
+        val untaggedCondition = builder.emit(MirUntagInstruction(conditionId))
+        val conditionJumpInstr = MirCondJumpInstruction(untaggedCondition)
         builder.emit(conditionJumpInstr)
         val conditionBlock = builder.finishBlock()
 
@@ -149,7 +150,8 @@ private class MirFunctionLowering(
     private fun lowerIf(expr: HirIfExpr): MirInstrId {
         // condition
         val conditionId = lowerExpr(expr.condition)
-        val conditionJumpInstr = MirCondJumpInstruction(conditionId)
+        val untaggedCondition = builder.emit(MirUntagInstruction(conditionId))
+        val conditionJumpInstr = MirCondJumpInstruction(untaggedCondition)
         builder.emit(conditionJumpInstr)
         builder.finishBlock()
         // if is expression, so we need to return result
@@ -218,7 +220,8 @@ fun createSatelliteRepackager(function: HirFunctionDeclaration, originalFunction
     }
     val conditionId = builder.emit(MirBinaryIntInstr(operation, realParameterCountId, expectedParametersCountId))
     // true - ok path, else - wrong count of parameters
-    val conditionalJumpInstr = MirCondJumpInstruction(conditionId)
+    val untaggedConditionId = builder.emit(MirUntagInstruction(conditionId))
+    val conditionalJumpInstr = MirCondJumpInstruction(untaggedConditionId)
     builder.emit(conditionalJumpInstr)
     builder.finishBlock()
 

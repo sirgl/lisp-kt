@@ -41,7 +41,8 @@ b0:
   list_size list: b0:i0
   load_const 1 (i32, tagged)
   binary Eq b0:i1, b0:i2
-  cond_jump cond: b0:i3 then: b1 else: b2
+  untag value: b0:i3
+  cond_jump cond: b0:i4 then: b1 else: b2
 b1:
   list_first list: b0:i0
   list_tail list: b0:i0
@@ -69,7 +70,8 @@ var table:
    0 __merge_if_0
 b0:
   load_const true (bool, tagged)
-  cond_jump cond: b0:i0 then: b1 else: b2
+  untag value: b0:i0
+  cond_jump cond: b0:i1 then: b1 else: b2
 b1:
   load_const 1 (i32, tagged)
   store_var: v1 value: b1:i0
@@ -96,14 +98,16 @@ var table:
    1 __merge_if_1
 b0:
   load_const true (bool, tagged)
-  cond_jump cond: b0:i0 then: b1 else: b2
+  untag value: b0:i0
+  cond_jump cond: b0:i1 then: b1 else: b2
 b1:
   load_const 1 (i32, tagged)
   store_var: v1 value: b1:i0
   goto b6
 b2:
   load_const false (bool, tagged)
-  cond_jump cond: b2:i0 then: b3 else: b4
+  untag value: b2:i0
+  cond_jump cond: b2:i1 then: b3 else: b4
 b3:
   load_const 2 (i32, tagged)
   store_var: v2 value: b3:i0
@@ -143,7 +147,8 @@ b0:
   list_size list: b0:i0
   load_const 1 (i32, tagged)
   binary Eq b0:i1, b0:i2
-  cond_jump cond: b0:i3 then: b1 else: b2
+  untag value: b0:i3
+  cond_jump cond: b0:i4 then: b1 else: b2
 b1:
   list_first list: b0:i0
   list_tail list: b0:i0
@@ -157,7 +162,8 @@ fun main__init params: 0, totalVars: 0 (main)
 b0:
   get_function_reference 1
   load_const true (bool, tagged)
-  cond_jump cond: b0:i1 then: b1 else: b2
+  untag value: b0:i1
+  cond_jump cond: b0:i2 then: b1 else: b2
 b1:
   load_const 42 (i32, tagged)
   call function: 0 args: (b1:i0)
@@ -251,7 +257,8 @@ b0:
   list_size list: b0:i0
   load_const 2 (i32, tagged)
   binary Ge b0:i1, b0:i2
-  cond_jump cond: b0:i3 then: b1 else: b2
+  untag value: b0:i3
+  cond_jump cond: b0:i4 then: b1 else: b2
 b1:
   list_first list: b0:i0
   list_tail list: b0:i0
@@ -295,7 +302,8 @@ b0:
   list_size list: b0:i0
   load_const 0 (i32, tagged)
   binary Eq b0:i1, b0:i2
-  cond_jump cond: b0:i3 then: b1 else: b2
+  untag value: b0:i3
+  cond_jump cond: b0:i4 then: b1 else: b2
 b1:
   call function: 0 args: ()
   return b1:i0
@@ -311,7 +319,7 @@ b0:
   store_var: v0 value: b0:i0
   load_var: v0
   load_const ()
-  call_by_reference referneceInstr: b0:i2 args: (b0:i3)
+  call_by_reference referneceInstr: b0:i2 args: b0:i3
   return b0:i4
         """.trimIndent(), listOf(
             "main" withText """
@@ -335,7 +343,8 @@ b0:
   list_size list: b0:i0
   load_const 1 (i32, tagged)
   binary Eq b0:i1, b0:i2
-  cond_jump cond: b0:i3 then: b1 else: b2
+  untag value: b0:i3
+  cond_jump cond: b0:i4 then: b1 else: b2
 b1:
   list_first list: b0:i0
   list_tail list: b0:i0
@@ -374,7 +383,8 @@ b0:
   list_size list: b0:i0
   load_const 1 (i32, tagged)
   binary Eq b0:i1, b0:i2
-  cond_jump cond: b0:i3 then: b1 else: b2
+  untag value: b0:i3
+  cond_jump cond: b0:i4 then: b1 else: b2
 b1:
   list_first list: b0:i0
   list_tail list: b0:i0
@@ -428,7 +438,8 @@ b0:
   list_size list: b0:i0
   load_const 1 (i32, tagged)
   binary Eq b0:i1, b0:i2
-  cond_jump cond: b0:i3 then: b1 else: b2
+  untag value: b0:i3
+  cond_jump cond: b0:i4 then: b1 else: b2
 b1:
   list_first list: b0:i0
   list_tail list: b0:i0

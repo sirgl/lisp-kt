@@ -118,30 +118,41 @@ main__init:
     fun `test if`() {
         testCodegen("""
 main.S:
+	.text
+	.globl main__init
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}-8, %rsp
-	movq ${'$'}0, -16(%rsp)
-	cmpq ${'$'}0, -16(%rsp)
+	subq ${'$'}64, %rsp
+	movabsq ${'$'}4611686018427387905, %rax
+	movq %rax, -16(%rbp)
+//save registers for call r__untag
+	movq -16(%rbp), %rdi
+	callq r__untag
+	movq %rax, -24(%rbp)
+//restore registers for call r__untag
+//finish handling call r__untag
+	cmpq ${'$'}0, -24(%rbp)
 	jne L1
 L0:
-	movq ${'$'}1, -24(%rsp)
-;mem (-24(%rsp)) -> mem (-16(%rsp)) move through temporary register
-	movq -24(%rsp), %r10
-	movq %r10, -16(%rsp)
+	movabsq ${'$'}2305843009213693953, %rax
+	movq %rax, -32(%rbp)
+//mem (-32(%rbp)) -> mem (-16(%rbp)) move through temporary register
+	movq -32(%rbp), %rax
+	movq %rax, -16(%rbp)
 	jmp L2
 L1:
-	movq ${'$'}0, -40(%rsp)
-;mem (-40(%rsp)) -> mem (-16(%rsp)) move through temporary register
-	movq -40(%rsp), %r10
-	movq %r10, -16(%rsp)
+	movabsq ${'$'}2305843009213693954, %rax
+	movq %rax, -48(%rbp)
+//mem (-48(%rbp)) -> mem (-16(%rbp)) move through temporary register
+	movq -48(%rbp), %rax
+	movq %rax, -16(%rbp)
 L2:
-;mem (-16(%rsp)) -> mem (-56(%rsp)) move through temporary register
-	movq -16(%rsp), %r10
-	movq %r10, -56(%rsp)
-	movq -56(%rsp), %rax
-	addq ${'$'}-8, %rsp
+//mem (-16(%rbp)) -> mem (-64(%rbp)) move through temporary register
+	movq -16(%rbp), %rax
+	movq %rax, -64(%rbp)
+	movq -64(%rbp), %rax
+	addq ${'$'}64, %rsp
 	popq %rbp
 	retq
 """.trimIndent(), listOf(
@@ -297,82 +308,89 @@ main__init:
     fun `test data`() {
         testCodegen("""
 main.S:
-.asciz "let"
-.asciz "foo"
-.asciz "x"
+	.text
+Lstr0:
+	.asciz "x"
+Lstr1:
+	.asciz "foo"
+Lstr2:
+	.asciz "let"
+	.globl main__init
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}-8, %rsp
-	movq ${'$'}0, -8(%rsp)
-	movabsq Lstr0, -112(%rsp)
-;save registers for call r__createSymbol
-	movq -112(%rsp), %rdi
+	subq ${'$'}128, %rsp
+	movq ${'$'}0, -8(%rbp)
+	movq ${'$'}Lstr0, -112(%rbp)
+//save registers for call r__createSymbol
+	movq -112(%rbp), %rdi
 	callq r__createSymbol
-	movq %rax, -16(%rsp)
-;restore registers for call r__createSymbol
-;finish handling call r__createSymbol
-;save registers for call r__withElement
-	movq -16(%rsp), %rdi
-	movq -8(%rsp), %rsi
+	movq %rax, -16(%rbp)
+//restore registers for call r__createSymbol
+//finish handling call r__createSymbol
+//save registers for call r__withElement
+	movq -8(%rbp), %rdi
+	movq -16(%rbp), %rsi
 	callq r__withElement
-	movq %rax, -24(%rsp)
-;restore registers for call r__withElement
-;finish handling call r__withElement
-	movq ${'$'}0, -32(%rsp)
-	movabsq Lstr1, -120(%rsp)
-;save registers for call r__createString
-	movq -120(%rsp), %rdi
+	movq %rax, -24(%rbp)
+//restore registers for call r__withElement
+//finish handling call r__withElement
+	movq ${'$'}0, -32(%rbp)
+	movabsq ${'$'}2305843009213693954, %rax
+	movq %rax, -40(%rbp)
+//save registers for call r__withElement
+	movq -32(%rbp), %rdi
+	movq -40(%rbp), %rsi
+	callq r__withElement
+	movq %rax, -48(%rbp)
+//restore registers for call r__withElement
+//finish handling call r__withElement
+	movabsq ${'$'}2305843009213693964, %rax
+	movq %rax, -56(%rbp)
+//save registers for call r__withElement
+	movq -48(%rbp), %rdi
+	movq -56(%rbp), %rsi
+	callq r__withElement
+	movq %rax, -64(%rbp)
+//restore registers for call r__withElement
+//finish handling call r__withElement
+	movq ${'$'}Lstr1, -120(%rbp)
+//save registers for call r__createString
+	movq -120(%rbp), %rdi
 	callq r__createString
-	movq %rax, -40(%rsp)
-;restore registers for call r__createString
-;finish handling call r__createString
-;save registers for call r__withElement
-	movq -40(%rsp), %rdi
-	movq -32(%rsp), %rsi
+	movq %rax, -72(%rbp)
+//restore registers for call r__createString
+//finish handling call r__createString
+//save registers for call r__withElement
+	movq -64(%rbp), %rdi
+	movq -72(%rbp), %rsi
 	callq r__withElement
-	movq %rax, -48(%rsp)
-;restore registers for call r__withElement
-;finish handling call r__withElement
-	movq ${'$'}0, -56(%rsp)
-;save registers for call r__withElement
-	movq -56(%rsp), %rdi
-	movq -48(%rsp), %rsi
+	movq %rax, -80(%rbp)
+//restore registers for call r__withElement
+//finish handling call r__withElement
+//save registers for call r__withElement
+	movq -24(%rbp), %rdi
+	movq -80(%rbp), %rsi
 	callq r__withElement
-	movq %rax, -64(%rsp)
-;restore registers for call r__withElement
-;finish handling call r__withElement
-	movq ${'$'}0, -72(%rsp)
-;save registers for call r__withElement
-	movq -72(%rsp), %rdi
-	movq -64(%rsp), %rsi
-	callq r__withElement
-	movq %rax, -80(%rsp)
-;restore registers for call r__withElement
-;finish handling call r__withElement
-;save registers for call r__withElement
-	movq -80(%rsp), %rdi
-	movq -24(%rsp), %rsi
-	callq r__withElement
-	movq %rax, -88(%rsp)
-;restore registers for call r__withElement
-;finish handling call r__withElement
-	movabsq Lstr2, -128(%rsp)
-;save registers for call r__createSymbol
-	movq -128(%rsp), %rdi
+	movq %rax, -88(%rbp)
+//restore registers for call r__withElement
+//finish handling call r__withElement
+	movq ${'$'}Lstr2, -128(%rbp)
+//save registers for call r__createSymbol
+	movq -128(%rbp), %rdi
 	callq r__createSymbol
-	movq %rax, -96(%rsp)
-;restore registers for call r__createSymbol
-;finish handling call r__createSymbol
-;save registers for call r__withElement
-	movq -96(%rsp), %rdi
-	movq -88(%rsp), %rsi
+	movq %rax, -96(%rbp)
+//restore registers for call r__createSymbol
+//finish handling call r__createSymbol
+//save registers for call r__withElement
+	movq -88(%rbp), %rdi
+	movq -96(%rbp), %rsi
 	callq r__withElement
-	movq %rax, -104(%rsp)
-;restore registers for call r__withElement
-;finish handling call r__withElement
-	movq -104(%rsp), %rax
-	addq ${'$'}-8, %rsp
+	movq %rax, -104(%rbp)
+//restore registers for call r__withElement
+//finish handling call r__withElement
+	movq -104(%rbp), %rax
+	addq ${'$'}128, %rsp
 	popq %rbp
 	retq
         """.trimIndent(), listOf(

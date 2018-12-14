@@ -44,6 +44,13 @@ class LirCallInstr(val regArgs: IntArray, val functionName: String, val resultRe
     }
 }
 
+// Can be the only argument
+class LirCallByPtrInstr(val functionReg: Int, val argumentReg: Int, val  resultReg: Int) : LirInstr() {
+    override fun toString(): String {
+        return "call_by_ptr: function: $functionReg args: $argumentReg result: $resultReg"
+    }
+}
+
 class LirCondJumpInstr(
     val condReg: Int,
     var thenInstructionIndex: Int = -1,

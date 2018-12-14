@@ -179,6 +179,12 @@ class MirListTailInstruction(val listId: MirInstrId) : MirValueInstr() {
     }
 }
 
+class MirUntagInstruction(val valueId: MirInstrId) : MirValueInstr() {
+    override fun pretty(strategy: PrettyPrintStrategy): String {
+        return "untag value: ${strategy.instrIdRenderer.render(valueId)}"
+    }
+}
+
 class MirPrintErrorAndExitInstruction(val errorTextId: MirInstrId) : MirValueInstr() {
     override fun pretty(strategy: PrettyPrintStrategy): String {
         return "print_error_end_exit text: ${strategy.instrIdRenderer.render(errorTextId)}"
@@ -220,11 +226,10 @@ class MirLoadInstr(val varId: Short) : MirValueInstr() {
 
 sealed class MirCallInstr(val args: Array<MirInstrId>) : MirValueInstr()
 
-class MirCallByRefInstr(val referenceInstrId: MirInstrId, args: Array<MirInstrId>) : MirCallInstr(args) {
+class MirCallByRefInstr(val referenceInstrId: MirInstrId, val argsListId: MirInstrId) : MirCallInstr(arrayOf(argsListId)) {
     override fun pretty(strategy: PrettyPrintStrategy): String {
         val instrIdRenderer = strategy.instrIdRenderer
-        val args = args.joinToString(separator = ", ", prefix = "(", postfix = ")") { instrIdRenderer.render(it) }
-        return "call_by_reference referneceInstr: ${strategy.instrIdRenderer.render(referenceInstrId)} args: $args"
+        return "call_by_reference referneceInstr: ${instrIdRenderer.render(referenceInstrId)} args: ${instrIdRenderer.render(argsListId)}"
     }
 
 }

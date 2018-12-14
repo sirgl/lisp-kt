@@ -184,8 +184,11 @@ private class LirFileLowering(val mirFile: MirFile, val world: MirWorld, val con
                     builder.emit(LirGetFunctionPtrInstr(function.name, builder.toReg(instrId)))
                 }
                 is MirCallByRefInstr -> {
-                    TODO("call by ptr, requires function alignment and function reference tag, " +
-                            "before call tag must be deleted")
+                    builder.emit(LirCallByPtrInstr(
+                            builder.toReg(instruction.referenceInstrId),
+                            builder.toReg(instruction.argsListId),
+                            builder.toReg(instrId)
+                    ))
                 }
 
                 is MirLocalCallInstr -> {
@@ -226,6 +229,10 @@ private class LirFileLowering(val mirFile: MirFile, val world: MirWorld, val con
                     val leftReg = builder.toReg(instruction.leftId)
                     val rightReg = builder.toReg(instruction.rightId)
                     builder.emit(LirCallInstr(intArrayOf(leftReg, rightReg), intrinsicName, builder.toReg(instrId)))
+                }
+                is MirUntagInstruction -> {
+                    val textReg = builder.toReg(instruction.valueId)
+                    builder.emit(LirCallInstr(intArrayOf(textReg), LirLoweringConstants.RUNTIME_UNTAG_FUNCTION_NAME, builder.toReg(instrId)))
                 }
             }
         }
