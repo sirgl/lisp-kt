@@ -40,13 +40,13 @@ stdlib created by Ivanov Roman and Ivanova Anastasia
 (defnat tail r__tail (list))
 (defnat size r__size (list))
 (defn is-empty (list) (_eq (size list) 0))
-
+(defn list @args (args))
 
 ; Chain operations
 (macro and-list (l)
     (if (is-empty l)
         #t
-        (if (first l)
+        `(if (first l)
             (and-list (tail l))
             #f
         )
@@ -58,7 +58,7 @@ stdlib created by Ivanov Roman and Ivanova Anastasia
 (macro or-list (args)
      (if (is-empty args)
         #f
-        (if (first args)
+        `(if (first args)
             #t
             (or-list (tail args))
         )
@@ -73,7 +73,7 @@ stdlib created by Ivanov Roman and Ivanova Anastasia
 
 
 ;macros section
-(macro inc (i) `(+ i 1))
+(macro inc (i) `(_add i 1))
 
 (macro loop (block) `(while #t block))
 

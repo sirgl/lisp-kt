@@ -65,6 +65,38 @@ main:
         ))
     }
 
+    @Test
+    fun `test or chain macro`() {
+        testExpansion("""
+main:
+(defnat _eq r__eq (a b))
+(defnat first r__first (list))
+(defnat tail r__tail (list))
+(defnat size r__size (list))
+(defn is-empty (list) (_eq (size list) 0))
+(if (first (tail `(#f #f #f #t #f))) #t (if (first (tail (tail `(#f #f #f #t #f)))) #t (if (first (tail (tail (tail `(#f #f #f #t #f))))) #t (if (first (tail (tail (tail (tail `(#f #f #f #t #f)))))) #t #f))))
+        """.trimIndent(), listOf("main" withText  """
+            (defnat _eq r__eq (a b))
+            ; List related functions
+            (defnat first r__first (list))
+            (defnat tail r__tail (list))
+            (defnat size r__size (list))
+            (defn is-empty (list) (_eq (size list) 0))
+
+            (macro or-list (args)
+                 (if (is-empty args)
+                    #f
+                    `(if (first args)
+                        #t
+                        (or-list (tail args))
+                    )
+                 )
+            )
+
+            (macro or (@args) (or-list args))
+            (or #f #f #f #t #f)
+        """.trimIndent()))
+    }
 
 
     @Test
