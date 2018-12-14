@@ -14,7 +14,10 @@ interface Validator {
     fun validate(node: AstNode, lintSink: LintSink, source: Source)
 }
 
-class ListMatcher<T : NodeInfo>(val name: String, private val validator: Validator, val extractor: (AstNode) -> T) {
+class ListMatcher<T : NodeInfo>(val name: List<String>, private val validator: Validator,
+                                val extractor: (AstNode) -> T) {
+    constructor(name: String, validator: Validator, extractor: (AstNode) -> T) :
+            this(listOf(name), validator, extractor)
     fun matches(node: AstNode, source: Source = FakeSource, sink: LintSink? = null) : Boolean {
         if (node !is ListNode) return false
         if (node.children.isEmpty()) return false
@@ -22,7 +25,7 @@ class ListMatcher<T : NodeInfo>(val name: String, private val validator: Validat
         val first = children[0] as? LeafNode ?: return false
         if (first.token.type != TokenType.Identifier) return false
         val firstText = first.token.text
-        if (firstText != name) return false
+        if (firstText !in name) return false
         if (sink != null) {
             var hasErrors = false
             val errorSink = InterceptingSink(sink) {

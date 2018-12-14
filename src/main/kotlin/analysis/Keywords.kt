@@ -8,6 +8,7 @@ object Keywords {
     const val MODULE_KW = "module"
     const val WHILE_KW = "while"
     const val DEFN_KW = "defn"
+    const val FN_KW = "fn"
     const val MACRO_KW = "macro"
     const val DEFNAT_KW = "defnat"
 }

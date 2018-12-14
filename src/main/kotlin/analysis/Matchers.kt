@@ -11,14 +11,34 @@ import parser.ListNode
 import util.Source
 
 object Matchers {
+    private var uniqueFnIdentifier: Int = 0
+
     class FunctionLikeValidator(private val nodeType: String) : Validator {
         override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
             val children = node.children
-            if (!verifyCountAtLeast(node, nodeType, 4, source, lintSink)) return
+            if (!verifyCountAtLeast(node, nodeType, 3, source, lintSink)) return
             verifyName(children[1], "Name", source, lintSink)
             val parametersNode = children[2]
             verifyParametersNode(parametersNode, source, lintSink)
         }
+    }
+
+    class LambdaFunctionValidator(private val nodeType: String) : Validator {
+        override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
+            val children = node.children
+            if (!verifyCountAtLeast(node, nodeType, 3, source, lintSink)) return
+            val parametersNode = children[1]
+            verifyParametersNode(parametersNode, source, lintSink)
+        }
+    }
+
+    class CompositeValidator(private val validators: Map<String, Validator>) : Validator {
+        override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
+            var isMatched: Boolean = false
+            val name = (node.children.firstOrNull() as? LeafNode)?.token?.text ?: return
+            validators[name]?.validate(node, lintSink, source)
+        }
+
     }
 
     private fun verifyParametersNode(parametersNode: AstNode, source: Source, lintSink: LintSink) {
@@ -49,11 +69,27 @@ object Matchers {
     private val functionValidator = FunctionLikeValidator("Define")
     private val macroValidator = FunctionLikeValidator("Macro")
 
-    val DEFN = ListMatcher(Keywords.DEFN_KW, functionValidator) { node ->
+    val DEFN = ListMatcher(listOf(Keywords.DEFN_KW, Keywords.FN_KW),
+            CompositeValidator(mapOf(
+                    Keywords.DEFN_KW to functionValidator,
+                    Keywords.FN_KW to LambdaFunctionValidator("LambdaFunction")
+            ))
+    ) { node ->
         val children = node.children
-        val name = (children[1] as LeafNode).token.text
-        val parameters = parseParameterList(children[2])
-        DefnNodeInfo(name, parameters, children.drop(3))
+        val keyWord = (children[0] as LeafNode).token.text
+        var name = ""
+        val childCount: Int
+
+        return@ListMatcher if (keyWord == Keywords.FN_KW) {
+            uniqueFnIdentifier++
+            name = "@uniqueId$uniqueFnIdentifier"
+            val parameters = parseParameterList(children[1])
+            DefnNodeInfo(name, parameters, children.drop(2))
+        } else {
+            name = (children[1] as LeafNode).token.text
+            val parameters = parseParameterList(children[2])
+            DefnNodeInfo(name, parameters, children.drop(3))
+        }
     }
 
     val MACRO = ListMatcher(Keywords.MACRO_KW, macroValidator) { node ->
