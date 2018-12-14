@@ -19,10 +19,11 @@ class AssemblyBackend(
         fileAssembler.markAsText()
         fileAssembler.writeStringTable(file.stringTable)
         fileAssembler.writeExportTable(file.functions.map { it.name })
+        val labelIndexHolder = LabelIndexHolder()
         for (function in file.functions) {
             val registerMap = registerAllocator.allocateRegisters(function)
-            fileAssembler.writeFunction(function.name) {asm ->
-                with(FunctionGenerationSession(function, registerMap)) {
+            fileAssembler.writeFunction(function.name) { asm ->
+                with(FunctionGenerationSession(function, registerMap, labelIndexHolder)) {
                     asm.generate()
                 }
             }
@@ -36,9 +37,9 @@ class AssemblyBackend(
 
 
 
-private class FunctionGenerationSession(val function: LirFunction, val memoryMap: MemoryMap) {
+private class FunctionGenerationSession(val function: LirFunction, val memoryMap: MemoryMap, val labelIndexHolder: LabelIndexHolder) {
     fun FunctionAssembler.generate() {
-        val indexToLabel = getLabelPositions()
+        val indexToLabel = getLabelPositions(labelIndexHolder)
         val bytesToAllocateOnStack = memoryMap.getBytesToAllocateOnStack()
         emitPush(Regs.rbp)
         emitMov(Regs.rsp, Regs.rbp)
@@ -106,20 +107,17 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
         emitRet()
     }
 
-    private fun getLabelPositions(): HashMap<Int, String> {
-        var nextLabelIndex = 0
+    private fun getLabelPositions(labelHolder: LabelIndexHolder): HashMap<Int, String> {
         val lirBBStartIndices = hashMapOf<Int, String>()
         for (instruction in function.instructions) {
             when (instruction) {
                 is LirCondJumpInstr -> {
-                    lirBBStartIndices[instruction.thenInstructionIndex] = "L$nextLabelIndex"
-                    lirBBStartIndices[instruction.elseInstrIndex] = "L${nextLabelIndex + 1}"
-                    nextLabelIndex += 2
+                    lirBBStartIndices[instruction.thenInstructionIndex] = "L${labelHolder.nextIndex()}"
+                    lirBBStartIndices[instruction.elseInstrIndex] = "L${labelHolder.nextIndex()}"
 
                 }
                 is LirGotoInstr -> {
-                    lirBBStartIndices[instruction.instrIndex] = "L$nextLabelIndex"
-                    nextLabelIndex++
+                    lirBBStartIndices[instruction.instrIndex] = "L${labelHolder.nextIndex()}"
                 }
             }
         }
@@ -134,5 +132,15 @@ private class FunctionGenerationSession(val function: LirFunction, val memoryMap
         } else {
             emitMov(from, to)
         }
+    }
+}
+
+class LabelIndexHolder {
+    private var nextLabelIndex: Int = 0
+
+    fun nextIndex() : Int {
+        val index = nextLabelIndex
+        nextLabelIndex++
+        return index
     }
 }
