@@ -125,7 +125,7 @@ val standardNativeFunctions = mapOf(
         "r__rem" to binRem,
         "r__gt" to binGt,
         "r__eq" to NativeEqFun,
-        "r__cons" to ConsFun,
+        "r__withElement" to ConsFun,
         "r__tail" to TailFun,
         "r__first" to FirstFun,
         "r__size" to ListSizeFun,

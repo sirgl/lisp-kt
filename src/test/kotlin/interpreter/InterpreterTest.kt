@@ -273,6 +273,26 @@ class InterpreterTest {
         """.trimIndent(), "3")
     }
 
+    @Test
+    fun `test revert function`() {
+        testResult("""
+            (defnat _eq r__eq (a b))
+            (defn is-empty (list) (_eq (size list) 0))
+            (defnat cons r__withElement (list elem))
+            (defnat first r__first (list))
+            (defnat tail r__tail (list))
+            (defnat size r__size (list))
+
+            (defn revert (list)
+                (if (_eq (size list) 1)
+                (cons () (first list))
+                (cons (revert (tail list)) (first list)))
+            )
+            (revert `(1 2 3 4))
+        """.trimIndent(), "(4 3 2 1)")
+    }
+
+
     private fun testResult(program: String, expectedResult: String) {
         val parseResult = parser.parse(lexer.tokenize(program))
         when (parseResult) {

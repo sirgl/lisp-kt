@@ -86,6 +86,9 @@ stdlib created by Ivanov Roman and Ivanova Anastasia
     )
 )
 
-(loop (print "1"))
 
-(while #t (print "1"))
+(defn revert (list)
+    (if (_eq (size list) 1)
+    (cons () (first list))
+    (cons (revert (tail list)) (first list)))
+)
