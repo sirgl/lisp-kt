@@ -31,6 +31,15 @@ class MacroNodeInfo(
         override val body: List<AstNode>
 ) : FuncLikeDefinitionInfo()
 
+class MacroAsmNodeInfo(
+        val name: String,
+        val body: AstNode
+) : NodeInfo()
+
+class EmitNodeInfo(
+        val body: String
+) : NodeInfo()
+
 class ModuleNodeInfo(
         val name: String
 ) : NodeInfo()

@@ -1,11 +1,14 @@
 package macro
 
+import analysis.MacroAsmNodeInfo
 import analysis.Matchers
 import deps.RealDependencyEntry
 import deps.dfs
 import interpreter.Interpreter
 import interpreter.InterpreterEnv
 import interpreter.InterpreterException
+import lexer.Token
+import lexer.TokenType
 import linting.Lint
 import linting.Severity
 import linting.Subsystem
@@ -73,9 +76,11 @@ private class MacroExpansionContext(asts: List<Ast>, val target: RealDependencyE
 
                 val maybeMacro = macroEnv[name]
                 return if (maybeMacro != null
-                        && Matchers.MACRO.matches(maybeMacro)) {
+                        && (Matchers.MACRO.matches(maybeMacro))) {
                     val env = InterpreterEnv(macroEnv)
-                    val newBody = Interpreter(env).eval(node)
+                    val interpreter = Interpreter(env)
+                    val newBody = interpreter.eval(node)
+
                     ExpansionResult(newBody, true)
                 } else {
                     buildListExpansion(children, macroEnv, node)
@@ -141,6 +146,30 @@ private class MacroExpansionContext(asts: List<Ast>, val target: RealDependencyE
                         macroEnv[it.nameInProgram] = child
                     }
                     child
+                }
+                Matchers.MACROASM.matches(child, source) -> {
+                    val macroAsmResult = Matchers.MACROASM.extract(child, source)
+                    when (macroAsmResult) {
+                        is ResultWithLints.Ok -> {
+                            val macroNode: MacroAsmNodeInfo = macroAsmResult.value
+                            val name = macroNode.name
+                            macroEnv[name] = child
+                            val env = InterpreterEnv(macroEnv)
+                            val interpreter = Interpreter(env)
+
+                            interpreter.currentMacroAsmNode = name
+                            interpreter.eval(macroNode.body)
+                            interpreter.currentMacroAsmNode = null
+                            val identifier = LeafNode(Token(0, "macro-asm-expanded", TokenType.Identifier),
+                                    SyntaxKind.Identifier)
+                            val macroAsmName = LeafNode(Token(0, name, TokenType.Identifier), SyntaxKind.Identifier)
+                            val body = LeafNode(Token(0, interpreter.emitResultMap[name].toString(), TokenType.String),
+                                    SyntaxKind.Identifier)
+                            wasExpansion = true
+                            ListNode(listOf(identifier, macroAsmName, body), child.textRange)
+                        }
+                        is ResultWithLints.Error -> child
+                    }
                 }
                 else -> {
                     val expansionResult = expandWithContext(child, macroEnv)

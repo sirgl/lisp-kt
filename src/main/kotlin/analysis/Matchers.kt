@@ -99,6 +99,28 @@ object Matchers {
         MacroNodeInfo(name, parameters, children.drop(3))
     }
 
+    val MACROASM = ListMatcher(Keywords.MACROASM_KW, object : Validator {
+        override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
+            val children = node.children
+            if (!verifyCountExact(node, "MacroAsm", 3, source, lintSink)) return
+            verifyName(children[1], "MacroAsm", source, lintSink)
+        }
+
+    }) { node ->
+        val children = node.children
+        val name = (children[1] as LeafNode).token.text
+        MacroAsmNodeInfo(name, children[2])
+    }
+
+    val EMIT = ListMatcher(Keywords.EMIT_KW, object : Validator {
+        override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
+            if (!verifyCountExact(node, "Emit", 2, source, lintSink)) return
+        }
+    }) { node ->
+        val children = node.children
+        EmitNodeInfo((children[1] as LeafNode).token.text)
+    }
+
     private fun parseParameterList(node: AstNode) : List<ParameterInfo> {
         node as ListNode
         val children = node.children

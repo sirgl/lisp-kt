@@ -2,8 +2,8 @@ package mir
 
 import FrontendTest
 import InMemoryFileInfo
-import util.InMemorySource
 import frontend.CompilerConfig
+import util.InMemorySource
 import withText
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -21,6 +21,7 @@ b0:
 fun __entry__ params: 0, totalVars: 0
 b0:
   call function: 0 args: ()
+  return b0:i0
         """.trimIndent(), listOf(
                 "main" withText "()"
         ))
@@ -37,11 +38,9 @@ b0:
   load_const 42 (i32, tagged)
   return b0:i0
 
-fun foo_satellite params: 1, totalVars: 1
-var table:
-   0 listParameters
+fun foo_satellite params: 1, totalVars: 0
 b0:
-  load_var: v1
+  load_var: v0
   list_size list: b0:i0
   load_const 1 (i32, tagged)
   binary Eq b0:i1, b0:i2
@@ -64,6 +63,7 @@ b0:
 fun __entry__ params: 0, totalVars: 0
 b0:
   call function: 2 args: ()
+  return b0:i0
         """.trimIndent(), listOf(
                 "main" withText "(defn foo(x) 42)"
         ))
@@ -95,6 +95,7 @@ b3:
 fun __entry__ params: 0, totalVars: 0
 b0:
   call function: 0 args: ()
+  return b0:i0
         """.trimIndent(), listOf(
                 "main" withText "(if #t 1 2)"
         ))
@@ -139,6 +140,7 @@ b6:
 fun __entry__ params: 0, totalVars: 0
 b0:
   call function: 0 args: ()
+  return b0:i0
         """.trimIndent(), listOf(
                 "main" withText "(if #t 1 (if #f 2 3))"
         ))
@@ -155,11 +157,9 @@ b0:
   load_const ()
   return b0:i0
 
-fun print_satellite params: 1, totalVars: 1
-var table:
-   0 listParameters
+fun print_satellite params: 1, totalVars: 0
 b0:
-  load_var: v1
+  load_var: v0
   list_size list: b0:i0
   load_const 1 (i32, tagged)
   binary Eq b0:i1, b0:i2
@@ -193,6 +193,7 @@ b3:
 fun __entry__ params: 0, totalVars: 0
 b0:
   call function: 2 args: ()
+  return b0:i0
         """.trimIndent(), listOf(
                 "main" withText "(defn print (x) ())(while #t (print 42))"
         ))
@@ -215,6 +216,7 @@ b0:
 fun __entry__ params: 0, totalVars: 0
 b0:
   call function: 0 args: ()
+  return b0:i0
         """.trimIndent(), listOf(
                 "main" withText "(let (( y 0)) (set y 12))"
         ))
@@ -236,6 +238,7 @@ b0:
 fun __entry__ params: 0, totalVars: 0
 b0:
   call function: 0 args: ()
+  return b0:i0
         """.trimIndent(), listOf(
                 "main" withText "(let ((x 12)) x)"
         ))
@@ -265,6 +268,7 @@ b0:
 fun __entry__ params: 0, totalVars: 0
 b0:
   call function: 0 args: ()
+  return b0:i0
         """.trimIndent(), listOf(
                 "main" withText "`(let (\"foo\" 12 2) x)"
         ))
@@ -283,11 +287,9 @@ b0:
   load_const ()
   return b0:i0
 
-fun foo_satellite params: 1, totalVars: 1
-var table:
-   0 listParameters
+fun foo_satellite params: 1, totalVars: 0
 b0:
-  load_var: v1
+  load_var: v0
   list_size list: b0:i0
   load_const 2 (i32, tagged)
   binary Ge b0:i1, b0:i2
@@ -317,6 +319,7 @@ b0:
 fun __entry__ params: 0, totalVars: 0
 b0:
   call function: 2 args: ()
+  return b0:i0
         """.trimIndent(), listOf(
                 "main" withText "(defn foo (a @vp) ())(foo 1 2 3)"
         ))
@@ -332,11 +335,9 @@ b0:
   load_const 42 (i32, tagged)
   return b0:i0
 
-fun f_satellite params: 1, totalVars: 1
-var table:
-   0 listParameters
+fun f_satellite params: 1, totalVars: 0
 b0:
-  load_var: v1
+  load_var: v0
   list_size list: b0:i0
   load_const 0 (i32, tagged)
   binary Eq b0:i1, b0:i2
@@ -364,6 +365,7 @@ b0:
 fun __entry__ params: 0, totalVars: 0
 b0:
   call function: 2 args: ()
+  return b0:i0
         """.trimIndent(), listOf(
             "main" withText """
         (let ((x (defn f () 42) )) (x))
@@ -378,11 +380,9 @@ b0:
 main:
 foreign fun r__print params: 1
 
-fun print_satellite params: 1, totalVars: 1
-var table:
-   0 listParameters
+fun print_satellite params: 1, totalVars: 0
 b0:
-  load_var: v1
+  load_var: v0
   list_size list: b0:i0
   load_const 1 (i32, tagged)
   binary Eq b0:i1, b0:i2
@@ -411,6 +411,7 @@ b0:
 fun __entry__ params: 0, totalVars: 0
 b0:
   call function: 2 args: ()
+  return b0:i0
         """.trimIndent(), listOf(
                 "main" withText "(defnat print r__print (x))(print `(12 22))"
         ))
@@ -422,11 +423,9 @@ b0:
 main:
 foreign fun r__print params: 1
 
-fun print_satellite params: 1, totalVars: 1
-var table:
-   0 listParameters
+fun print_satellite params: 1, totalVars: 0
 b0:
-  load_var: v1
+  load_var: v0
   list_size list: b0:i0
   load_const 1 (i32, tagged)
   binary Eq b0:i1, b0:i2
@@ -451,6 +450,7 @@ b0:
 fun __entry__ params: 0, totalVars: 0
 b0:
   call function: 2 args: ()
+  return b0:i0
         """.trimIndent(), listOf(
                 "main" withText """
         (defnat print r__print (x))
@@ -472,6 +472,7 @@ b0:
 fun __entry__ params: 0, totalVars: 0
 b0:
   call function: 0 args: ()
+  return b0:i0
         """.trim(), listOf(
                 "main" withText """
         "Hello world!"
@@ -485,11 +486,9 @@ b0:
 main:
 foreign fun print params: 1
 
-fun print_satellite params: 1, totalVars: 1
-var table:
-   0 listParameters
+fun print_satellite params: 1, totalVars: 0
 b0:
-  load_var: v1
+  load_var: v0
   list_size list: b0:i0
   load_const 1 (i32, tagged)
   binary Eq b0:i1, b0:i2
@@ -514,6 +513,7 @@ b0:
 fun __entry__ params: 0, totalVars: 0
 b0:
   call function: 2 args: ()
+  return b0:i0
         """.trim(), listOf(
                 "main" withText """
         (defnat print print (x))
@@ -548,6 +548,7 @@ b3:
 fun __entry__ params: 0, totalVars: 0
 b0:
   call function: 0 args: ()
+  return b0:i0
         """, listOf(
                 "main" withText """
             (let ((b #t)) (while b (set b #f)))

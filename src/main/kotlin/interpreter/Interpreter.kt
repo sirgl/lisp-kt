@@ -2,10 +2,10 @@ package interpreter
 
 import analysis.FuncLikeInfo
 import analysis.Matchers
-import lexer.Token
 import lexer.TokenType
 import parser.*
 import java.util.*
+import kotlin.collections.HashMap
 
 open class NativeFunction(val function: (List<AstNode>, Interpreter) -> AstNode) {
     fun call(args: List<AstNode>, interpreter: Interpreter): AstNode = function(args, interpreter)
@@ -68,6 +68,8 @@ class InterpreterEnv(
 
 
 class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(), standardNativeFunctions)) {
+    val emitResultMap = HashMap<String, StringBuilder>()
+    var currentMacroAsmNode: String? = null
 
     // assumes no macro inside
     @Throws(InterpreterException::class)
@@ -137,6 +139,18 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
             Matchers.MACRO.matches(node) -> {
                 val macroInfo = Matchers.MACRO.forceExtract(node)
                 env.addToScope(macroInfo.name, node)
+                emptyListNode()
+            }
+            Matchers.MACROASM.matches(node) -> {
+                val macroInfo = Matchers.MACROASM.forceExtract(node)
+                val name = macroInfo.name
+                env.addToScope(name, node)
+                emptyListNode()
+            }
+            Matchers.EMIT.matches(node) -> {
+                val emitNodeInfo = Matchers.EMIT.forceExtract(node)
+                val currentStringBuilder = emitResultMap[currentMacroAsmNode] ?: StringBuilder()
+                emitResultMap[currentMacroAsmNode!!] = currentStringBuilder.append(emitNodeInfo.body)
                 emptyListNode()
             }
             Matchers.SET.matches(node) -> {

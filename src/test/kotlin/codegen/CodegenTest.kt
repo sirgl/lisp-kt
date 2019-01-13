@@ -3,12 +3,12 @@ package codegen
 import FrontendTest
 import InMemoryFileInfo
 import backend.AssemblyBackend
-import backend.StringArtifactBuilder
 import backend.BackendConfiguration
 import backend.NaiveRegisterAllocator
+import backend.StringArtifactBuilder
 import backend.codegen.TextAssembler
-import util.InMemorySource
 import frontend.CompilerConfig
+import util.InMemorySource
 import withText
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -18,13 +18,30 @@ class CodegenTest : FrontendTest(emptyList()) {
     fun `test top level list`() {
         testCodegen("""
 main.S:
+	.text
+	.globl main__init
+	.globl __entry__
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}-8, %rsp
-	movq ${'$'}0, -8(%rsp)
-	movq -8(%rsp), %rax
-	addq ${'$'}-8, %rsp
+	subq ${'$'}16, %rsp
+	movq ${'$'}0, -8(%rbp)
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
+	popq %rbp
+	retq
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
         """.trimIndent(), listOf(
@@ -35,13 +52,130 @@ main__init:
     fun `test call simple`() {
         testCodegen("""
 main.S:
+	.text
+Lstr0:
+	.asciz "Unexpected parameter count"
+	.globl print_satellite
+	.globl main__init
+	.globl __entry__
+print_satellite:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}80, %rsp
+	movq %rdi, %rdi
+//save registers for call r__size
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__size
+	movq %rax, -8(%rbp)
+//restore registers for call r__size
+	popq %rdi
+//finish handling call r__size
+	movabsq ${'$'}2305843009213693953, %rax
+	movq %rax, -16(%rbp)
+//save registers for call r__eq
+	pushq %rdi
+	movq -8(%rbp), %rdi
+	movq -16(%rbp), %rsi
+	callq r__eq
+	movq %rax, -24(%rbp)
+//restore registers for call r__eq
+	popq %rdi
+//finish handling call r__eq
+//save registers for call r__untag
+	pushq %rdi
+	movq -24(%rbp), %rdi
+	callq r__untag
+	movq %rax, -32(%rbp)
+//restore registers for call r__untag
+	popq %rdi
+//finish handling call r__untag
+	cmpq ${'$'}0, -32(%rbp)
+	je L1
+L0:
+//save registers for call r__first
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__first
+	movq %rax, -40(%rbp)
+//restore registers for call r__first
+	popq %rdi
+//finish handling call r__first
+//save registers for call r__tail
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__tail
+	movq %rax, -48(%rbp)
+//restore registers for call r__tail
+	popq %rdi
+//finish handling call r__tail
+//save registers for call r__print
+	pushq %rdi
+	movq -40(%rbp), %rdi
+	callq r__print
+	movq %rax, -56(%rbp)
+//restore registers for call r__print
+	popq %rdi
+//finish handling call r__print
+	movq -56(%rbp), %rax
+	addq ${'$'}80, %rsp
+	popq %rbp
+	retq
+L1:
+	movq ${'$'}Lstr0, -80(%rbp)
+//save registers for call r__createString
+	pushq %rdi
+	movq -80(%rbp), %rdi
+	callq r__createString
+	movq %rax, -64(%rbp)
+//restore registers for call r__createString
+	popq %rdi
+//finish handling call r__createString
+//save registers for call r__printErrorAndExit
+	pushq %rdi
+	movq -64(%rbp), %rdi
+	callq r__printErrorAndExit
+	movq %rax, -72(%rbp)
+//restore registers for call r__printErrorAndExit
+	popq %rdi
+//finish handling call r__printErrorAndExit
+
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}-8, %rsp
-	movq ${'$'}0, -8(%rsp)
-	movq -8(%rsp), %rax
-	addq ${'$'}-8, %rsp
+	subq ${'$'}32, %rsp
+	movq print_satellite@GOTPCREL(%rip), %rax
+	movq %rax, -32(%rbp)
+//save registers for call r__tagFunction
+	movq -32(%rbp), %rdi
+	callq r__tagFunction
+	movq %rax, -8(%rbp)
+//restore registers for call r__tagFunction
+//finish handling call r__tagFunction
+	movabsq ${'$'}2305843009213693964, %rax
+	movq %rax, -16(%rbp)
+//save registers for call r__print
+	movq -16(%rbp), %rdi
+	callq r__print
+	movq %rax, -24(%rbp)
+//restore registers for call r__print
+//finish handling call r__print
+	movq -24(%rbp), %rax
+	addq ${'$'}32, %rsp
+	popq %rbp
+	retq
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
         """.trimIndent(), listOf(
@@ -54,31 +188,129 @@ main__init:
         testCodegen("""
 main.S:
 	.text
+Lstr0:
+	.asciz "Unexpected parameter count"
+	.globl print_satellite
 	.globl main__init
+	.globl __entry__
+print_satellite:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}80, %rsp
+	movq %rdi, %rdi
+//save registers for call r__size
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__size
+	movq %rax, -8(%rbp)
+//restore registers for call r__size
+	popq %rdi
+//finish handling call r__size
+	movabsq ${'$'}2305843009213693953, %rax
+	movq %rax, -16(%rbp)
+//save registers for call r__eq
+	pushq %rdi
+	movq -8(%rbp), %rdi
+	movq -16(%rbp), %rsi
+	callq r__eq
+	movq %rax, -24(%rbp)
+//restore registers for call r__eq
+	popq %rdi
+//finish handling call r__eq
+//save registers for call r__untag
+	pushq %rdi
+	movq -24(%rbp), %rdi
+	callq r__untag
+	movq %rax, -32(%rbp)
+//restore registers for call r__untag
+	popq %rdi
+//finish handling call r__untag
+	cmpq ${'$'}0, -32(%rbp)
+	je L1
+L0:
+//save registers for call r__first
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__first
+	movq %rax, -40(%rbp)
+//restore registers for call r__first
+	popq %rdi
+//finish handling call r__first
+//save registers for call r__tail
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__tail
+	movq %rax, -48(%rbp)
+//restore registers for call r__tail
+	popq %rdi
+//finish handling call r__tail
+//save registers for call r__print
+	pushq %rdi
+	movq -40(%rbp), %rdi
+	callq r__print
+	movq %rax, -56(%rbp)
+//restore registers for call r__print
+	popq %rdi
+//finish handling call r__print
+	movq -56(%rbp), %rax
+	addq ${'$'}80, %rsp
+	popq %rbp
+	retq
+L1:
+	movq ${'$'}Lstr0, -80(%rbp)
+//save registers for call r__createString
+	pushq %rdi
+	movq -80(%rbp), %rdi
+	callq r__createString
+	movq %rax, -64(%rbp)
+//restore registers for call r__createString
+	popq %rdi
+//finish handling call r__createString
+//save registers for call r__printErrorAndExit
+	pushq %rdi
+	movq -64(%rbp), %rdi
+	callq r__printErrorAndExit
+	movq %rax, -72(%rbp)
+//restore registers for call r__printErrorAndExit
+	popq %rdi
+//finish handling call r__printErrorAndExit
+
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}48, %rsp
-	movq r__print, %rax
-	movq %rax, -8(%rbp)
-	movq ${'$'}0, -16(%rbp)
-	movabsq ${'$'}2305843009213693964, %rax
-	movq %rax, -24(%rbp)
-//save registers for call r__withElement
-	movq -24(%rbp), %rdi
-	movq -16(%rbp), %rsi
-	callq r__withElement
+	subq ${'$'}32, %rsp
+	movq print_satellite@GOTPCREL(%rip), %rax
 	movq %rax, -32(%rbp)
-//restore registers for call r__withElement
-//finish handling call r__withElement
-//save registers for call r__print
+//save registers for call r__tagFunction
 	movq -32(%rbp), %rdi
+	callq r__tagFunction
+	movq %rax, -8(%rbp)
+//restore registers for call r__tagFunction
+//finish handling call r__tagFunction
+	movabsq ${'$'}4611686018427387905, %rax
+	movq %rax, -16(%rbp)
+//save registers for call r__print
+	movq -16(%rbp), %rdi
 	callq r__print
-	movq %rax, -40(%rbp)
+	movq %rax, -24(%rbp)
 //restore registers for call r__print
 //finish handling call r__print
-	movq -40(%rbp), %rax
-	addq ${'$'}48, %rsp
+	movq -24(%rbp), %rax
+	addq ${'$'}32, %rsp
+	popq %rbp
+	retq
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
         """.trimIndent(), listOf(
@@ -90,23 +322,134 @@ main__init:
     fun `test function definition`() {
         testCodegen("""
 main.S:
+	.text
+Lstr0:
+	.asciz "Unexpected parameter count"
+	.globl foo
+	.globl foo_satellite
+	.globl main__init
+	.globl __entry__
 foo:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}-8, %rsp
-	movq ${'$'}0, -8(%rsp)
-	movq -8(%rsp), %rax
-	addq ${'$'}-8, %rsp
+	subq ${'$'}16, %rsp
+	movabsq ${'$'}2305843009213693994, %rax
+	movq %rax, -8(%rbp)
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
+
+foo_satellite:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}80, %rsp
+	movq %rdi, %rdi
+//save registers for call r__size
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__size
+	movq %rax, -8(%rbp)
+//restore registers for call r__size
+	popq %rdi
+//finish handling call r__size
+	movabsq ${'$'}2305843009213693953, %rax
+	movq %rax, -16(%rbp)
+//save registers for call r__eq
+	pushq %rdi
+	movq -8(%rbp), %rdi
+	movq -16(%rbp), %rsi
+	callq r__eq
+	movq %rax, -24(%rbp)
+//restore registers for call r__eq
+	popq %rdi
+//finish handling call r__eq
+//save registers for call r__untag
+	pushq %rdi
+	movq -24(%rbp), %rdi
+	callq r__untag
+	movq %rax, -32(%rbp)
+//restore registers for call r__untag
+	popq %rdi
+//finish handling call r__untag
+	cmpq ${'$'}0, -32(%rbp)
+	je L1
+L0:
+//save registers for call r__first
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__first
+	movq %rax, -40(%rbp)
+//restore registers for call r__first
+	popq %rdi
+//finish handling call r__first
+//save registers for call r__tail
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__tail
+	movq %rax, -48(%rbp)
+//restore registers for call r__tail
+	popq %rdi
+//finish handling call r__tail
+//save registers for call foo
+	pushq %rdi
+	movq -40(%rbp), %rdi
+	callq foo
+	movq %rax, -56(%rbp)
+//restore registers for call foo
+	popq %rdi
+//finish handling call foo
+	movq -56(%rbp), %rax
+	addq ${'$'}80, %rsp
+	popq %rbp
+	retq
+L1:
+	movq ${'$'}Lstr0, -80(%rbp)
+//save registers for call r__createString
+	pushq %rdi
+	movq -80(%rbp), %rdi
+	callq r__createString
+	movq %rax, -64(%rbp)
+//restore registers for call r__createString
+	popq %rdi
+//finish handling call r__createString
+//save registers for call r__printErrorAndExit
+	pushq %rdi
+	movq -64(%rbp), %rdi
+	callq r__printErrorAndExit
+	movq %rax, -72(%rbp)
+//restore registers for call r__printErrorAndExit
+	popq %rdi
+//finish handling call r__printErrorAndExit
 
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}-8, %rsp
-	movq foo, -8(%rsp)
-	movq -8(%rsp), %rax
-	addq ${'$'}-8, %rsp
+	subq ${'$'}16, %rsp
+	movq foo_satellite@GOTPCREL(%rip), %rax
+	movq %rax, -16(%rbp)
+//save registers for call r__tagFunction
+	movq -16(%rbp), %rdi
+	callq r__tagFunction
+	movq %rax, -8(%rbp)
+//restore registers for call r__tagFunction
+//finish handling call r__tagFunction
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
+	popq %rbp
+	retq
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
         """.trimIndent(), listOf(
@@ -166,6 +509,7 @@ __entry__:
 	movq %rax, -8(%rbp)
 //restore registers for call main__init
 //finish handling call main__init
+	movq -8(%rbp), %rax
 	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
@@ -247,38 +591,156 @@ L2:
     fun `test while`() {
         testCodegen("""
 main.S:
+	.text
+Lstr0:
+	.asciz "Unexpected parameter count"
+	.globl print
+	.globl print_satellite
+	.globl main__init
+	.globl __entry__
 print:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}-8, %rsp
-	movq ${'$'}0, -8(%rsp)
-	movq -8(%rsp), %rax
-	addq ${'$'}-8, %rsp
+	subq ${'$'}16, %rsp
+	movq ${'$'}0, -8(%rbp)
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
+
+print_satellite:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}80, %rsp
+	movq %rdi, %rdi
+//save registers for call r__size
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__size
+	movq %rax, -8(%rbp)
+//restore registers for call r__size
+	popq %rdi
+//finish handling call r__size
+	movabsq ${'$'}2305843009213693953, %rax
+	movq %rax, -16(%rbp)
+//save registers for call r__eq
+	pushq %rdi
+	movq -8(%rbp), %rdi
+	movq -16(%rbp), %rsi
+	callq r__eq
+	movq %rax, -24(%rbp)
+//restore registers for call r__eq
+	popq %rdi
+//finish handling call r__eq
+//save registers for call r__untag
+	pushq %rdi
+	movq -24(%rbp), %rdi
+	callq r__untag
+	movq %rax, -32(%rbp)
+//restore registers for call r__untag
+	popq %rdi
+//finish handling call r__untag
+	cmpq ${'$'}0, -32(%rbp)
+	je L1
+L0:
+//save registers for call r__first
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__first
+	movq %rax, -40(%rbp)
+//restore registers for call r__first
+	popq %rdi
+//finish handling call r__first
+//save registers for call r__tail
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__tail
+	movq %rax, -48(%rbp)
+//restore registers for call r__tail
+	popq %rdi
+//finish handling call r__tail
+//save registers for call print
+	pushq %rdi
+	movq -40(%rbp), %rdi
+	callq print
+	movq %rax, -56(%rbp)
+//restore registers for call print
+	popq %rdi
+//finish handling call print
+	movq -56(%rbp), %rax
+	addq ${'$'}80, %rsp
+	popq %rbp
+	retq
+L1:
+	movq ${'$'}Lstr0, -80(%rbp)
+//save registers for call r__createString
+	pushq %rdi
+	movq -80(%rbp), %rdi
+	callq r__createString
+	movq %rax, -64(%rbp)
+//restore registers for call r__createString
+	popq %rdi
+//finish handling call r__createString
+//save registers for call r__printErrorAndExit
+	pushq %rdi
+	movq -64(%rbp), %rdi
+	callq r__printErrorAndExit
+	movq %rax, -72(%rbp)
+//restore registers for call r__printErrorAndExit
+	popq %rdi
+//finish handling call r__printErrorAndExit
 
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}-8, %rsp
+	subq ${'$'}64, %rsp
+	movq print_satellite@GOTPCREL(%rip), %rax
+	movq %rax, -56(%rbp)
+//save registers for call r__tagFunction
+	movq -56(%rbp), %rdi
+	callq r__tagFunction
+	movq %rax, -8(%rbp)
+//restore registers for call r__tagFunction
+//finish handling call r__tagFunction
+L4:
+	movabsq ${'$'}4611686018427387905, %rax
+	movq %rax, -16(%rbp)
+//save registers for call r__untag
+	movq -16(%rbp), %rdi
+	callq r__untag
+	movq %rax, -24(%rbp)
+//restore registers for call r__untag
+//finish handling call r__untag
+	cmpq ${'$'}0, -24(%rbp)
+	je L3
 L2:
-	movq print, -8(%rsp)
-	movq ${'$'}0, -16(%rsp)
-	cmpq ${'$'}0, -16(%rsp)
-	jne L1
-L0:
-	movq ${'$'}0, -24(%rsp)
-;save registers for call print
-	movq -24(%rsp), %rdi
+	movabsq ${'$'}2305843009213693994, %rax
+	movq %rax, -32(%rbp)
+//save registers for call print
+	movq -32(%rbp), %rdi
 	callq print
-	movq %rax, -32(%rsp)
-;restore registers for call print
-;finish handling call print
-	jmp L2
-L1:
-	movq ${'$'}0, -40(%rsp)
-	movq -40(%rsp), %rax
-	addq ${'$'}-8, %rsp
+	movq %rax, -40(%rbp)
+//restore registers for call print
+//finish handling call print
+	jmp L4
+L3:
+	movq ${'$'}0, -48(%rbp)
+	movq -48(%rbp), %rax
+	addq ${'$'}64, %rsp
+	popq %rbp
+	retq
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
         """.trimIndent(), listOf(
@@ -290,20 +752,39 @@ L1:
     fun `test assign`() {
         testCodegen("""
 main.S:
+	.text
+	.globl main__init
+	.globl __entry__
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}-8, %rsp
-	movq ${'$'}0, -16(%rsp)
-;mem (-16(%rsp)) -> mem (-8(%rsp)) move through temporary register
-	movq -16(%rsp), %r10
-	movq %r10, -8(%rsp)
-	movq ${'$'}0, -32(%rsp)
-;mem (-32(%rsp)) -> mem (-8(%rsp)) move through temporary register
-	movq -32(%rsp), %r10
-	movq %r10, -8(%rsp)
-	movq -40(%rsp), %rax
-	addq ${'$'}-8, %rsp
+	subq ${'$'}48, %rsp
+	movabsq ${'$'}2305843009213693952, %rax
+	movq %rax, -16(%rbp)
+//mem (-16(%rbp)) -> mem (-8(%rbp)) move through temporary register
+	movq -16(%rbp), %rax
+	movq %rax, -8(%rbp)
+	movabsq ${'$'}2305843009213693964, %rax
+	movq %rax, -32(%rbp)
+//mem (-32(%rbp)) -> mem (-8(%rbp)) move through temporary register
+	movq -32(%rbp), %rax
+	movq %rax, -8(%rbp)
+	movq -40(%rbp), %rax
+	addq ${'$'}48, %rsp
+	popq %rbp
+	retq
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
         """.trimIndent(), listOf(
@@ -315,19 +796,37 @@ main__init:
     fun `test let`() {
         testCodegen("""
 main.S:
+	.text
+	.globl main__init
+	.globl __entry__
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}-8, %rsp
-	movq ${'$'}0, -16(%rsp)
-;mem (-16(%rsp)) -> mem (-8(%rsp)) move through temporary register
-	movq -16(%rsp), %r10
-	movq %r10, -8(%rsp)
-;mem (-8(%rsp)) -> mem (-32(%rsp)) move through temporary register
-	movq -8(%rsp), %r10
-	movq %r10, -32(%rsp)
-	movq -32(%rsp), %rax
-	addq ${'$'}-8, %rsp
+	subq ${'$'}32, %rsp
+	movabsq ${'$'}2305843009213693964, %rax
+	movq %rax, -16(%rbp)
+//mem (-16(%rbp)) -> mem (-8(%rbp)) move through temporary register
+	movq -16(%rbp), %rax
+	movq %rax, -8(%rbp)
+//mem (-8(%rbp)) -> mem (-32(%rbp)) move through temporary register
+	movq -8(%rbp), %rax
+	movq %rax, -32(%rbp)
+	movq -32(%rbp), %rax
+	addq ${'$'}32, %rsp
+	popq %rbp
+	retq
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
         """.trimIndent(), listOf(
@@ -347,6 +846,7 @@ Lstr1:
 Lstr2:
 	.asciz "let"
 	.globl main__init
+	.globl __entry__
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
@@ -424,7 +924,21 @@ main__init:
 	addq ${'$'}128, %rsp
 	popq %rbp
 	retq
-        """.trimIndent(), listOf(
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
+	popq %rbp
+	retq
+""".trimIndent(), listOf(
                 "main" withText "`(let (\"foo\" 12 2) x)"
         ))
     }
@@ -434,48 +948,162 @@ main__init:
     fun `test vararg`() {
         testCodegen("""
 main.S:
+	.text
+Lstr0:
+	.asciz "Unexpected parameter count"
+	.globl foo
+	.globl foo_satellite
+	.globl main__init
+	.globl __entry__
 foo:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}-8, %rsp
-	movq ${'$'}0, -8(%rsp)
-	movq -8(%rsp), %rax
-	addq ${'$'}-8, %rsp
+	subq ${'$'}16, %rsp
+	movq ${'$'}0, -8(%rbp)
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
+
+foo_satellite:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}80, %rsp
+	movq %rdi, %rdi
+//save registers for call r__size
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__size
+	movq %rax, -8(%rbp)
+//restore registers for call r__size
+	popq %rdi
+//finish handling call r__size
+	movabsq ${'$'}2305843009213693954, %rax
+	movq %rax, -16(%rbp)
+//save registers for call _ge
+	pushq %rdi
+	movq -8(%rbp), %rdi
+	movq -16(%rbp), %rsi
+	callq _ge
+	movq %rax, -24(%rbp)
+//restore registers for call _ge
+	popq %rdi
+//finish handling call _ge
+//save registers for call r__untag
+	pushq %rdi
+	movq -24(%rbp), %rdi
+	callq r__untag
+	movq %rax, -32(%rbp)
+//restore registers for call r__untag
+	popq %rdi
+//finish handling call r__untag
+	cmpq ${'$'}0, -32(%rbp)
+	je L1
+L0:
+//save registers for call r__first
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__first
+	movq %rax, -40(%rbp)
+//restore registers for call r__first
+	popq %rdi
+//finish handling call r__first
+//save registers for call r__tail
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__tail
+	movq %rax, -48(%rbp)
+//restore registers for call r__tail
+	popq %rdi
+//finish handling call r__tail
+//save registers for call foo
+	pushq %rdi
+	movq -40(%rbp), %rdi
+	movq -48(%rbp), %rsi
+	callq foo
+	movq %rax, -56(%rbp)
+//restore registers for call foo
+	popq %rdi
+//finish handling call foo
+	movq -56(%rbp), %rax
+	addq ${'$'}80, %rsp
+	popq %rbp
+	retq
+L1:
+	movq ${'$'}Lstr0, -80(%rbp)
+//save registers for call r__createString
+	pushq %rdi
+	movq -80(%rbp), %rdi
+	callq r__createString
+	movq %rax, -64(%rbp)
+//restore registers for call r__createString
+	popq %rdi
+//finish handling call r__createString
+//save registers for call r__printErrorAndExit
+	pushq %rdi
+	movq -64(%rbp), %rdi
+	callq r__printErrorAndExit
+	movq %rax, -72(%rbp)
+//restore registers for call r__printErrorAndExit
+	popq %rdi
+//finish handling call r__printErrorAndExit
 
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}-8, %rsp
-	movq foo, -8(%rsp)
-	movq ${'$'}1, -16(%rsp)
-	movq ${'$'}0, -24(%rsp)
-	movq ${'$'}0, -32(%rsp)
-;save registers for call r__withElement
-	movq -32(%rsp), %rdi
-	movq -24(%rsp), %rsi
+	subq ${'$'}80, %rsp
+	movq foo_satellite@GOTPCREL(%rip), %rax
+	movq %rax, -72(%rbp)
+//save registers for call r__tagFunction
+	movq -72(%rbp), %rdi
+	callq r__tagFunction
+	movq %rax, -8(%rbp)
+//restore registers for call r__tagFunction
+//finish handling call r__tagFunction
+	movabsq ${'$'}2305843009213693953, %rax
+	movq %rax, -16(%rbp)
+	movq ${'$'}0, -24(%rbp)
+	movabsq ${'$'}2305843009213693954, %rax
+	movq %rax, -32(%rbp)
+//save registers for call r__withElement
+	movq -24(%rbp), %rdi
+	movq -32(%rbp), %rsi
 	callq r__withElement
-	movq %rax, -40(%rsp)
-;restore registers for call r__withElement
-;finish handling call r__withElement
-	movq ${'$'}1, -48(%rsp)
-;save registers for call r__withElement
-	movq -48(%rsp), %rdi
-	movq -40(%rsp), %rsi
+	movq %rax, -40(%rbp)
+//restore registers for call r__withElement
+//finish handling call r__withElement
+	movabsq ${'$'}2305843009213693955, %rax
+	movq %rax, -48(%rbp)
+//save registers for call r__withElement
+	movq -40(%rbp), %rdi
+	movq -48(%rbp), %rsi
 	callq r__withElement
-	movq %rax, -56(%rsp)
-;restore registers for call r__withElement
-;finish handling call r__withElement
-;save registers for call foo
-	movq -16(%rsp), %rdi
-	movq -56(%rsp), %rsi
+	movq %rax, -56(%rbp)
+//restore registers for call r__withElement
+//finish handling call r__withElement
+//save registers for call foo
+	movq -16(%rbp), %rdi
+	movq -56(%rbp), %rsi
 	callq foo
-	movq %rax, -64(%rsp)
-;restore registers for call foo
-;finish handling call foo
-	movq -64(%rsp), %rax
-	addq ${'$'}-8, %rsp
+	movq %rax, -64(%rbp)
+//restore registers for call foo
+//finish handling call foo
+	movq -64(%rbp), %rax
+	addq ${'$'}80, %rsp
+	popq %rbp
+	retq
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
         """.trimIndent(), listOf(
@@ -487,19 +1115,139 @@ main__init:
     @Test
     fun `test call by variable`() {
         testCodegen("""
-main:
-fun foo params: 0, totalVars: 0
-b0:
-  load_const ()
-  return b0:i0
+main.S:
+	.text
+Lstr0:
+	.asciz "Unexpected parameter count"
+	.globl foo
+	.globl foo_satellite
+	.globl main__init
+	.globl __entry__
+foo:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+	movq ${'$'}0, -8(%rbp)
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
+	popq %rbp
+	retq
 
-fun main__init params: 0, totalVars: 1 (main)
-b0:
-  get_function_reference 0
-  store_var: v0 value: b0:i0
-  load_var: v0
-  call_by_reference referneceInstr: b0:i2 args: ()
-  return b0:i3
+foo_satellite:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}64, %rsp
+	movq %rdi, %rdi
+//save registers for call r__size
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__size
+	movq %rax, -8(%rbp)
+//restore registers for call r__size
+	popq %rdi
+//finish handling call r__size
+	movabsq ${'$'}2305843009213693952, %rax
+	movq %rax, -16(%rbp)
+//save registers for call r__eq
+	pushq %rdi
+	movq -8(%rbp), %rdi
+	movq -16(%rbp), %rsi
+	callq r__eq
+	movq %rax, -24(%rbp)
+//restore registers for call r__eq
+	popq %rdi
+//finish handling call r__eq
+//save registers for call r__untag
+	pushq %rdi
+	movq -24(%rbp), %rdi
+	callq r__untag
+	movq %rax, -32(%rbp)
+//restore registers for call r__untag
+	popq %rdi
+//finish handling call r__untag
+	cmpq ${'$'}0, -32(%rbp)
+	je L1
+L0:
+//save registers for call foo
+	pushq %rdi
+	callq foo
+	movq %rax, -40(%rbp)
+//restore registers for call foo
+	popq %rdi
+//finish handling call foo
+	movq -40(%rbp), %rax
+	addq ${'$'}64, %rsp
+	popq %rbp
+	retq
+L1:
+	movq ${'$'}Lstr0, -64(%rbp)
+//save registers for call r__createString
+	pushq %rdi
+	movq -64(%rbp), %rdi
+	callq r__createString
+	movq %rax, -48(%rbp)
+//restore registers for call r__createString
+	popq %rdi
+//finish handling call r__createString
+//save registers for call r__printErrorAndExit
+	pushq %rdi
+	movq -48(%rbp), %rdi
+	callq r__printErrorAndExit
+	movq %rax, -56(%rbp)
+//restore registers for call r__printErrorAndExit
+	popq %rdi
+//finish handling call r__printErrorAndExit
+
+main__init:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}64, %rsp
+	movq foo_satellite@GOTPCREL(%rip), %rax
+	movq %rax, -64(%rbp)
+//save registers for call r__tagFunction
+	movq -64(%rbp), %rdi
+	callq r__tagFunction
+	movq %rax, -16(%rbp)
+//restore registers for call r__tagFunction
+//finish handling call r__tagFunction
+//mem (-16(%rbp)) -> mem (-8(%rbp)) move through temporary register
+	movq -16(%rbp), %rax
+	movq %rax, -8(%rbp)
+//mem (-8(%rbp)) -> mem (-32(%rbp)) move through temporary register
+	movq -8(%rbp), %rax
+	movq %rax, -32(%rbp)
+	movq ${'$'}0, -40(%rbp)
+//save registers for call r__untag
+	movq -32(%rbp), %rdi
+	callq r__untag
+	movq %rax, -48(%rbp)
+//restore registers for call r__untag
+//finish handling call r__untag
+//save registers for call by ptr
+	movq -40(%rbp), %rdi
+	movq -48(%rbp), %rax
+	call *%rax
+	movq %rax, -56(%rbp)
+//restore registers for call by ptr
+//finish handling call call by ptr
+	movq -56(%rbp), %rax
+	addq ${'$'}64, %rsp
+	popq %rbp
+	retq
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
+	popq %rbp
+	retq
         """.trimIndent(), listOf(
             "main" withText """
         (let ((f (defn foo () ()))) (f))
@@ -512,22 +1260,137 @@ b0:
     fun `test simple call`() {
         testCodegen("""
 main.S:
+	.text
+Lstr0:
+	.asciz "Unexpected parameter count"
+Lstr1:
+	.asciz "Hello"
+	.globl print_satellite
+	.globl main__init
+	.globl __entry__
+print_satellite:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}80, %rsp
+	movq %rdi, %rdi
+//save registers for call r__size
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__size
+	movq %rax, -8(%rbp)
+//restore registers for call r__size
+	popq %rdi
+//finish handling call r__size
+	movabsq ${'$'}2305843009213693953, %rax
+	movq %rax, -16(%rbp)
+//save registers for call r__eq
+	pushq %rdi
+	movq -8(%rbp), %rdi
+	movq -16(%rbp), %rsi
+	callq r__eq
+	movq %rax, -24(%rbp)
+//restore registers for call r__eq
+	popq %rdi
+//finish handling call r__eq
+//save registers for call r__untag
+	pushq %rdi
+	movq -24(%rbp), %rdi
+	callq r__untag
+	movq %rax, -32(%rbp)
+//restore registers for call r__untag
+	popq %rdi
+//finish handling call r__untag
+	cmpq ${'$'}0, -32(%rbp)
+	je L1
+L0:
+//save registers for call r__first
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__first
+	movq %rax, -40(%rbp)
+//restore registers for call r__first
+	popq %rdi
+//finish handling call r__first
+//save registers for call r__tail
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__tail
+	movq %rax, -48(%rbp)
+//restore registers for call r__tail
+	popq %rdi
+//finish handling call r__tail
+//save registers for call r__print
+	pushq %rdi
+	movq -40(%rbp), %rdi
+	callq r__print
+	movq %rax, -56(%rbp)
+//restore registers for call r__print
+	popq %rdi
+//finish handling call r__print
+	movq -56(%rbp), %rax
+	addq ${'$'}80, %rsp
+	popq %rbp
+	retq
+L1:
+	movq ${'$'}Lstr0, -80(%rbp)
+//save registers for call r__createString
+	pushq %rdi
+	movq -80(%rbp), %rdi
+	callq r__createString
+	movq %rax, -64(%rbp)
+//restore registers for call r__createString
+	popq %rdi
+//finish handling call r__createString
+//save registers for call r__printErrorAndExit
+	pushq %rdi
+	movq -64(%rbp), %rdi
+	callq r__printErrorAndExit
+	movq %rax, -72(%rbp)
+//restore registers for call r__printErrorAndExit
+	popq %rdi
+//finish handling call r__printErrorAndExit
+
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}32, %rsp
-	movq r__print, %rax
-	movq %rax, -8(%rsp)
-	movabsq ${'$'}2305843009213693964, %rax
-	movq %rax, -16(%rsp)
+	subq ${'$'}48, %rsp
+	movq print_satellite@GOTPCREL(%rip), %rax
+	movq %rax, -32(%rbp)
+//save registers for call r__tagFunction
+	movq -32(%rbp), %rdi
+	callq r__tagFunction
+	movq %rax, -8(%rbp)
+//restore registers for call r__tagFunction
+//finish handling call r__tagFunction
+	movq ${'$'}Lstr1, -40(%rbp)
+//save registers for call r__createString
+	movq -40(%rbp), %rdi
+	callq r__createString
+	movq %rax, -16(%rbp)
+//restore registers for call r__createString
+//finish handling call r__createString
 //save registers for call r__print
-	movq -16(%rsp), %rdi
+	movq -16(%rbp), %rdi
 	callq r__print
-	movq %rax, -24(%rsp)
+	movq %rax, -24(%rbp)
 //restore registers for call r__print
 //finish handling call r__print
-	movq -24(%rsp), %rax
-	addq ${'$'}32, %rsp
+	movq -24(%rbp), %rax
+	addq ${'$'}48, %rsp
+	popq %rbp
+	retq
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
         """.trimIndent(), listOf(
@@ -547,17 +1410,32 @@ main.S:
 Lstr0:
 	.asciz "Hello world!"
 	.globl main__init
+	.globl __entry__
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
 	subq ${'$'}16, %rsp
-	movabsq Lstr0, -16(%rbp)
+	movq ${'$'}Lstr0, -16(%rbp)
 //save registers for call r__createString
 	movq -16(%rbp), %rdi
 	callq r__createString
 	movq %rax, -8(%rbp)
 //restore registers for call r__createString
 //finish handling call r__createString
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
+	popq %rbp
+	retq
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
 	movq -8(%rbp), %rax
 	addq ${'$'}16, %rsp
 	popq %rbp
@@ -575,17 +1453,109 @@ main__init:
 main.S:
 	.text
 Lstr0:
+	.asciz "Unexpected parameter count"
+Lstr1:
 	.asciz "Hello world!"
+	.globl print_satellite
 	.globl main__init
+	.globl __entry__
+print_satellite:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}80, %rsp
+	movq %rdi, %rdi
+//save registers for call r__size
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__size
+	movq %rax, -8(%rbp)
+//restore registers for call r__size
+	popq %rdi
+//finish handling call r__size
+	movabsq ${'$'}2305843009213693953, %rax
+	movq %rax, -16(%rbp)
+//save registers for call r__eq
+	pushq %rdi
+	movq -8(%rbp), %rdi
+	movq -16(%rbp), %rsi
+	callq r__eq
+	movq %rax, -24(%rbp)
+//restore registers for call r__eq
+	popq %rdi
+//finish handling call r__eq
+//save registers for call r__untag
+	pushq %rdi
+	movq -24(%rbp), %rdi
+	callq r__untag
+	movq %rax, -32(%rbp)
+//restore registers for call r__untag
+	popq %rdi
+//finish handling call r__untag
+	cmpq ${'$'}0, -32(%rbp)
+	je L1
+L0:
+//save registers for call r__first
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__first
+	movq %rax, -40(%rbp)
+//restore registers for call r__first
+	popq %rdi
+//finish handling call r__first
+//save registers for call r__tail
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__tail
+	movq %rax, -48(%rbp)
+//restore registers for call r__tail
+	popq %rdi
+//finish handling call r__tail
+//save registers for call r__print
+	pushq %rdi
+	movq -40(%rbp), %rdi
+	callq r__print
+	movq %rax, -56(%rbp)
+//restore registers for call r__print
+	popq %rdi
+//finish handling call r__print
+	movq -56(%rbp), %rax
+	addq ${'$'}80, %rsp
+	popq %rbp
+	retq
+L1:
+	movq ${'$'}Lstr0, -80(%rbp)
+//save registers for call r__createString
+	pushq %rdi
+	movq -80(%rbp), %rdi
+	callq r__createString
+	movq %rax, -64(%rbp)
+//restore registers for call r__createString
+	popq %rdi
+//finish handling call r__createString
+//save registers for call r__printErrorAndExit
+	pushq %rdi
+	movq -64(%rbp), %rdi
+	callq r__printErrorAndExit
+	movq %rax, -72(%rbp)
+//restore registers for call r__printErrorAndExit
+	popq %rdi
+//finish handling call r__printErrorAndExit
+
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}32, %rsp
-	movq r__print, %rax
-	movq %rax, -8(%rbp)
-	movq ${'$'}Lstr0, -32(%rbp)
-//save registers for call r__createString
+	subq ${'$'}48, %rsp
+	movq print_satellite@GOTPCREL(%rip), %rax
+	movq %rax, -32(%rbp)
+//save registers for call r__tagFunction
 	movq -32(%rbp), %rdi
+	callq r__tagFunction
+	movq %rax, -8(%rbp)
+//restore registers for call r__tagFunction
+//finish handling call r__tagFunction
+	movq ${'$'}Lstr1, -40(%rbp)
+//save registers for call r__createString
+	movq -40(%rbp), %rdi
 	callq r__createString
 	movq %rax, -16(%rbp)
 //restore registers for call r__createString
@@ -597,7 +1567,21 @@ main__init:
 //restore registers for call r__print
 //finish handling call r__print
 	movq -24(%rbp), %rax
-	addq ${'$'}32, %rsp
+	addq ${'$'}48, %rsp
+	popq %rbp
+	retq
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
         """, listOf(
@@ -613,29 +1597,135 @@ main__init:
 main.S:
 	.text
 Lstr0:
-	.asciz "Hello world!"
+	.asciz "Unexpected parameter count"
+	.globl f
+	.globl f_satellite
 	.globl main__init
+	.globl __entry__
+f:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+	movabsq ${'$'}2305843009213693994, %rax
+	movq %rax, -8(%rbp)
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
+	popq %rbp
+	retq
+
+f_satellite:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}64, %rsp
+	movq %rdi, %rdi
+//save registers for call r__size
+	pushq %rdi
+	movq %rdi, %rdi
+	callq r__size
+	movq %rax, -8(%rbp)
+//restore registers for call r__size
+	popq %rdi
+//finish handling call r__size
+	movabsq ${'$'}2305843009213693952, %rax
+	movq %rax, -16(%rbp)
+//save registers for call r__eq
+	pushq %rdi
+	movq -8(%rbp), %rdi
+	movq -16(%rbp), %rsi
+	callq r__eq
+	movq %rax, -24(%rbp)
+//restore registers for call r__eq
+	popq %rdi
+//finish handling call r__eq
+//save registers for call r__untag
+	pushq %rdi
+	movq -24(%rbp), %rdi
+	callq r__untag
+	movq %rax, -32(%rbp)
+//restore registers for call r__untag
+	popq %rdi
+//finish handling call r__untag
+	cmpq ${'$'}0, -32(%rbp)
+	je L1
+L0:
+//save registers for call f
+	pushq %rdi
+	callq f
+	movq %rax, -40(%rbp)
+//restore registers for call f
+	popq %rdi
+//finish handling call f
+	movq -40(%rbp), %rax
+	addq ${'$'}64, %rsp
+	popq %rbp
+	retq
+L1:
+	movq ${'$'}Lstr0, -64(%rbp)
+//save registers for call r__createString
+	pushq %rdi
+	movq -64(%rbp), %rdi
+	callq r__createString
+	movq %rax, -48(%rbp)
+//restore registers for call r__createString
+	popq %rdi
+//finish handling call r__createString
+//save registers for call r__printErrorAndExit
+	pushq %rdi
+	movq -48(%rbp), %rdi
+	callq r__printErrorAndExit
+	movq %rax, -56(%rbp)
+//restore registers for call r__printErrorAndExit
+	popq %rdi
+//finish handling call r__printErrorAndExit
+
 main__init:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq ${'$'}32, %rsp
-	movq r__print, %rax
-	movq %rax, -8(%rbp)
-	movq ${'$'}Lstr0, -32(%rbp)
-//save registers for call r__createString
-	movq -32(%rbp), %rdi
-	callq r__createString
+	subq ${'$'}64, %rsp
+	movq f_satellite@GOTPCREL(%rip), %rax
+	movq %rax, -64(%rbp)
+//save registers for call r__tagFunction
+	movq -64(%rbp), %rdi
+	callq r__tagFunction
 	movq %rax, -16(%rbp)
-//restore registers for call r__createString
-//finish handling call r__createString
-//save registers for call r__print
-	movq -16(%rbp), %rdi
-	callq r__print
-	movq %rax, -24(%rbp)
-//restore registers for call r__print
-//finish handling call r__print
-	movq -24(%rbp), %rax
-	addq ${'$'}32, %rsp
+//restore registers for call r__tagFunction
+//finish handling call r__tagFunction
+//mem (-16(%rbp)) -> mem (-8(%rbp)) move through temporary register
+	movq -16(%rbp), %rax
+	movq %rax, -8(%rbp)
+//mem (-8(%rbp)) -> mem (-32(%rbp)) move through temporary register
+	movq -8(%rbp), %rax
+	movq %rax, -32(%rbp)
+	movq ${'$'}0, -40(%rbp)
+//save registers for call r__untag
+	movq -32(%rbp), %rdi
+	callq r__untag
+	movq %rax, -48(%rbp)
+//restore registers for call r__untag
+//finish handling call r__untag
+//save registers for call by ptr
+	movq -40(%rbp), %rdi
+	movq -48(%rbp), %rax
+	call *%rax
+	movq %rax, -56(%rbp)
+//restore registers for call by ptr
+//finish handling call call by ptr
+	movq -56(%rbp), %rax
+	addq ${'$'}64, %rsp
+	popq %rbp
+	retq
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
 	popq %rbp
 	retq
         """, listOf(
