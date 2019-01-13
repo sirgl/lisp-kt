@@ -454,30 +454,6 @@ fun __entry__ :  virtual regs: 1 paramCount: 0
         ))
     }
 
-    @Test
-    fun `test let while`() {
-        testLir("""
-fun main__init :  virtual regs: 8 paramCount: 0
-  0 inplace_i64 reg: %1 value: 4611686018427387905 (without tag: 1)
-  1 mov from %1 to %0
-  2 mov from %0 to %3
-  3 call name: r__untag resultReg: %4 args: (%3)
-  4 cond_jump cond: %4 thenIndex: 5 elseIndex: 8
-  5 inplace_i64 reg: %5 value: 4611686018427387904 (without tag: 0)
-  6 mov from %5 to %0
-  7 goto 2
-  8 inplace_i64 reg: %7 value: 0 (without tag: 0)
-  9 return %7
-
-fun __entry__ :  virtual regs: 1 paramCount: 0
-  0 call name: main__init resultReg: %0 args: ()
-        """, listOf(
-                "main" withText """
-            (let ((b #t)) (while b (set b #f)))
-  1 return %0
-                """.trimIndent()
-        ))
-    }
 
     fun testLir(expected: String, files: List<InMemoryFileInfo>) {
         val sources = files.map { InMemorySource(it.text, it.name) }

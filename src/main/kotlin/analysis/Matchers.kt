@@ -118,7 +118,8 @@ object Matchers {
         }
     }) { node ->
         val children = node.children
-        EmitNodeInfo((children[1] as LeafNode).token.text)
+        val text = (children[1] as LeafNode).token.text
+        EmitNodeInfo(text.substring(1, text.lastIndex))
     }
 
     private fun parseParameterList(node: AstNode) : List<ParameterInfo> {

@@ -163,7 +163,8 @@ private class MacroExpansionContext(asts: List<Ast>, val target: RealDependencyE
                             val identifier = LeafNode(Token(0, "macro-asm-expanded", TokenType.Identifier),
                                     SyntaxKind.Identifier)
                             val macroAsmName = LeafNode(Token(0, name, TokenType.Identifier), SyntaxKind.Identifier)
-                            val body = LeafNode(Token(0, interpreter.emitResultMap[name].toString(), TokenType.String),
+                            val text = "\"" + interpreter.emitResultMap[name].toString() + "\""
+                            val body = LeafNode(Token(0, text, TokenType.String),
                                     SyntaxKind.Identifier)
                             wasExpansion = true
                             ListNode(listOf(identifier, macroAsmName, body), child.textRange)
