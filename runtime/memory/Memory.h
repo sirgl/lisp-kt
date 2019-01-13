@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <iomanip>
 #include "../Error.h"
 #include "Memory.h"

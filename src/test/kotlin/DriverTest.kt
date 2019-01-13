@@ -2,6 +2,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import shell.ShellCommandExecutor
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -12,8 +13,8 @@ import kotlin.test.assertEquals
 class DriverTest {
     val driver: Driver = Driver()
     private val shellCommandExecutor: ShellCommandExecutor = ShellCommandExecutor()
-    private val libraryPath = "src/main/resources/stdlib.lisp"
-    private val runtimePath = "src/test/resources/runtime.o"
+    private val libraryPath = "/home/roman/IdeaProjects/lisp-kt/src/main/resources/stdlib.lisp"
+    private val runtimePath = "/home/roman/IdeaProjects/lisp-kt/src/test/resources/libruntime.a"
 
     @ParameterizedTest
     @MethodSource("testPathProvider")
@@ -27,7 +28,7 @@ class DriverTest {
             )
         )
         if (!success) throw IllegalStateException("Failed to compile")
-        val actual = shellCommandExecutor.runCommand(path.toFile(), "./$outputFileName.o")
+        val actual = shellCommandExecutor.runCommand(path.toFile(), "./runtime")
         val expected = Files.readAllLines(path.resolve("expected.txt")).joinToString("\n")
         assertEquals(expected, actual)
     }

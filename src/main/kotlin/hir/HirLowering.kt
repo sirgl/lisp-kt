@@ -3,6 +3,7 @@ package hir
 import analysis.Matchers
 import deps.RealDependencyEntry
 import deps.dfs
+import deps.preorderDfs
 import lexer.TokenType
 import linting.AppendingSink
 import linting.Lint
@@ -20,12 +21,10 @@ class HirLowering(private val implicitImports: List<HirImport>) {
         val lints = mutableListOf<Lint>()
         val files = mutableListOf<HirFile>()
         var isError = false
-        var isTarget = true
         target.dfs {
             it as RealDependencyEntry
             val ast = it.ast
-            val file = lower(ast.root, ast.source, context, isTarget)
-            isTarget = false
+            val file = lower(ast.root, ast.source, context, it === target)
             lints.addAll(file.lints)
             if (file.isError()) {
                 isError = true

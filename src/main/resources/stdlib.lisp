@@ -22,8 +22,8 @@ stdlib created by Ivanov Roman and Ivanova Anastasia
 (macro not (a) `(if a #f #t))
 
 (defn _lt (a b) (_and
-                    (!(_gt a b))
-                    (!(_eq a b))
+                    (not(_gt a b))
+                    (not(_eq a b))
                 )
 )
 (defn _le (a b) (not (_gt a b)
@@ -40,13 +40,13 @@ stdlib created by Ivanov Roman and Ivanova Anastasia
 (defnat tail r__tail (list))
 (defnat size r__size (list))
 (defn is-empty (list) (_eq (size list) 0))
-(defn list @args (args))
+(defn list (@args) (args))
 
 ; Chain operations
 (macro and-list (l)
     (if (is-empty l)
         #t
-        `(if (first l)
+        `(if (first l)0
             (and-list (tail l))
             #f
         )

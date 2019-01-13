@@ -62,6 +62,20 @@ fun DependencyEntry.bfs(f: (DependencyEntry) -> Unit) {
     }
 }
 
+fun DependencyEntry.preorderDfs(f: (DependencyEntry) -> Unit) {
+    preorderDfs(f, hashSetOf())
+}
+
+private fun DependencyEntry.preorderDfs(f: (DependencyEntry) -> Unit, passed: MutableSet<DependencyEntry>)  {
+    passed.add(this)
+    f(this)
+    for (dependency in dependencies) {
+        if (dependency !in passed) {
+            dependency.dfs(f, passed)
+        }
+    }
+}
+
 fun DependencyEntry.dfs(f: (DependencyEntry) -> Unit) {
     dfs(f, hashSetOf())
 }
