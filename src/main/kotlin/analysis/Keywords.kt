@@ -12,5 +12,6 @@ object Keywords {
     const val MACRO_KW = "macro"
     const val DEFNAT_KW = "defnat"
     const val MACROASM_KW = "macroasm"
+    const val MACROASM_EXPANDED_KW = "macro-asm-expanded"
     const val EMIT_KW = "emit"
 }

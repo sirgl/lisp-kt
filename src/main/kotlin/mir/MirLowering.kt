@@ -25,7 +25,7 @@ class MirLowering {
             listOf(function, satellite)
             }
         }
-        return MirFile(file.source, functions)
+        return MirFile(file.source, functions, file.macroasms)
     }
 
     private fun lower(function: HirFunctionDeclaration, file: HirFile, context: MirBuilderContext): MirFunction {

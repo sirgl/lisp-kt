@@ -45,6 +45,7 @@ class HirFile(
         val source: Source,
         val imports: List<HirImport>,
         val functions: List<HirFunctionDeclaration>,
+        val macroasms: List<HirMacroasmDefinition>,
         val moduleName: String?
 ) : HirNode() {
     override val children: List<HirNode> = childrenFrom(imports, functions)
@@ -128,6 +129,19 @@ class HirFunctionDefinition(
         }
     }
 
+}
+
+class HirMacroasmDefinition(override val name: String, val asmText: String) : HirNode(), HirFunctionDeclaration {
+    override val children: List<HirNode> = emptyList()
+
+    override val parameters: List<HirParameter> = emptyList()
+
+    override fun prettySelf(): String {
+        return buildString {
+            append("Macroasm definition: ")
+            append(name)
+        }
+    }
 }
 
 class HirBlockExpr(

@@ -19,6 +19,9 @@ class AssemblyBackend(
         fileAssembler.markAsText()
         fileAssembler.writeStringTable(file.stringTable)
         fileAssembler.writeExportTable(file.functions.map { mangle(it.name) })
+        for (macroasm in file.macroasms) {
+            fileAssembler.writeMacroasm(macroasm)
+        }
         val labelIndexHolder = LabelIndexHolder()
         for (function in file.functions) {
             val registerMap = registerAllocator.allocateRegisters(function)

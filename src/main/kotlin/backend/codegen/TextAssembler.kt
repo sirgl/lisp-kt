@@ -2,10 +2,15 @@ package backend.codegen
 
 import backend.MemoryLocation
 import backend.mangle
+import hir.HirMacroasmDefinition
 import java.io.OutputStream
 
 class TextAssembler : Assembler {
-    override fun writeExportTable(functionNames: List<String>) {
+	override fun writeMacroasm(def: HirMacroasmDefinition) {
+		sb.append("${def.name}:\n${def.asmText}\n")
+	}
+
+	override fun writeExportTable(functionNames: List<String>) {
         for (functionName in functionNames) {
             sb.append("\t.globl $functionName\n")
         }

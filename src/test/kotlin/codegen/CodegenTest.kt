@@ -2473,6 +2473,45 @@ __entry__:
 //                )
 //            )
 
+    @Test
+    fun `test macro asm`() {
+        testCodegen("""
+main.S:
+	.text
+	.globl main__init
+	.globl __entry__
+foo:
+asm1
+asm2
+
+main__init:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+	movq ${'$'}0, -8(%rbp)
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
+	popq %rbp
+	retq
+
+__entry__:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq ${'$'}16, %rsp
+//save registers for call main__init
+	callq main__init
+	movq %rax, -8(%rbp)
+//restore registers for call main__init
+//finish handling call main__init
+	movq -8(%rbp), %rax
+	addq ${'$'}16, %rsp
+	popq %rbp
+	retq
+        """, listOf(
+                "main" withText """(macroasm foo (let () (emit "asm1") (emit "asm2")))"""
+        ))
+    }
+
     fun testCodegen(expected: String, files: List<InMemoryFileInfo>) {
         val sources = files.map { InMemorySource(it.text, it.name) }
         val session = frontend.compilationSession(sources, emptyList(), CompilerConfig(0), false)

@@ -3,7 +3,6 @@ package hir
 import analysis.Matchers
 import deps.RealDependencyEntry
 import deps.dfs
-import deps.preorderDfs
 import lexer.TokenType
 import linting.AppendingSink
 import linting.Lint
@@ -100,6 +99,7 @@ private class UnitHirLowering(
     val imports = implicitImports.toMutableList()
     val lints = mutableListOf<Lint>()
     val functions = mutableListOf<HirFunctionDeclaration>()
+    val macroasms = mutableListOf<HirMacroasmDefinition>()
     var moduleName: String? = null
     val sink = AppendingSink(lints)
 
@@ -113,7 +113,7 @@ private class UnitHirLowering(
         // Convention for top level code in file (all code in HIR must be in function, so synthetic one is created)
         val name = source.path.replace('/', '_').replace('.', '_') + "__init"
         functions.add(HirFunctionDefinition(name, emptyList(), block, true, isTarget))
-        return ResultWithLints.Ok(HirFile(source, imports, functions, moduleName))
+        return ResultWithLints.Ok(HirFile(source, imports, functions, macroasms, moduleName))
     }
 
     fun lowerBlock(nodes: List<AstNode>, isTopLevel: Boolean = false): HirBlockExpr? {
@@ -248,6 +248,13 @@ private class UnitHirLowering(
                             return null
                         }
                         HirAssignExpr(name, newValue, varDeclaration)
+                    }
+                    Matchers.MACROASM_EXPANDED.matches(node, source, sink) -> {
+                        val macroInfo = Matchers.MACROASM_EXPANDED.extract(node, source).drainTo(lints) ?: return null
+                        val declaration = HirMacroasmDefinition(macroInfo.name, macroInfo.asmText)
+                        context.addToScope(declaration)
+                        macroasms.add(declaration)
+                        emptyListLiteral()
                     }
                     Matchers.DEFNAT.matches(node, source, sink) -> {
                         val nativeFun = Matchers.DEFNAT.extract(node, source).drainTo(lints)

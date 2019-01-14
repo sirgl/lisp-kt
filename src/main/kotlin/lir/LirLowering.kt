@@ -112,7 +112,7 @@ private class LirFileLowering(val mirFile: MirFile, val world: MirWorld, val con
         val functions = mirFile.functions
             .filterIsInstance<MirFunctionDefinition>()
             .map { lowerFunction(it) }
-        return LirFile(mirFile.source, functions, context.getStrTable())
+        return LirFile(mirFile.source, functions, context.getStrTable(), mirFile.macroasms)
 
     }
 

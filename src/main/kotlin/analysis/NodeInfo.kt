@@ -82,3 +82,8 @@ class NativeFunctionDeclarationInfo(
         override val name: String
                 get() = nameInProgram
 }
+
+class MacroAsmExpandedInfo(
+        val name: String,
+        val asmText: String
+) : NodeInfo()

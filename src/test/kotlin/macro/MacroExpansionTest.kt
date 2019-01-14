@@ -182,7 +182,9 @@ main : Error in MacroExpander [15, 22) : No definition of bar in env
     fun `test macro asm`() {
         testExpansion("""
 main:
-(macro-asm-expanded foo "asm1\nasm2\n")
+(macro-asm-expanded foo asm1
+asm2
+)
         """, listOf(
                 "main" withText """(macroasm foo (let () (emit "asm1") (emit "asm2")))"""
         ))

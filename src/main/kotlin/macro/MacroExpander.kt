@@ -1,5 +1,6 @@
 package macro
 
+import analysis.Keywords
 import analysis.MacroAsmNodeInfo
 import analysis.Matchers
 import deps.RealDependencyEntry
@@ -160,15 +161,14 @@ private class MacroExpansionContext(asts: List<Ast>, val target: RealDependencyE
                             interpreter.currentMacroAsmNode = name
                             interpreter.eval(macroNode.body)
                             interpreter.currentMacroAsmNode = null
-                            val identifier = LeafNode(Token(0, "macro-asm-expanded", TokenType.Identifier),
+                            val identifier = LeafNode(Token(0, Keywords.MACROASM_EXPANDED_KW, TokenType.Identifier),
                                     SyntaxKind.Identifier)
                             val macroAsmName = LeafNode(Token(0, name, TokenType.Identifier), SyntaxKind.Identifier)
-                            val text = "\"" + interpreter.emitResultMap[name].toString() + "\""
-                            val body = LeafNode(Token(0, text, TokenType.String),
-                                    SyntaxKind.Identifier)
+                            val text = interpreter.emitResultMap[name].toString()
+                            val body = LeafNode(Token(0, text, TokenType.String), SyntaxKind.StringLiteral)
                             wasExpansion = true
                             ListNode(listOf(identifier, macroAsmName, body), child.textRange)
-                        }
+                    }
                         is ResultWithLints.Error -> child
                     }
                 }

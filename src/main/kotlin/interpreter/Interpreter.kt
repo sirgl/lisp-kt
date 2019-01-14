@@ -150,7 +150,7 @@ class Interpreter(private val env: InterpreterEnv = InterpreterEnv(mutableMapOf(
             Matchers.EMIT.matches(node) -> {
                 val emitNodeInfo = Matchers.EMIT.forceExtract(node)
                 val currentStringBuilder = emitResultMap[currentMacroAsmNode] ?: StringBuilder()
-                emitResultMap[currentMacroAsmNode!!] = currentStringBuilder.append(emitNodeInfo.body + "\\n")
+                emitResultMap[currentMacroAsmNode!!] = currentStringBuilder.append(emitNodeInfo.body + "\n")
                 emptyListNode()
             }
             Matchers.SET.matches(node) -> {

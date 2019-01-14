@@ -1,6 +1,7 @@
 package backend.codegen
 
 import backend.MemoryLocation
+import hir.HirMacroasmDefinition
 import util.LongStorage
 import java.io.OutputStream
 
@@ -9,6 +10,8 @@ interface Assembler {
     fun writeStringTable(stringTable: Array<String>)
 
     fun writeFunction(name: String, writer: (FunctionAssembler) -> Unit)
+
+    fun writeMacroasm(def: HirMacroasmDefinition)
 
     fun markAsText()
 

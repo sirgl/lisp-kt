@@ -1,8 +1,13 @@
 package lir
 
+import hir.HirMacroasmDefinition
 import util.Source
 
-class LirFile(val source: Source, val functions: List<LirFunction>, val stringTable: Array<String>) {
+class LirFile(
+        val source: Source, val functions: List<LirFunction>,
+        val stringTable: Array<String>,
+        val macroasms: List<HirMacroasmDefinition>
+) {
     override fun toString(): String {
         return buildString {
             if (stringTable.isNotEmpty()) {

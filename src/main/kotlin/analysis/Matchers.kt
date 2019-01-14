@@ -8,6 +8,7 @@ import linting.Subsystem
 import parser.AstNode
 import parser.LeafNode
 import parser.ListNode
+import parser.SyntaxKind
 import util.Source
 
 object Matchers {
@@ -240,6 +241,22 @@ object Matchers {
         val runtimeName = (children[1] as LeafNode).token.text
         val programName = (children[2] as LeafNode).token.text
         NativeFunctionDeclarationInfo(runtimeName, programName, parseParameterList(children[3]))
+    }
+
+    val MACROASM_EXPANDED = ListMatcher(Keywords.MACROASM_EXPANDED_KW, object : Validator {
+        override fun validate(node: AstNode, lintSink: LintSink, source: Source) {
+            if (!verifyCountExact(node, "Native function declaration", 3, source, lintSink)) return
+            verifyName(node.children[1], "Macroasm function name", source, lintSink)
+            val textNode = node.children[2]
+            if (textNode.syntaxKind != SyntaxKind.StringLiteral) {
+                lintSink.addError("3 node of macroasm must be string", textNode, source)
+            }
+        }
+    }) { node ->
+        val children = node.children
+        val name = (children[1] as LeafNode).token.text
+        val text = (children[2] as LeafNode).token.text
+        MacroAsmExpandedInfo(name, text)
     }
 
 
